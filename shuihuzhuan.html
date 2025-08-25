@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- 自动将HTTP转换为HTTPS -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水浒传事件-好汉选择游戏</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#9b2226',      // 主色调-深红色
+                        secondary: '#0f766e',    // 辅助色-深绿色（好汉相关）
+                        accent: '#7c2d12',       // 强调色-棕色（事件相关）
+                        neutral: '#57534e',      // 中性色-深灰色
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .btn-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1 transform;
+            }
+            .card-effect {
+                @apply bg-white rounded-xl shadow-md overflow-hidden transition-all duration-500 hover:shadow-xl;
+            }
+            .img-zoom {
+                @apply transition-transform duration-500 hover:scale-105;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-amber-50 to-orange-50 min-h-screen font-sans text-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <!-- 页面标题 -->
+        <header class="text-center mb-10">
+            <h1 class="text-3rem md:text-4rem font-bold mb-4 tracking-tight">
+                水浒传<span class="text-primary">游戏合集</span>
+            </h1>
+            <p class="text-gray-600 mb-6 max-w-2xl mx-auto text-lg">
+                选择以下游戏，体验水浒传的经典故事与英雄人物
+            </p>
+        </header>
+        
+        <!-- 游戏选择区域 -->
+        <div class="grid md:grid-cols-2 gap-8 mb-10">
+            <!-- 别名匹配游戏卡片 -->
+            <div class="card-effect">
+                <!-- 水浒传人物聚义图片 -->
+                <div class="h-56 overflow-hidden">
+                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/5ce500e39d1745cc92597e57439098ed.png~tplv-a9rns2rl98-24:720:720.png?rk3s=1fb89129&x-expires=1756527265&x-signature=hWcT%2Bg%2FvcHMWG3N27Jvic2O18Vc%3D" 
+                         alt="水浒传好汉聚义场景，展示梁山好汉在聚义厅议事的情景，背景有'替天行道'旗帜" 
+                         class="w-full h-full object-cover img-zoom">
+                </div>
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-2 text-primary">好汉别名匹配</h2>
+                    <p class="text-gray-600 mb-4">
+                        匹配108位好汉的姓名与江湖别称，考验您对水浒传人物的熟悉程度
+                    </p>
+                    <button onclick="window.open('shuihuzhuan-biemingpipei.html', '_self')" 
+                            class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg shadow-md btn-hover focus:outline-none">
+                        <i class="fa fa-play-circle mr-2"></i> 开始游戏
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 事件匹配游戏卡片 -->
+            <div class="card-effect">
+                <!-- 水浒传战斗事件图片 -->
+                <div class="h-56 overflow-hidden">
+                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/0a2175b0d09e4cb09e373771a6685f15.png~tplv-a9rns2rl98-24:720:720.png?rk3s=1fb89129&x-expires=1756527265&x-signature=FCBjH0Awh%2B34J2UdLA8HFNEbNGk%3D" 
+                         alt="水浒传经典战斗场景，展示梁山好汉骑马作战的激烈场面" 
+                         class="w-full h-full object-cover img-zoom">
+                </div>
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-2 text-secondary">事件好汉匹配</h2>
+                    <p class="text-gray-600 mb-4">
+                        选择经典事件，找出所有参与该事件的好汉，重温水浒传经典故事
+                    </p>
+                    <button onclick="window.open('shuihuzhuan-shijianpipei.html', '_self')" 
+                            class="w-full bg-secondary hover:bg-secondary/90 text-white font-bold py-3 px-6 rounded-lg shadow-md btn-hover focus:outline-none">
+                        <i class="fa fa-play-circle mr-2"></i> 开始游戏
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 游戏介绍 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-3 text-accent flex items-center">
+                <i class="fa fa-book mr-2"></i> 关于水浒传
+            </h3>
+            <p class="text-gray-700 mb-4">
+                《水浒传》是中国古典四大名著之一，讲述了108位好汉在梁山泊聚义的故事。
+                这些游戏旨在通过互动方式帮助玩家更好地了解这部经典文学作品中的人物和事件。
+            </p>
+            <p class="text-gray-700">
+                无论是匹配好汉的别名，还是回忆他们参与的重要事件，都能让您在娱乐中学习，
+                加深对这部经典名著的理解。
+            </p>
+        </div>
+        
+        <footer class="text-center text-gray-500 py-4">
+            <p>水浒传游戏合集 | 基于中国古典文学名著</p>
+        </footer>
+    </div>
+</body>
+</html>
