@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- 更严格的内容安全策略，只允许HTTPS资源 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' https://p3-flow-imagex-sign.byteimg.com data:; font-src https://cdn.jsdelivr.net;">
+    <!-- 强制HTTPS，包括子域名，预加载HSTS -->
+    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习资源导航</title>
+    <!-- 引入Tailwind CSS - 使用HTTPS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome - 使用HTTPS -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',      // 化学页面主色调-蓝色
+                        secondary: '#9b2226',    // 水浒传页面主色调-深红色
+                        accent: '#7c2d12',       // 强调色-棕色
+                        neutral: '#57534e',      // 中性色-深灰色
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .btn-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1 transform;
+            }
+            .card-effect {
+                @apply bg-white rounded-xl shadow-md overflow-hidden transition-all duration-500 hover:shadow-xl;
+            }
+            .img-zoom {
+                @apply transition-transform duration-500 hover:scale-105;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-amber-50 min-h-screen font-sans text-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <!-- 页面标题 -->
+        <header class="text-center mb-10">
+            <h1 class="text-3rem md:text-4rem font-bold mb-4 tracking-tight">
+                学习<span class="text-primary">资源</span>导航
+            </h1>
+            <p class="text-gray-600 mb-6 max-w-2xl mx-auto text-lg">
+                选择以下学习资源，开始你的学习之旅
+            </p>
+        </header>
+        
+        <!-- 资源选择区域 -->
+        <div class="grid md:grid-cols-2 gap-8 mb-10">
+            <!-- 水浒传游戏卡片 -->
+            <div class="card-effect">
+                <div class="h-56 overflow-hidden">
+                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/5ce500e39d1745cc92597e57439098ed.png~tplv-a9rns2rl98-24:720:720.png?rk3s=1fb89129&x-expires=1756527265&x-signature=hWcT%2Bg%2FvcHMWG3N27Jvic2O18Vc%3D" 
+                         alt="水浒传好汉聚义场景" 
+                         class="w-full h-full object-cover img-zoom">
+                </div>
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-2 text-secondary">水浒传游戏合集</h2>
+                    <p class="text-gray-600 mb-4">
+                        包含好汉别名匹配和事件好汉匹配两个游戏，通过互动方式了解水浒传中的人物和事件
+                    </p>
+                    <button onclick="window.open('shuihuzhuan.html', '_self')" 
+                            class="w-full bg-secondary hover:bg-secondary/90 text-white font-bold py-3 px-6 rounded-lg shadow-md btn-hover focus:outline-none">
+                        <i class="fa fa-book mr-2"></i> 进入学习
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 化学元素游戏卡片 -->
+            <div class="card-effect">
+                <div class="h-56 overflow-hidden">
+                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/creation_agent/4025b76741904324be3924cf9134c748~tplv-a9rns2rl98-web-preview-watermark.png?rcl=20250825161338C0EAF0A4ECD03C3D200A&rk3s=8e244e95&rrcfp=5057214b&x-expires=2071469634&x-signature=3s5yq286c95S8riO%2F3Lt5G9vJKA%3D" 
+                         alt="化学元素周期表" 
+                         class="w-full h-full object-cover img-zoom">
+                </div>
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-2 text-primary">化学必背元素匹配</h2>
+                    <p class="text-gray-600 mb-4">
+                        匹配化学元素符号与其中文名称，提升化学学习效率，包含多种游戏模式
+                    </p>
+                    <button onclick="window.open('chemistry.html', '_self')" 
+                            class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg shadow-md btn-hover focus:outline-none">
+                        <i class="fa fa-flask mr-2"></i> 进入学习
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 资源介绍 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-3 text-accent flex items-center">
+                <i class="fa fa-info-circle mr-2"></i> 关于学习资源
+            </h3>
+            <p class="text-gray-700 mb-4">
+                这里提供了两个互动学习资源，通过游戏化的方式帮助你更好地掌握知识：
+            </p>
+            <ul class="text-gray-700 list-disc pl-5 space-y-2">
+                <li>《水浒传》游戏：通过匹配人物别名和事件参与人物，加深对中国古典文学名著的理解</li>
+                <li>化学元素匹配：通过匹配元素符号与中文名称，帮助记忆化学必背元素，适合九年级学生暑假学习</li>
+            </ul>
+        </div>
+        
+        <footer class="text-center text-gray-500 py-4">
+            <p>学习资源导航 | 互动学习平台</p>
+        </footer>
+    </div>
+</body>
+</html>
