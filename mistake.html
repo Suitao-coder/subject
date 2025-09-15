@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错题宝 - 智能错题记录系统</title>
+    <!-- 引入外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6', // 主色调：蓝色
+                        secondary: '#10B981', // 辅助色：绿色
+                        accent: '#F59E0B', // 强调色：橙色
+                        danger: '#EF4444', // 危险色：红色
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+            }
+            .btn-effect {
+                @apply transition-all duration-300 hover:shadow-md transform hover:-translate-y-0.5;
+            }
+            .input-focus {
+                @apply focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            .pulse-effect {
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-dark">
+    <!-- 页面加载动画 -->
+    <div id="loader" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="flex flex-col items-center">
+            <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-primary font-medium">加载中...</p>
+        </div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-sm z-40 transition-all duration-300">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <i class="fa fa-book text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold text-primary">错题宝</span>
+                    </a>
+                </div>
+                
+                <!-- 桌面导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#dashboard" class="nav-link text-primary font-medium transition-colors">
+                        <i class="fa fa-tachometer mr-1"></i> 仪表盘
+                    </a>
+                    <a href="#questions" class="nav-link text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa fa-list-alt mr-1"></i> 错题库
+                    </a>
+                    <a href="#subjects" class="nav-link text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa fa-folder-open mr-1"></i> 科目管理
+                    </a>
+                    <a href="#statistics" class="nav-link text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa fa-bar-chart mr-1"></i> 学习分析
+                    </a>
+                </div>
+                
+                <div class="flex items-center">
+                    <!-- 用户菜单 -->
+                    <div class="relative ml-3" id="userMenuContainer">
+                        <div>
+                            <button type="button" id="userMenuButton" class="flex items-center max-w-xs rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
+                                <img class="h-8 w-8 rounded-full object-cover" src="https://picsum.photos/200/200?random=user" alt="用户头像">
+                                <span class="ml-2 hidden md:block text-sm font-medium" id="userName">学习达人</span>
+                                <i class="fa fa-chevron-down ml-1 text-xs text-gray-500"></i>
+                            </button>
+                        </div>
+                        <!-- 用户菜单下拉 -->
+                        <div id="userMenu" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 hidden z-50">
+                            <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                                <i class="fa fa-user mr-2"></i>个人资料
+                            </a>
+                            <a href="#settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                                <i class="fa fa-cog mr-2"></i>设置
+                            </a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <a href="#" id="logoutBtn" class="block px-4 py-2 text-sm text-danger hover:bg-gray-100 cursor-pointer">
+                                <i class="fa fa-sign-out mr-2"></i>退出登录
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 移动端菜单按钮 -->
+                    <button type="button" id="mobileMenuButton" class="ml-4 md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-primary hover:bg-gray-100 focus:outline-none cursor-pointer">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 移动端导航菜单 -->
+        <div id="mobileMenu" class="md:hidden hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#dashboard" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-primary bg-blue-50 cursor-pointer">
+                    <i class="fa fa-tachometer mr-2"></i>仪表盘
+                </a>
+                <a href="#questions" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
+                    <i class="fa fa-list-alt mr-2"></i>错题库
+                </a>
+                <a href="#subjects" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
+                    <i class="fa fa-folder-open mr-2"></i>科目管理
+                </a>
+                <a href="#statistics" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
+                    <i class="fa fa-bar-chart mr-2"></i>学习分析
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="pt-20 pb-16 min-h-screen">
+        <!-- 仪表盘页面 -->
+        <section id="dashboardPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="mb-8">
+                <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">仪表盘</h1>
+                <p class="text-gray-600 mt-1">欢迎回来，<span id="welcomeUserName" class="font-medium text-primary">学习达人</span>，查看您的学习进度</p>
+            </div>
+            
+            <!-- 快捷操作 -->
+            <div class="flex flex-wrap gap-4 mb-8">
+                <button id="addQuestionBtn" class="flex items-center bg-primary text-white px-6 py-3 rounded-lg shadow-sm btn-effect cursor-pointer">
+                    <i class="fa fa-plus-circle mr-2"></i> 添加新错题
+                </button>
+                <button id="exportQuestionsBtn" class="flex items-center bg-white text-gray-700 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                    <i class="fa fa-download mr-2"></i> 导出错题
+                </button>
+                <button id="reviewPlanBtn" class="flex items-center bg-white text-gray-700 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                    <i class="fa fa-refresh mr-2"></i> 复习计划
+                </button>
+            </div>
+            
+            <!-- 统计卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">总错题数</p>
+                            <h3 class="text-3xl font-bold mt-1" id="totalQuestions">0</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fa fa-list-alt text-primary text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center text-sm">
+                        <span class="text-green-500 flex items-center">
+                            <i class="fa fa-arrow-up mr-1"></i> 12%
+                        </span>
+                        <span class="text-gray-500 ml-2">较上周</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">已掌握</p>
+                            <h3 class="text-3xl font-bold mt-1" id="masteredQuestions">0</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fa fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center text-sm">
+                        <span class="text-green-500 flex items-center">
+                            <i class="fa fa-arrow-up mr-1"></i> 8%
+                        </span>
+                        <span class="text-gray-500 ml-2">较上周</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">待复习</p>
+                            <h3 class="text-3xl font-bold mt-1" id="reviewQuestions">0</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <i class="fa fa-clock-o text-amber-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center text-sm">
+                        <span class="text-red-500 flex items-center">
+                            <i class="fa fa-arrow-up mr-1"></i> 5%
+                        </span>
+                        <span class="text-gray-500 ml-2">较上周</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">科目数量</p>
+                            <h3 class="text-3xl font-bold mt-1" id="totalSubjects">0</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fa fa-folder-open text-purple-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center text-sm">
+                        <span class="text-green-500 flex items-center">
+                            <i class="fa fa-arrow-up mr-1"></i> 2
+                        </span>
+                        <span class="text-gray-500 ml-2">新增科目</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 图表和最近错题 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm card-shadow">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold">错题分布</h2>
+                        <div class="flex space-x-2">
+                            <button id="bySubjectBtn" class="text-sm px-3 py-1 rounded-md bg-primary/10 text-primary cursor-pointer">按科目</button>
+                            <button id="byDifficultyBtn" class="text-sm px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100 cursor-pointer">按难度</button>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        <canvas id="subjectsChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold">最近添加</h2>
+                        <a href="#questions" class="text-primary text-sm hover:underline cursor-pointer">查看全部</a>
+                    </div>
+                    <div class="space-y-4 max-h-80 overflow-y-auto pr-2" id="recentQuestions">
+                        <!-- 最近错题将通过JS动态生成 -->
+                        <div class="text-center text-gray-500 py-8">
+                            暂无错题记录
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 错题列表页面 -->
+        <section id="questionsPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+            <div class="mb-8">
+                <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">错题库</h1>
+                <p class="text-gray-600 mt-1">管理和查看您的所有错题</p>
+            </div>
+            
+            <!-- 筛选和搜索 -->
+            <div class="bg-white rounded-xl p-4 shadow-sm mb-6">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" id="searchQuestions" 
+                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus"
+                                placeholder="搜索错题...">
+                        </div>
+                    </div>
+                    
+                    <div class="w-full md:w-auto flex gap-4">
+                        <select id="filterSubject" class="block w-full md:w-48 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white cursor-pointer">
+                            <option value="">所有科目</option>
+                            <!-- 科目选项将通过JS动态生成 -->
+                        </select>
+                        
+                        <select id="filterDifficulty" class="block w-full md:w-40 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white cursor-pointer">
+                            <option value="">所有难度</option>
+                            <option value="easy">简单</option>
+                            <option value="medium">中等</option>
+                            <option value="hard">困难</option>
+                        </select>
+                        
+                        <button id="resetFilters" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 btn-effect cursor-pointer">
+                            <i class="fa fa-refresh mr-1"></i> 重置
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 错题列表 -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    题目
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    科目
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    难度
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    添加日期
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="questionsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- 错题数据将通过JS动态生成 -->
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                    暂无错题记录，请添加错题
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between" id="pagination">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 cursor-pointer" id="prevPageMobile" disabled>
+                            上一页
+                        </button>
+                        <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 cursor-pointer" id="nextPageMobile" disabled>
+                            下一页
+                        </button>
+                    </div>
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                显示第 <span class="font-medium" id="currentPageText">1</span> 到 <span class="font-medium" id="lastPageText">0</span> 条，共 <span class="font-medium" id="totalItemsText">0</span> 条记录
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 cursor-pointer" id="prevPage" disabled>
+                                    <span class="sr-only">上一页</span>
+                                    <i class="fa fa-chevron-left"></i>
+                                </button>
+                                <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer" id="currentPageBtn" disabled>
+                                    1
+                                </button>
+                                <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 cursor-pointer" id="nextPage" disabled>
+                                    <span class="sr-only">下一页</span>
+                                    <i class="fa fa-chevron-right"></i>
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 科目管理页面 -->
+        <section id="subjectsPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+            <div class="mb-8">
+                <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">科目管理</h1>
+                <p class="text-gray-600 mt-1">管理您的学习科目，自定义分类</p>
+            </div>
+            
+            <!-- 添加科目按钮 -->
+            <div class="mb-6">
+                <button id="addSubjectBtn" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                    <i class="fa fa-plus mr-2"></i> 添加新科目
+                </button>
+            </div>
+            
+            <!-- 科目列表 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="subjectsList">
+                <!-- 科目卡片将通过JS动态生成 -->
+                <div class="col-span-full text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm">
+                    暂无科目，请添加科目
+                </div>
+            </div>
+        </section>
+
+        <!-- 统计分析页面 -->
+        <section id="statisticsPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+            <div class="mb-8">
+                <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">学习分析</h1>
+                <p class="text-gray-600 mt-1">了解您的学习情况和错题分布，针对性提升</p>
+            </div>
+            
+            <!-- 时间趋势图 -->
+            <div class="bg-white rounded-xl p-6 shadow-sm card-shadow mb-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold">错题添加趋势</h2>
+                    <div class="flex space-x-2">
+                        <button id="weekTrendBtn" class="text-sm px-3 py-1 rounded-md bg-primary/10 text-primary cursor-pointer">周</button>
+                        <button id="monthTrendBtn" class="text-sm px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100 cursor-pointer">月</button>
+                        <button id="yearTrendBtn" class="text-sm px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100 cursor-pointer">年</button>
+                    </div>
+                </div>
+                <div class="h-80">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 掌握情况和难度分布 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow">
+                    <h2 class="text-xl font-bold mb-6">掌握情况</h2>
+                    <div class="h-80">
+                        <canvas id="masteryChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow">
+                    <h2 class="text-xl font-bold mb-6">难度分布</h2>
+                    <div class="h-80">
+                        <canvas id="difficultyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 薄弱知识点 -->
+            <div class="bg-white rounded-xl p-6 shadow-sm card-shadow">
+                <h2 class="text-xl font-bold mb-6">薄弱知识点</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    知识点
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    所属科目
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    错题数量
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="weakPointsTableBody" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+                                    暂无足够数据生成薄弱知识点分析
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 添加/编辑错题模态框 -->
+    <div id="questionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900" id="questionModalTitle">添加新错题</h3>
+                <button id="closeQuestionModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6">
+                <form id="questionForm">
+                    <input type="hidden" id="questionId">
+                    
+                    <div class="mb-4">
+                        <label for="questionContent" class="block text-sm font-medium text-gray-700 mb-1">题目内容 <span class="text-danger">*</span></label>
+                        <textarea id="questionContent" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入题目内容" required></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="questionAnswer" class="block text-sm font-medium text-gray-700 mb-1">正确答案 <span class="text-danger">*</span></label>
+                        <textarea id="questionAnswer" rows="2" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入正确答案" required></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="questionExplanation" class="block text-sm font-medium text-gray-700 mb-1">解析</label>
+                        <textarea id="questionExplanation" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入解析或错误原因"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="questionSubject" class="block text-sm font-medium text-gray-700 mb-1">科目 <span class="text-danger">*</span></label>
+                            <select id="questionSubject" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white" required>
+                                <option value="">请选择科目</option>
+                                <!-- 科目选项将通过JS动态生成 -->
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="questionDifficulty" class="block text-sm font-medium text-gray-700 mb-1">难度 <span class="text-danger">*</span></label>
+                            <select id="questionDifficulty" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white" required>
+                                <option value="">请选择难度</option>
+                                <option value="easy">简单</option>
+                                <option value="medium">中等</option>
+                                <option value="hard">困难</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="questionKnowledgePoint" class="block text-sm font-medium text-gray-700 mb-1">知识点</label>
+                            <input type="text" id="questionKnowledgePoint" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入知识点">
+                        </div>
+                        
+                        <div>
+                            <label for="questionStatus" class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                            <select id="questionStatus" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white">
+                                <option value="pending">待复习</option>
+                                <option value="mastered">已掌握</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button type="submit" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            <i class="fa fa-save mr-2"></i> 保存
+                        </button>
+                        <button type="button" id="cancelQuestionBtn" class="ml-3 inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑科目模态框 -->
+    <div id="subjectModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900" id="subjectModalTitle">添加新科目</h3>
+                <button id="closeSubjectModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6">
+                <form id="subjectForm">
+                    <input type="hidden" id="subjectId">
+                    
+                    <div class="mb-4">
+                        <label for="subjectName" class="block text-sm font-medium text-gray-700 mb-1">科目名称 <span class="text-danger">*</span></label>
+                        <input type="text" id="subjectName" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入科目名称" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="subjectColor" class="block text-sm font-medium text-gray-700 mb-1">科目颜色</label>
+                        <input type="color" id="subjectColor" class="block w-full h-10 p-1 border border-gray-300 rounded-lg focus:outline-none input-focus cursor-pointer" value="#3B82F6">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="subjectDescription" class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                        <textarea id="subjectDescription" rows="2" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入科目描述"></textarea>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button type="submit" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            <i class="fa fa-save mr-2"></i> 保存
+                        </button>
+                        <button type="button" id="cancelSubjectBtn" class="ml-3 inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div id="confirmDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">确认删除</h3>
+            </div>
+            <div class="px-6 py-6">
+                <p class="text-gray-700 mb-6" id="deleteConfirmMessage">您确定要删除这项吗？此操作无法撤销。</p>
+                <div class="flex justify-end">
+                    <button id="cancelDeleteBtn" class="inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                        取消
+                    </button>
+                    <button id="confirmDeleteBtn" class="ml-3 inline-flex items-center bg-danger text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                        <i class="fa fa-trash mr-2"></i> 确认删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知提示 -->
+    <div id="notification" class="fixed bottom-4 right-4 bg-dark text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center">
+        <i id="notificationIcon" class="fa fa-check-circle mr-2"></i>
+        <span id="notificationMessage"></span>
+    </div>
+
+    <!-- 功能提示模态框 -->
+    <div id="featureModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">功能提示</h3>
+                <button id="closeFeatureModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6">
+                <p class="text-gray-700 mb-6" id="featureMessage">此功能正在开发中，敬请期待！</p>
+                <div class="flex justify-end">
+                    <button id="okFeatureBtn" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 数据存储与管理
+        const DataManager = {
+            // 初始化数据
+            init() {
+                if (!localStorage.getItem('subjects')) {
+                    localStorage.setItem('subjects', JSON.stringify([]));
+                }
+                if (!localStorage.getItem('questions')) {
+                    localStorage.setItem('questions', JSON.stringify([]));
+                }
+                
+                // 添加示例数据（如果没有数据）
+                this.addSampleDataIfEmpty();
+            },
+            
+            // 添加示例数据（如果没有数据）
+            addSampleDataIfEmpty() {
+                const subjects = this.getSubjects();
+                const questions = this.getQuestions();
+                
+                if (subjects.length === 0 && questions.length === 0) {
+                    // 添加示例科目
+                    const mathId = this.addSubject({
+                        name: '数学',
+                        color: '#3B82F6',
+                        description: '数学科目包含代数、几何等内容'
+                    }).id;
+                    
+                    const physicsId = this.addSubject({
+                        name: '物理',
+                        color: '#EF4444',
+                        description: '物理科目包含力学、电学等内容'
+                    }).id;
+                    
+                    // 添加示例错题
+                    this.addQuestion({
+                        content: '已知三角形的两边长分别为3和4，求第三边的长度。',
+                        answer: '5（直角三角形情况下）',
+                        explanation: '根据勾股定理：直角三角形的两条直角边的平方和等于斜边的平方。即3² + 4² = 5²，所以第三边长为5。',
+                        subjectId: mathId,
+                        difficulty: 'easy',
+                        knowledgePoint: '勾股定理',
+                        status: 'mastered'
+                    });
+                    
+                    this.addQuestion({
+                        content: '一个物体在光滑水平面上以5m/s的速度匀速直线运动，不受外力作用，它将如何运动？',
+                        answer: '保持5m/s的速度匀速直线运动',
+                        explanation: '根据牛顿第一定律，物体在不受外力或所受合外力为零时，将保持静止或匀速直线运动状态。',
+                        subjectId: physicsId,
+                        difficulty: 'medium',
+                        knowledgePoint: '牛顿第一定律',
+                        status: 'pending'
+                    });
+                }
+            },
+            
+            // 科目相关操作
+            getSubjects() {
+                return JSON.parse(localStorage.getItem('subjects') || '[]');
+            },
+            
+            getSubject(id) {
+                const subjects = this.getSubjects();
+                return subjects.find(subject => subject.id === id);
+            },
+            
+            addSubject(subject) {
+                const subjects = this.getSubjects();
+                const newSubject = {
+                    id: Date.now().toString(),
+                    name: subject.name,
+                    color: subject.color || '#3B82F6',
+                    description: subject.description || '',
+                    createdAt: new Date().toISOString()
+                };
+                subjects.push(newSubject);
+                localStorage.setItem('subjects', JSON.stringify(subjects));
+                return newSubject;
+            },
+            
+            updateSubject(id, subject) {
+                const subjects = this.getSubjects();
+                const index = subjects.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    subjects[index] = {
+                        ...subjects[index],
+                        ...subject,
+                        updatedAt: new Date().toISOString()
+                    };
+                    localStorage.setItem('subjects', JSON.stringify(subjects));
+                    return subjects[index];
+                }
+                return null;
+            },
+            
+            deleteSubject(id) {
+                const subjects = this.getSubjects();
+                const newSubjects = subjects.filter(subject => subject.id !== id);
+                localStorage.setItem('subjects', JSON.stringify(newSubjects));
+                
+                // 同时删除该科目的所有错题
+                const questions = this.getQuestions();
+                const newQuestions = questions.filter(question => question.subjectId !== id);
+                localStorage.setItem('questions', JSON.stringify(newQuestions));
+                
+                return newSubjects;
+            },
+            
+            // 错题相关操作
+            getQuestions(filters = {}) {
+                let questions = JSON.parse(localStorage.getItem('questions') || '[]');
+                
+                // 应用筛选条件
+                if (filters.subjectId) {
+                    questions = questions.filter(q => q.subjectId === filters.subjectId);
+                }
+                if (filters.difficulty) {
+                    questions = questions.filter(q => q.difficulty === filters.difficulty);
+                }
+                if (filters.search) {
+                    const searchTerm = filters.search.toLowerCase();
+                    questions = questions.filter(q => 
+                        q.content.toLowerCase().includes(searchTerm) || 
+                        q.answer.toLowerCase().includes(searchTerm) ||
+                        q.explanation.toLowerCase().includes(searchTerm) ||
+                        q.knowledgePoint.toLowerCase().includes(searchTerm)
+                    );
+                }
+                if (filters.status) {
+                    questions = questions.filter(q => q.status === filters.status);
+                }
+                
+                // 按添加时间降序排序
+                return questions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            },
+            
+            getQuestion(id) {
+                const questions = this.getQuestions();
+                return questions.find(question => question.id === id);
+            },
+            
+            addQuestion(question) {
+                const questions = this.getQuestions();
+                const newQuestion = {
+                    id: Date.now().toString(),
+                    content: question.content,
+                    answer: question.answer,
+                    explanation: question.explanation || '',
+                    subjectId: question.subjectId,
+                    difficulty: question.difficulty,
+                    knowledgePoint: question.knowledgePoint || '',
+                    status: question.status || 'pending',
+                    createdAt: new Date().toISOString()
+                };
+                questions.push(newQuestion);
+                localStorage.setItem('questions', JSON.stringify(questions));
+                return newQuestion;
+            },
+            
+            updateQuestion(id, question) {
+                const questions = this.getQuestions();
+                const index = questions.findIndex(q => q.id === id);
+                if (index !== -1) {
+                    questions[index] = {
+                        ...questions[index],
+                        ...question,
+                        updatedAt: new Date().toISOString()
+                    };
+                    localStorage.setItem('questions', JSON.stringify(questions));
+                    return questions[index];
+                }
+                return null;
+            },
+            
+            deleteQuestion(id) {
+                const questions = this.getQuestions();
+                const newQuestions = questions.filter(question => question.id !== id);
+                localStorage.setItem('questions', JSON.stringify(newQuestions));
+                return newQuestions;
+            },
+            
+            // 导出为JSON
+            exportQuestions() {
+                const questions = this.getQuestions();
+                const subjects = this.getSubjects();
+                
+                // 丰富错题数据，包含科目名称
+                const exportData = questions.map(question => {
+                    const subject = subjects.find(s => s.id === question.subjectId);
+                    return {
+                        ...question,
+                        subjectName: subject ? subject.name : '未知科目'
+                    };
+                });
+                
+                // 转换为JSON字符串
+                const jsonStr = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                // 创建下载链接
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `错题导出_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // 清理
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 0);
+                
+                return true;
+            },
+            
+            // 统计数据
+            getStats() {
+                const questions = this.getQuestions();
+                const subjects = this.getSubjects();
+                
+                return {
+                    totalQuestions: questions.length,
+                    masteredQuestions: questions.filter(q => q.status === 'mastered').length,
+                    reviewQuestions: questions.filter(q => q.status === 'pending').length,
+                    totalSubjects: subjects.length,
+                    
+                    // 按科目统计
+                    bySubject: subjects.map(subject => {
+                        const count = questions.filter(q => q.subjectId === subject.id).length;
+                        return {
+                            ...subject,
+                            count
+                        };
+                    }).filter(item => item.count > 0),
+                    
+                    // 按难度统计
+                    byDifficulty: [
+                        { name: '简单', value: questions.filter(q => q.difficulty === 'easy').length, color: '#10B981' },
+                        { name: '中等', value: questions.filter(q => q.difficulty === 'medium').length, color: '#F59E0B' },
+                        { name: '困难', value: questions.filter(q => q.difficulty === 'hard').length, color: '#EF4444' }
+                    ],
+                    
+                    // 按状态统计
+                    byStatus: [
+                        { name: '待复习', value: questions.filter(q => q.status === 'pending').length, color: '#F59E0B' },
+                        { name: '已掌握', value: questions.filter(q => q.status === 'mastered').length, color: '#10B981' }
+                    ],
+                    
+                    // 最近添加的错题
+                    recent: questions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5),
+                    
+                    // 薄弱知识点
+                    weakPoints: this.getWeakPoints()
+                };
+            },
+            
+            // 获取薄弱知识点
+            getWeakPoints() {
+                const questions = this.getQuestions();
+                const subjects = this.getSubjects();
+                
+                // 按知识点分组
+                const knowledgePoints = {};
+                questions.forEach(question => {
+                    if (!question.knowledgePoint) return;
+                    
+                    const key = question.knowledgePoint.toLowerCase();
+                    if (!knowledgePoints[key]) {
+                        knowledgePoints[key] = {
+                            name: question.knowledgePoint,
+                            count: 0,
+                            subjectIds: new Set()
+                        };
+                    }
+                    knowledgePoints[key].count++;
+                    knowledgePoints[key].subjectIds.add(question.subjectId);
+                });
+                
+                // 转换为数组并排序
+                return Object.values(knowledgePoints)
+                    .map(point => {
+                        // 获取第一个相关科目的名称
+                        const subjectId = Array.from(point.subjectIds)[0];
+                        const subject = subjects.find(s => s.id === subjectId);
+                        
+                        return {
+                            name: point.name,
+                            count: point.count,
+                            subjectName: subject ? subject.name : '未知科目',
+                            subjectId
+                        };
+                    })
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5);
+            },
+            
+            // 获取时间趋势数据
+            getTrendData(period = 'week') {
+                const questions = this.getQuestions();
+                const now = new Date();
+                const trendData = [];
+                
+                if (period === 'week') {
+                    // 过去7天
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date(now);
+                        date.setDate(now.getDate() - i);
+                        const dateStr = date.toISOString().split('T')[0];
+                        
+                        const count = questions.filter(q => 
+                            q.createdAt.split('T')[0] === dateStr
+                        ).length;
+                        
+                        trendData.push({
+                            date: dateStr,
+                            label: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()],
+                            count
+                        });
+                    }
+                } else if (period === 'month') {
+                    // 过去30天，按周统计
+                    for (let i = 3; i >= 0; i--) {
+                        const endDate = new Date(now);
+                        endDate.setDate(now.getDate() - i * 7);
+                        const startDate = new Date(endDate);
+                        startDate.setDate(endDate.getDate() - 6);
+                        
+                        const count = questions.filter(q => {
+                            const qDate = new Date(q.createdAt);
+                            return qDate >= startDate && qDate <= endDate;
+                        }).length;
+                        
+                        trendData.push({
+                            label: `第${i + 1}周`,
+                            count
+                        });
+                    }
+                } else if (period === 'year') {
+                    // 过去12个月
+                    for (let i = 11; i >= 0; i--) {
+                        const date = new Date(now);
+                        date.setMonth(now.getMonth() - i);
+                        const month = date.getMonth();
+                        
+                        const count = questions.filter(q => {
+                            const qDate = new Date(q.createdAt);
+                            return qDate.getMonth() === month && qDate.getFullYear() === date.getFullYear();
+                        }).length;
+                        
+                        trendData.push({
+                            label: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'][month],
+                            count
+                        });
+                    }
+                }
+                
+                return trendData;
+            }
+        };
+
+        // 页面导航控制
+        const PageController = {
+            currentPage: 'dashboard',
+            
+            init() {
+                // 初始化导航事件监听
+                this.setupNavListeners();
+                
+                // 检查URL中的锚点
+                const hash = window.location.hash;
+                if (hash && hash.startsWith('#')) {
+                    const page = hash.substring(1);
+                    if (['dashboard', 'questions', 'subjects', 'statistics'].includes(page)) {
+                        this.navigateTo(page);
+                    }
+                }
+            },
+            
+            setupNavListeners() {
+                // 桌面导航链接
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = link.getAttribute('href').substring(1);
+                        this.navigateTo(page);
+                    });
+                });
+                
+                // 移动端导航链接
+                document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = link.getAttribute('href').substring(1);
+                        this.navigateTo(page);
+                        // 关闭移动菜单
+                        document.getElementById('mobileMenu').classList.add('hidden');
+                    });
+                });
+                
+                // 移动端菜单按钮
+                document.getElementById('mobileMenuButton').addEventListener('click', () => {
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    mobileMenu.classList.toggle('hidden');
+                });
+            },
+            
+            navigateTo(page) {
+                if (this.currentPage === page) return;
+                
+                // 隐藏当前页面
+                document.getElementById(`${this.currentPage}Page`).classList.add('hidden');
+                
+                // 显示新页面
+                document.getElementById(`${page}Page`).classList.remove('hidden');
+                document.getElementById(`${page}Page`).classList.add('fade-in');
+                
+                // 更新导航状态
+                this.updateNavActiveState(page);
+                
+                // 更新URL
+                window.location.hash = page;
+                
+                // 记录当前页面
+                this.currentPage = page;
+                
+                // 触发页面更新
+                this.onPageChange(page);
+            },
+            
+            updateNavActiveState(page) {
+                // 更新桌面导航
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    const href = link.getAttribute('href').substring(1);
+                    if (href === page) {
+                        link.classList.add('text-primary', 'font-medium');
+                        link.classList.remove('text-gray-600');
+                    } else {
+                        link.classList.remove('text-primary', 'font-medium');
+                        link.classList.add('text-gray-600');
+                    }
+                });
+                
+                // 更新移动端导航
+                document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                    const href = link.getAttribute('href').substring(1);
+                    if (href === page) {
+                        link.classList.add('text-primary', 'bg-blue-50');
+                        link.classList.remove('text-gray-600');
+                    } else {
+                        link.classList.remove('text-primary', 'bg-blue-50');
+                        link.classList.add('text-gray-600');
+                    }
+                });
+            },
+            
+            onPageChange(page) {
+                // 页面切换时的回调
+                switch(page) {
+                    case 'dashboard':
+                        Dashboard.render();
+                        break;
+                    case 'questions':
+                        Questions.render();
+                        break;
+                    case 'subjects':
+                        Subjects.render();
+                        break;
+                    case 'statistics':
+                        Statistics.render();
+                        break;
+                }
+            }
+        };
+
+        // 仪表盘页面
+        const Dashboard = {
+            subjectsChart: null,
+            
+            render() {
+                const stats = DataManager.getStats();
+                
+                // 更新统计卡片
+                document.getElementById('totalQuestions').textContent = stats.totalQuestions;
+                document.getElementById('masteredQuestions').textContent = stats.masteredQuestions;
+                document.getElementById('reviewQuestions').textContent = stats.reviewQuestions;
+                document.getElementById('totalSubjects').textContent = stats.totalSubjects;
+                
+                // 渲染最近添加的错题
+                this.renderRecentQuestions(stats.recent);
+                
+                // 渲染科目分布图表
+                this.renderSubjectsChart(stats.bySubject);
+            },
+            
+            renderRecentQuestions(questions) {
+                const container = document.getElementById('recentQuestions');
+                const subjects = DataManager.getSubjects();
+                
+                if (questions.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-gray-500 py-8">
+                            暂无错题记录
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                questions.forEach(question => {
+                    const subject = subjects.find(s => s.id === question.subjectId);
+                    const subjectName = subject ? subject.name : '未知科目';
+                    const subjectColor = subject ? subject.color : '#3B82F6';
+                    
+                    let difficultyLabel = '';
+                    let difficultyClass = '';
+                    
+                    switch(question.difficulty) {
+                        case 'easy':
+                            difficultyLabel = '简单';
+                            difficultyClass = 'bg-green-100 text-green-800';
+                            break;
+                        case 'medium':
+                            difficultyLabel = '中等';
+                            difficultyClass = 'bg-amber-100 text-amber-800';
+                            break;
+                        case 'hard':
+                            difficultyLabel = '困难';
+                            difficultyClass = 'bg-red-100 text-red-800';
+                            break;
+                    }
+                    
+                    // 格式化日期
+                    const date = new Date(question.createdAt);
+                    const formattedDate = `${date.getMonth() + 1}月${date.getDate()}日`;
+                    
+                    html += `
+                        <div class="p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow cursor-pointer" onclick="PageController.navigateTo('questions')">
+                            <div class="flex justify-between items-start mb-2">
+                                <p class="font-medium line-clamp-2">${question.content}</p>
+                                <span class="text-xs px-2 py-1 rounded-full ${difficultyClass}">${difficultyLabel}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm text-gray-500">
+                                <span class="flex items-center">
+                                    <span class="w-2 h-2 rounded-full mr-1" style="background-color: ${subjectColor};"></span>
+                                    ${subjectName}
+                                </span>
+                                <span>${formattedDate}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+            
+            renderSubjectsChart(data) {
+                const ctx = document.getElementById('subjectsChart').getContext('2d');
+                
+                // 销毁现有图表
+                if (this.subjectsChart) {
+                    this.subjectsChart.destroy();
+                }
+                
+                // 准备图表数据
+                const labels = data.map(item => item.name);
+                const values = data.map(item => item.count);
+                const colors = data.map(item => item.color);
+                
+                // 图表选项
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `错题数: ${context.raw}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000
+                    }
+                };
+                
+                // 如果没有数据，显示提示信息
+                if (data.length === 0) {
+                    this.subjectsChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['暂无数据'],
+                            datasets: [{
+                                label: '错题数量',
+                                data: [0],
+                                backgroundColor: '#e5e7eb',
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            ...options,
+                            plugins: {
+                                ...options.plugins,
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
+                    return;
+                }
+                
+                // 按科目显示
+                document.getElementById('bySubjectBtn').addEventListener('click', () => {
+                    document.getElementById('bySubjectBtn').classList.add('bg-primary/10', 'text-primary');
+                    document.getElementById('bySubjectBtn').classList.remove('text-gray-600', 'hover:bg-gray-100');
+                    document.getElementById('byDifficultyBtn').classList.remove('bg-primary/10', 'text-primary');
+                    document.getElementById('byDifficultyBtn').classList.add('text-gray-600', 'hover:bg-gray-100');
+                    
+                    this.subjectsChart.data = {
+                        labels: labels,
+                        datasets: [{
+                            label: '错题数量',
+                            data: values,
+                            backgroundColor: colors,
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }]
+                    };
+                    this.subjectsChart.update();
+                });
+                
+                // 按难度显示
+                document.getElementById('byDifficultyBtn').addEventListener('click', () => {
+                    document.getElementById('byDifficultyBtn').classList.add('bg-primary/10', 'text-primary');
+                    document.getElementById('byDifficultyBtn').classList.remove('text-gray-600', 'hover:bg-gray-100');
+                    document.getElementById('bySubjectBtn').classList.remove('bg-primary/10', 'text-primary');
+                    document.getElementById('bySubjectBtn').classList.add('text-gray-600', 'hover:bg-gray-100');
+                    
+                    const difficultyData = DataManager.getStats().byDifficulty;
+                    this.subjectsChart.data = {
+                        labels: difficultyData.map(item => item.name),
+                        datasets: [{
+                            label: '错题数量',
+                            data: difficultyData.map(item => item.value),
+                            backgroundColor: difficultyData.map(item => item.color),
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }]
+                    };
+                    this.subjectsChart.update();
+                });
+                
+                // 创建初始图表
+                this.subjectsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '错题数量',
+                            data: values,
+                            backgroundColor: colors,
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: options
+                });
+            }
+        };
+
+        // 错题页面
+        const Questions = {
+            currentPage: 1,
+            itemsPerPage: 10,
+            currentFilters: {},
+            
+            render() {
+                // 加载科目选项
+                this.loadSubjectOptions();
+                
+                // 渲染错题列表
+                this.renderQuestionsList();
+            },
+            
+            loadSubjectOptions() {
+                const subjects = DataManager.getSubjects();
+                const subjectSelect = document.getElementById('filterSubject');
+                const questionSubjectSelect = document.getElementById('questionSubject');
+                
+                // 保存当前选中的值
+                const currentValue = subjectSelect.value;
+                
+                // 清空现有选项（保留第一个"所有科目"选项）
+                while (subjectSelect.options.length > 1) {
+                    subjectSelect.remove(1);
+                }
+                
+                // 清空题目表单中的科目选项（保留第一个"请选择科目"选项）
+                while (questionSubjectSelect.options.length > 1) {
+                    questionSubjectSelect.remove(1);
+                }
+                
+                // 添加科目选项
+                subjects.forEach(subject => {
+                    // 筛选下拉框
+                    const option = document.createElement('option');
+                    option.value = subject.id;
+                    option.textContent = subject.name;
+                    subjectSelect.appendChild(option);
+                    
+                    // 题目表单中的科目下拉框
+                    const questionOption = document.createElement('option');
+                    questionOption.value = subject.id;
+                    questionOption.textContent = subject.name;
+                    questionSubjectSelect.appendChild(questionOption);
+                });
+                
+                // 恢复选中值
+                if (currentValue) {
+                    subjectSelect.value = currentValue;
+                }
+            },
+            
+            renderQuestionsList() {
+                const questions = DataManager.getQuestions(this.currentFilters);
+                const container = document.getElementById('questionsTableBody');
+                const subjects = DataManager.getSubjects();
+                
+                // 分页处理
+                const totalPages = Math.ceil(questions.length / this.itemsPerPage);
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = Math.min(startIndex + this.itemsPerPage, questions.length);
+                const paginatedQuestions = questions.slice(startIndex, endIndex);
+                
+                // 更新分页信息
+                this.updatePagination(questions.length, totalPages);
+                
+                if (questions.length === 0) {
+                    container.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                暂无错题记录，请添加错题
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                paginatedQuestions.forEach(question => {
+                    const subject = subjects.find(s => s.id === question.subjectId);
+                    const subjectName = subject ? subject.name : '未知科目';
+                    const subjectColor = subject ? subject.color : '#3B82F6';
+                    
+                    let difficultyLabel = '';
+                    let difficultyClass = '';
+                    
+                    switch(question.difficulty) {
+                        case 'easy':
+                            difficultyLabel = '简单';
+                            difficultyClass = 'bg-green-100 text-green-800';
+                            break;
+                        case 'medium':
+                            difficultyLabel = '中等';
+                            difficultyClass = 'bg-amber-100 text-amber-800';
+                            break;
+                        case 'hard':
+                            difficultyLabel = '困难';
+                            difficultyClass = 'bg-red-100 text-red-800';
+                            break;
+                    }
+                    
+                    let statusLabel = '';
+                    let statusClass = '';
+                    
+                    switch(question.status) {
+                        case 'pending':
+                            statusLabel = '待复习';
+                            statusClass = 'bg-amber-100 text-amber-800';
+                            break;
+                        case 'mastered':
+                            statusLabel = '已掌握';
+                            statusClass = 'bg-green-100 text-green-800';
+                            break;
+                    }
+                    
+                    // 格式化日期
+                    const date = new Date(question.createdAt);
+                    const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                    
+                    html += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900 line-clamp-1">${question.content}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="w-2 h-2 rounded-full mr-2" style="background-color: ${subjectColor};"></span>
+                                    <span class="text-sm text-gray-500">${subjectName}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${difficultyClass}">
+                                    ${difficultyLabel}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${formattedDate}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                                    ${statusLabel}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-primary hover:text-primary/80 mr-3 edit-question" data-id="${question.id}">
+                                    <i class="fa fa-pencil"></i> 编辑
+                                </button>
+                                <button class="text-danger hover:text-danger/80 delete-question" data-id="${question.id}">
+                                    <i class="fa fa-trash"></i> 删除
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+                // 添加编辑和删除事件监听
+                this.addQuestionActionListeners();
+            },
+            
+            updatePagination(totalItems, totalPages) {
+                const currentPageEl = document.getElementById('currentPageBtn');
+                const prevPageEl = document.getElementById('prevPage');
+                const nextPageEl = document.getElementById('nextPage');
+                const prevPageMobileEl = document.getElementById('prevPageMobile');
+                const nextPageMobileEl = document.getElementById('nextPageMobile');
+                const currentPageTextEl = document.getElementById('currentPageText');
+                const lastPageTextEl = document.getElementById('lastPageText');
+                const totalItemsTextEl = document.getElementById('totalItemsText');
+                
+                // 更新页码显示
+                currentPageEl.textContent = this.currentPage;
+                currentPageTextEl.textContent = (this.currentPage - 1) * this.itemsPerPage + 1;
+                lastPageTextEl.textContent = Math.min(this.currentPage * this.itemsPerPage, totalItems);
+                totalItemsTextEl.textContent = totalItems;
+                
+                // 更新按钮状态
+                if (this.currentPage <= 1) {
+                    prevPageEl.disabled = true;
+                    prevPageMobileEl.disabled = true;
+                } else {
+                    prevPageEl.disabled = false;
+                    prevPageMobileEl.disabled = false;
+                }
+                
+                if (this.currentPage >= totalPages || totalPages === 0) {
+                    nextPageEl.disabled = true;
+                    nextPageMobileEl.disabled = true;
+                } else {
+                    nextPageEl.disabled = false;
+                    nextPageMobileEl.disabled = false;
+                }
+                
+                // 移除旧的事件监听器，避免多次绑定
+                prevPageEl.onclick = null;
+                nextPageEl.onclick = null;
+                prevPageMobileEl.onclick = null;
+                nextPageMobileEl.onclick = null;
+                
+                // 分页事件监听
+                prevPageEl.onclick = () => this.changePage(this.currentPage - 1);
+                nextPageEl.onclick = () => this.changePage(this.currentPage + 1);
+                prevPageMobileEl.onclick = () => this.changePage(this.currentPage - 1);
+                nextPageMobileEl.onclick = () => this.changePage(this.currentPage + 1);
+            },
+            
+            changePage(page) {
+                this.currentPage = page;
+                this.renderQuestionsList();
+            },
+            
+            addQuestionActionListeners() {
+                // 移除旧的事件监听器
+                document.querySelectorAll('.edit-question').forEach(button => {
+                    button.onclick = null;
+                });
+                document.querySelectorAll('.delete-question').forEach(button => {
+                    button.onclick = null;
+                });
+                
+                // 编辑错题
+                document.querySelectorAll('.edit-question').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const id = button.getAttribute('data-id');
+                        this.openEditQuestionModal(id);
+                    });
+                });
+                
+                // 删除错题
+                document.querySelectorAll('.delete-question').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const id = button.getAttribute('data-id');
+                        this.openDeleteQuestionModal(id);
+                    });
+                });
+            },
+            
+            openEditQuestionModal(id) {
+                const question = DataManager.getQuestion(id);
+                if (!question) return;
+                
+                // 填充表单数据
+                document.getElementById('questionId').value = question.id;
+                document.getElementById('questionContent').value = question.content;
+                document.getElementById('questionAnswer').value = question.answer;
+                document.getElementById('questionExplanation').value = question.explanation || '';
+                document.getElementById('questionSubject').value = question.subjectId;
+                document.getElementById('questionDifficulty').value = question.difficulty;
+                document.getElementById('questionKnowledgePoint').value = question.knowledgePoint || '';
+                document.getElementById('questionStatus').value = question.status;
+                
+                // 更新模态框标题
+                document.getElementById('questionModalTitle').textContent = '编辑错题';
+                
+                // 显示模态框
+                document.getElementById('questionModal').classList.remove('hidden');
+                document.getElementById('questionModal').classList.add('flex');
+            },
+            
+            openDeleteQuestionModal(id) {
+                // 保存要删除的ID
+                document.getElementById('confirmDeleteBtn').setAttribute('data-id', id);
+                
+                // 更新确认消息
+                document.getElementById('deleteConfirmMessage').textContent = '您确定要删除这道错题吗？此操作无法撤销。';
+                
+                // 显示模态框
+                document.getElementById('confirmDeleteModal').classList.remove('hidden');
+                document.getElementById('confirmDeleteModal').classList.add('flex');
+            },
+            
+            // 应用筛选条件
+            applyFilters(filters) {
+                this.currentFilters = filters;
+                this.currentPage = 1; // 重置到第一页
+                this.renderQuestionsList();
+            }
+        };
+
+        // 科目页面
+        const Subjects = {
+            render() {
+                const subjects = DataManager.getSubjects();
+                const container = document.getElementById('subjectsList');
+                
+                if (subjects.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm">
+                            暂无科目，请添加科目
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                subjects.forEach(subject => {
+                    // 计算该科目的错题数量
+                    const questions = DataManager.getQuestions({ subjectId: subject.id });
+                    const questionCount = questions.length;
+                    
+                    html += `
+                        <div class="bg-white rounded-xl shadow-sm overflow-hidden transform transition-all duration-300 hover:shadow-md">
+                            <div class="p-5">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${subject.color};"></div>
+                                        <h3 class="font-medium">${subject.name}</h3>
+                                    </div>
+                                    <div class="flex space-x-1">
+                                        <button class="text-gray-400 hover:text-primary p-1 edit-subject" data-id="${subject.id}">
+                                            <i class="fa fa-pencil"></i>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-danger p-1 delete-subject" data-id="${subject.id}">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-3 line-clamp-2">${subject.description || '无描述'}</p>
+                                <div class="text-xs text-gray-500">
+                                    错题数量: <span class="font-medium">${questionCount}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+                // 添加编辑和删除事件监听
+                this.addSubjectActionListeners();
+            },
+            
+            addSubjectActionListeners() {
+                // 移除旧的事件监听器
+                document.querySelectorAll('.edit-subject').forEach(button => {
+                    button.onclick = null;
+                });
+                document.querySelectorAll('.delete-subject').forEach(button => {
+                    button.onclick = null;
+                });
+                
+                // 编辑科目
+                document.querySelectorAll('.edit-subject').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const id = button.getAttribute('data-id');
+                        this.openEditSubjectModal(id);
+                    });
+                });
+                
+                // 删除科目
+                document.querySelectorAll('.delete-subject').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const id = button.getAttribute('data-id');
+                        this.openDeleteSubjectModal(id);
+                    });
+                });
+            },
+            
+            openEditSubjectModal(id) {
+                const subject = DataManager.getSubject(id);
+                if (!subject) return;
+                
+                // 填充表单数据
+                document.getElementById('subjectId').value = subject.id;
+                document.getElementById('subjectName').value = subject.name;
+                document.getElementById('subjectColor').value = subject.color;
+                document.getElementById('subjectDescription').value = subject.description || '';
+                
+                // 更新模态框标题
+                document.getElementById('subjectModalTitle').textContent = '编辑科目';
+                
+                // 显示模态框
+                document.getElementById('subjectModal').classList.remove('hidden');
+                document.getElementById('subjectModal').classList.add('flex');
+            },
+            
+            openDeleteSubjectModal(id) {
+                const subject = DataManager.getSubject(id);
+                if (!subject) return;
+                
+                // 保存要删除的ID
+                document.getElementById('confirmDeleteBtn').setAttribute('data-id', id);
+                
+                // 更新确认消息
+                document.getElementById('deleteConfirmMessage').textContent = `您确定要删除科目"${subject.name}"吗？该科目的所有错题也将被删除，此操作无法撤销。`;
+                
+                // 显示模态框
+                document.getElementById('confirmDeleteModal').classList.remove('hidden');
+                document.getElementById('confirmDeleteModal').classList.add('flex');
+            }
+        };
+
+        // 统计页面
+        const Statistics = {
+            trendChart: null,
+            masteryChart: null,
+            difficultyChart: null,
+            currentPeriod: 'week',
+            
+            render() {
+                const stats = DataManager.getStats();
+                
+                // 渲染趋势图
+                this.renderTrendChart();
+                
+                // 渲染掌握情况图表
+                this.renderMasteryChart(stats.byStatus);
+                
+                // 渲染难度分布图表
+                this.renderDifficultyChart(stats.byDifficulty);
+                
+                // 渲染薄弱知识点
+                this.renderWeakPoints(stats.weakPoints);
+                
+                // 添加时间周期切换事件
+                this.addPeriodSwitchListeners();
+            },
+            
+            renderTrendChart() {
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                const data = DataManager.getTrendData(this.currentPeriod);
+                
+                // 销毁现有图表
+                if (this.trendChart) {
+                    this.trendChart.destroy();
+                }
+                
+                // 准备图表数据
+                const labels = data.map(item => item.label);
+                const values = data.map(item => item.count);
+                
+                // 创建图表
+                this.trendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '错题数量',
+                            data: values,
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderColor: '#3B82F6',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true,
+                            pointBackgroundColor: '#3B82F6',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1000
+                        }
+                    }
+                });
+            },
+            
+            renderMasteryChart(data) {
+                const ctx = document.getElementById('masteryChart').getContext('2d');
+                
+                // 销毁现有图表
+                if (this.masteryChart) {
+                    this.masteryChart.destroy();
+                }
+                
+                // 创建图表
+                this.masteryChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.map(item => item.name),
+                        datasets: [{
+                            data: data.map(item => item.value),
+                            backgroundColor: data.map(item => item.color),
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const value = context.raw;
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                        return `${context.label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '70%',
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true,
+                            duration: 1000
+                        }
+                    }
+                });
+            },
+            
+            renderDifficultyChart(data) {
+                const ctx = document.getElementById('difficultyChart').getContext('2d');
+                
+                // 销毁现有图表
+                if (this.difficultyChart) {
+                    this.difficultyChart.destroy();
+                }
+                
+                // 创建图表
+                this.difficultyChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.map(item => item.name),
+                        datasets: [{
+                            data: data.map(item => item.value),
+                            backgroundColor: data.map(item => item.color),
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const value = context.raw;
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                        return `${context.label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true,
+                            duration: 1000
+                        }
+                    }
+                });
+            },
+            
+            renderWeakPoints(points) {
+                const container = document.getElementById('weakPointsTableBody');
+                
+                if (points.length === 0) {
+                    container.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+                                暂无足够数据生成薄弱知识点分析
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                points.forEach(point => {
+                    html += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${point.name}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500">${point.subjectName}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500">${point.count}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#questions" class="text-primary hover:text-primary/80 view-questions" data-subject="${point.subjectId}" data-knowledge="${point.name}">
+                                    查看相关错题
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+                // 移除旧的事件监听器
+                document.querySelectorAll('.view-questions').forEach(link => {
+                    link.onclick = null;
+                });
+                
+                // 添加查看相关错题事件
+                document.querySelectorAll('.view-questions').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const subjectId = link.getAttribute('data-subject');
+                        const knowledge = link.getAttribute('data-knowledge');
+                        
+                        // 切换到错题页面并应用筛选
+                        PageController.navigateTo('questions');
+                        
+                        // 延迟执行以确保页面已加载
+                        setTimeout(() => {
+                            // 设置筛选条件
+                            document.getElementById('filterSubject').value = subjectId;
+                            document.getElementById('searchQuestions').value = knowledge;
+                            
+                            // 应用筛选
+                            Questions.applyFilters({
+                                subjectId,
+                                search: knowledge
+                            });
+                        }, 300);
+                    });
+                });
+            },
+            
+            addPeriodSwitchListeners() {
+                // 移除旧的事件监听器
+                document.getElementById('weekTrendBtn').onclick = null;
+                document.getElementById('monthTrendBtn').onclick = null;
+                document.getElementById('yearTrendBtn').onclick = null;
+                
+                // 周趋势
+                document.getElementById('weekTrendBtn').addEventListener('click', () => {
+                    if (this.currentPeriod === 'week') return;
+                    
+                    this.currentPeriod = 'week';
+                    this.updatePeriodButtons();
+                    this.renderTrendChart();
+                });
+                
+                // 月趋势
+                document.getElementById('monthTrendBtn').addEventListener('click', () => {
+                    if (this.currentPeriod === 'month') return;
+                    
+                    this.currentPeriod = 'month';
+                    this.updatePeriodButtons();
+                    this.renderTrendChart();
+                });
+                
+                // 年趋势
+                document.getElementById('yearTrendBtn').addEventListener('click', () => {
+                    if (this.currentPeriod === 'year') return;
+                    
+                    this.currentPeriod = 'year';
+                    this.updatePeriodButtons();
+                    this.renderTrendChart();
+                });
+            },
+            
+            updatePeriodButtons() {
+                // 重置所有按钮样式
+                document.getElementById('weekTrendBtn').classList.remove('bg-primary/10', 'text-primary');
+                document.getElementById('weekTrendBtn').classList.add('text-gray-600', 'hover:bg-gray-100');
+                document.getElementById('monthTrendBtn').classList.remove('bg-primary/10', 'text-primary');
+                document.getElementById('monthTrendBtn').classList.add('text-gray-600', 'hover:bg-gray-100');
+                document.getElementById('yearTrendBtn').classList.remove('bg-primary/10', 'text-primary');
+                document.getElementById('yearTrendBtn').classList.add('text-gray-600', 'hover:bg-gray-100');
+                
+                // 设置当前选中的按钮样式
+                document.getElementById(`${this.currentPeriod}TrendBtn`).classList.add('bg-primary/10', 'text-primary');
+                document.getElementById(`${this.currentPeriod}TrendBtn`).classList.remove('text-gray-600', 'hover:bg-gray-100');
+            }
+        };
+
+        // 通知提示
+        const Notification = {
+            show(message, type = 'success') {
+                const notification = document.getElementById('notification');
+                const icon = document.getElementById('notificationIcon');
+                const messageEl = document.getElementById('notificationMessage');
+                
+                // 设置消息和图标
+                messageEl.textContent = message;
+                
+                // 设置图标
+                icon.className = '';
+                if (type === 'success') {
+                    icon.className = 'fa fa-check-circle mr-2 text-green-400';
+                } else if (type === 'error') {
+                    icon.className = 'fa fa-exclamation-circle mr-2 text-red-400';
+                } else if (type === 'warning') {
+                    icon.className = 'fa fa-exclamation-triangle mr-2 text-yellow-400';
+                } else if (type === 'info') {
+                    icon.className = 'fa fa-info-circle mr-2 text-blue-400';
+                }
+                
+                // 显示通知
+                notification.classList.remove('translate-y-20', 'opacity-0');
+                notification.classList.add('translate-y-0', 'opacity-100');
+                
+                // 3秒后自动隐藏
+                setTimeout(() => {
+                    this.hide();
+                }, 3000);
+            },
+            
+            hide() {
+                const notification = document.getElementById('notification');
+                notification.classList.remove('translate-y-0', 'opacity-100');
+                notification.classList.add('translate-y-20', 'opacity-0');
+            }
+        };
+
+        // 功能提示模态框控制
+        const FeatureModal = {
+            show(message) {
+                document.getElementById('featureMessage').textContent = message || '此功能正在开发中，敬请期待！';
+                document.getElementById('featureModal').classList.remove('hidden');
+                document.getElementById('featureModal').classList.add('flex');
+            },
+            
+            hide() {
+                document.getElementById('featureModal').classList.add('hidden');
+                document.getElementById('featureModal').classList.remove('flex');
+            }
+        };
+
+        // 初始化应用
+        function initApp() {
+            // 初始化数据
+            DataManager.init();
+            
+            // 初始化页面导航
+            PageController.init();
+            
+            // 隐藏加载动画
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                loader.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 300);
+            }, 800);
+            
+            // 设置事件监听
+            setupEventListeners();
+        }
+
+        // 设置全局事件监听
+        function setupEventListeners() {
+            // 用户菜单切换
+            document.getElementById('userMenuButton').addEventListener('click', () => {
+                const userMenu = document.getElementById('userMenu');
+                userMenu.classList.toggle('hidden');
+            });
+            
+            // 点击其他区域关闭用户菜单
+            document.addEventListener('click', (e) => {
+                const userMenuContainer = document.getElementById('userMenuContainer');
+                const userMenu = document.getElementById('userMenu');
+                
+                if (!userMenuContainer.contains(e.target) && !userMenu.classList.contains('hidden')) {
+                    userMenu.classList.add('hidden');
+                }
+            });
+            
+            // 个人资料和设置链接
+            document.querySelectorAll('#userMenu a').forEach(link => {
+                if (link.getAttribute('href') === '#profile' || link.getAttribute('href') === '#settings') {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        document.getElementById('userMenu').classList.add('hidden');
+                        FeatureModal.show('个人资料和设置功能正在开发中，敬请期待！');
+                    });
+                }
+            });
+            
+            // 添加错题按钮
+            document.getElementById('addQuestionBtn').addEventListener('click', () => {
+                // 检查是否有科目，如果没有，先提示添加科目
+                const subjects = DataManager.getSubjects();
+                if (subjects.length === 0) {
+                    FeatureModal.show('请先添加科目，然后才能添加错题。');
+                    return;
+                }
+                
+                // 重置表单
+                document.getElementById('questionForm').reset();
+                document.getElementById('questionId').value = '';
+                document.getElementById('questionModalTitle').textContent = '添加新错题';
+                
+                // 显示模态框
+                document.getElementById('questionModal').classList.remove('hidden');
+                document.getElementById('questionModal').classList.add('flex');
+            });
+            
+            // 导出错题按钮
+            document.getElementById('exportQuestionsBtn').addEventListener('click', () => {
+                const questions = DataManager.getQuestions();
+                if (questions.length === 0) {
+                    Notification.show('没有可导出的错题', 'warning');
+                    return;
+                }
+                
+                if (DataManager.exportQuestions()) {
+                    Notification.show('错题导出成功');
+                } else {
+                    Notification.show('错题导出失败', 'error');
+                }
+            });
+            
+            // 复习计划按钮
+            document.getElementById('reviewPlanBtn').addEventListener('click', () => {
+                FeatureModal.show('复习计划功能正在开发中，敬请期待！');
+            });
+            
+            // 关闭错题模态框
+            document.getElementById('closeQuestionModal').addEventListener('click', () => {
+                document.getElementById('questionModal').classList.add('hidden');
+                document.getElementById('questionModal').classList.remove('flex');
+            });
+            
+            document.getElementById('cancelQuestionBtn').addEventListener('click', () => {
+                document.getElementById('questionModal').classList.add('hidden');
+                document.getElementById('questionModal').classList.remove('flex');
+            });
+            
+            // 错题表单提交
+            document.getElementById('questionForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const id = document.getElementById('questionId').value;
+                const questionData = {
+                    content: document.getElementById('questionContent').value,
+                    answer: document.getElementById('questionAnswer').value,
+                    explanation: document.getElementById('questionExplanation').value,
+                    subjectId: document.getElementById('questionSubject').value,
+                    difficulty: document.getElementById('questionDifficulty').value,
+                    knowledgePoint: document.getElementById('questionKnowledgePoint').value,
+                    status: document.getElementById('questionStatus').value
+                };
+                
+                let result;
+                if (id) {
+                    // 更新错题
+                    result = DataManager.updateQuestion(id, questionData);
+                    if (result) {
+                        Notification.show('错题更新成功');
+                    }
+                } else {
+                    // 添加新错题
+                    result = DataManager.addQuestion(questionData);
+                    if (result) {
+                        Notification.show('错题添加成功');
+                    }
+                }
+                
+                if (result) {
+                    // 关闭模态框
+                    document.getElementById('questionModal').classList.add('hidden');
+                    document.getElementById('questionModal').classList.remove('flex');
+                    
+                    // 更新相关页面
+                    Dashboard.render();
+                    Questions.render();
+                    Statistics.render();
+                } else {
+                    Notification.show('操作失败，请重试', 'error');
+                }
+            });
+            
+            // 添加科目按钮
+            document.getElementById('addSubjectBtn').addEventListener('click', () => {
+                // 重置表单
+                document.getElementById('subjectForm').reset();
+                document.getElementById('subjectId').value = '';
+                document.getElementById('subjectColor').value = '#3B82F6';
+                document.getElementById('subjectModalTitle').textContent = '添加新科目';
+                
+                // 显示模态框
+                document.getElementById('subjectModal').classList.remove('hidden');
+                document.getElementById('subjectModal').classList.add('flex');
+            });
+            
+            // 关闭科目模态框
+            document.getElementById('closeSubjectModal').addEventListener('click', () => {
+                document.getElementById('subjectModal').classList.add('hidden');
+                document.getElementById('subjectModal').classList.remove('flex');
+            });
+            
+            document.getElementById('cancelSubjectBtn').addEventListener('click', () => {
+                document.getElementById('subjectModal').classList.add('hidden');
+                document.getElementById('subjectModal').classList.remove('flex');
+            });
+            
+            // 科目表单提交
+            document.getElementById('subjectForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const id = document.getElementById('subjectId').value;
+                const subjectData = {
+                    name: document.getElementById('subjectName').value,
+                    color: document.getElementById('subjectColor').value,
+                    description: document.getElementById('subjectDescription').value
+                };
+                
+                let result;
+                if (id) {
+                    // 更新科目
+                    result = DataManager.updateSubject(id, subjectData);
+                    if (result) {
+                        Notification.show('科目更新成功');
+                    }
+                } else {
+                    // 添加新科目
+                    result = DataManager.addSubject(subjectData);
+                    if (result) {
+                        Notification.show('科目添加成功');
+                    }
+                }
+                
+                if (result) {
+                    // 关闭模态框
+                    document.getElementById('subjectModal').classList.add('hidden');
+                    document.getElementById('subjectModal').classList.remove('flex');
+                    
+                    // 更新相关页面
+                    Dashboard.render();
+                    Questions.render();
+                    Subjects.render();
+                    Statistics.render();
+                } else {
+                    Notification.show('操作失败，请重试', 'error');
+                }
+            });
+            
+            // 关闭确认删除模态框
+            document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+                document.getElementById('confirmDeleteModal').classList.add('hidden');
+                document.getElementById('confirmDeleteModal').classList.remove('flex');
+            });
+            
+            // 确认删除
+            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+                const id = document.getElementById('confirmDeleteBtn').getAttribute('data-id');
+                if (!id) return;
+                
+                // 检查是删除科目还是错题
+                const subject = DataManager.getSubject(id);
+                if (subject) {
+                    // 删除科目
+                    DataManager.deleteSubject(id);
+                    Notification.show('科目删除成功');
+                    
+                    // 更新相关页面
+                    Dashboard.render();
+                    Questions.render();
+                    Subjects.render();
+                    Statistics.render();
+                } else {
+                    // 删除错题
+                    DataManager.deleteQuestion(id);
+                    Notification.show('错题删除成功');
+                    
+                    // 更新相关页面
+                    Dashboard.render();
+                    Questions.render();
+                    Statistics.render();
+                }
+                
+                // 关闭模态框
+                document.getElementById('confirmDeleteModal').classList.add('hidden');
+                document.getElementById('confirmDeleteModal').classList.remove('flex');
+            });
+            
+            // 错题搜索和筛选
+            document.getElementById('searchQuestions').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.trim();
+                Questions.applyFilters({
+                    ...Questions.currentFilters,
+                    search: searchTerm
+                });
+            });
+            
+            document.getElementById('filterSubject').addEventListener('change', (e) => {
+                const subjectId = e.target.value;
+                Questions.applyFilters({
+                    ...Questions.currentFilters,
+                    subjectId
+                });
+            });
+            
+            document.getElementById('filterDifficulty').addEventListener('change', (e) => {
+                const difficulty = e.target.value;
+                Questions.applyFilters({
+                    ...Questions.currentFilters,
+                    difficulty
+                });
+            });
+            
+            document.getElementById('resetFilters').addEventListener('click', () => {
+                document.getElementById('searchQuestions').value = '';
+                document.getElementById('filterSubject').value = '';
+                document.getElementById('filterDifficulty').value = '';
+                
+                Questions.applyFilters({});
+            });
+            
+            // 退出登录
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (confirm('确定要退出登录吗？')) {
+                    Notification.show('已退出登录', 'info');
+                    // 在实际应用中，这里会处理真实的退出登录逻辑
+                }
+            });
+            
+            // 功能提示模态框控制
+            document.getElementById('closeFeatureModal').addEventListener('click', () => {
+                FeatureModal.hide();
+            });
+            
+            document.getElementById('okFeatureBtn').addEventListener('click', () => {
+                FeatureModal.hide();
+            });
+        }
+
+        // 页面加载完成后初始化应用
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
