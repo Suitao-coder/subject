@@ -18,7 +18,8 @@
             neutral: '#64748b',
             light: '#f1f5f9',
             dark: '#1e293b',
-            warning: '#f59e0b'
+            warning: '#f59e0b',
+            danger: '#ef4444'
           },
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -61,12 +62,12 @@
             <i class="fa fa-book mr-2 text-primary"></i>科目
           </label>
           <select id="subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
-            <option value="历史">历史</option>
             <option value="语文">语文</option>
             <option value="数学">数学</option>
             <option value="英语">英语</option>
             <option value="物理">物理</option>
             <option value="化学">化学</option>
+            <option value="历史">历史</option>
             <option value="道法">道法</option>
           </select>
         </div>
@@ -75,7 +76,7 @@
           <label for="choice-count" class="block text-sm font-medium text-gray-700 mb-1.5">
             <i class="fa fa-list-ul mr-2 text-primary"></i>选择题数量
           </label>
-          <input type="number" id="choice-count" min="0" value="2" 
+          <input type="number" id="choice-count" min="0" value="0" 
                  class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
         </div>
         
@@ -126,6 +127,9 @@
       <div id="question-container" class="min-h-[300px] mb-6"></div>
       
       <div class="flex justify-between">
+        <button id="exit-btn" class="bg-danger text-white font-medium py-2 px-4 rounded-lg btn-hover">
+          <i class="fa fa-sign-out mr-1"></i>退出答题
+        </button>
         <button id="prev-btn" class="bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg btn-hover" style="display: none;">
           <i class="fa fa-arrow-left mr-1"></i>上一题
         </button>
@@ -161,6 +165,9 @@
       <h2 class="text-xl font-bold text-center text-primary mb-4">历史记录</h2>
       <div id="history-list" class="flex-1 overflow-y-auto mb-4 space-y-3"></div>
       <div class="flex gap-3">
+        <button id="clear-all-history-btn" class="flex-1 bg-danger text-white font-medium py-2 rounded-lg btn-hover">
+          <i class="fa fa-trash mr-1"></i>清空记录
+        </button>
         <button id="close-history-btn" class="flex-1 bg-neutral text-white font-medium py-2 rounded-lg btn-hover">
           <i class="fa fa-times mr-1"></i>关闭
         </button>
@@ -188,7 +195,7 @@
     const subjectFileMap = {
       语文: {
         questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/chinese/chinese_problem.csv',
-        historyKey: 'chinese_history'  // 修改为统一的键名格式
+        historyKey: 'chinese_history'
       },
       数学: {
         questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/math/math_problem.csv',
@@ -232,6 +239,7 @@
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
     const submitBtn = document.getElementById('submit-btn');
+    const exitBtn = document.getElementById('exit-btn');
     const resultModal = document.getElementById('result-modal');
     const resultContent = document.getElementById('result-content');
     const backBtn = document.getElementById('back-btn');
@@ -240,6 +248,7 @@
     const historyList = document.getElementById('history-list');
     const closeHistoryBtn = document.getElementById('close-history-btn');
     const exportAllHistoryBtn = document.getElementById('export-all-history-btn');
+    const clearAllHistoryBtn = document.getElementById('clear-all-history-btn');
 
     // 初始化事件监听
     function initEventListeners() {
@@ -247,13 +256,60 @@
       historyBtn.addEventListener('click', showHistory);
       prevBtn.addEventListener('click', goToPrevQuestion);
       nextBtn.addEventListener('click', goToNextQuestion);
-      submitBtn.addEventListener('click', submitAnswers);
+      submitBtn.addEventListener('click', confirmSubmit);
+      exitBtn.addEventListener('click', confirmExit);
       backBtn.addEventListener('click', returnToConfig);
       exportResultBtn.addEventListener('click', exportCurrentResult);
       closeHistoryBtn.addEventListener('click', () => {
         historyModal.style.display = 'none';
       });
       exportAllHistoryBtn.addEventListener('click', exportAllHistory);
+      clearAllHistoryBtn.addEventListener('click', confirmClearAllHistory);
+    }
+
+    // 确认提交答案
+    function confirmSubmit() {
+      if (confirm('确定要提交答案吗？提交后将无法修改。')) {
+        submitAnswers();
+      }
+    }
+
+    // 确认退出答题
+    function confirmExit() {
+      if (confirm('确定要退出答题吗？当前进度将会丢失。')) {
+        returnToConfig();
+      }
+    }
+
+    // 确认清空所有历史记录
+    function confirmClearAllHistory() {
+      const subject = subjectSelect.value;
+      const historyKey = subjectFileMap[subject].historyKey;
+      const records = JSON.parse(localStorage.getItem(historyKey) || '[]');
+      
+      if (records.length === 0) {
+        alert('暂无历史记录可清空');
+        return;
+      }
+      
+      if (confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
+        localStorage.setItem(historyKey, JSON.stringify([]));
+        showHistory(); // 刷新历史记录列表
+      }
+    }
+
+    // 删除单条历史记录
+    function deleteHistoryRecord(index) {
+      if (confirm('确定要删除这条记录吗？此操作不可恢复。')) {
+        const subject = subjectSelect.value;
+        const historyKey = subjectFileMap[subject].historyKey;
+        let records = JSON.parse(localStorage.getItem(historyKey) || '[]');
+        
+        // 删除指定索引的记录
+        records.splice(index, 1);
+        localStorage.setItem(historyKey, JSON.stringify(records));
+        showHistory(); // 刷新历史记录列表
+      }
     }
 
     // 解析CSV文本为题目数组
@@ -601,15 +657,21 @@
       } else {
         // 倒序显示，最新的在前面
         records.slice().reverse().forEach((record, i) => {
+          const originalIndex = records.length - 1 - i;
           const recordItem = document.createElement('div');
           recordItem.className = 'p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
           
           recordItem.innerHTML = `
             <div class="flex justify-between items-start mb-2">
               <div class="font-medium">${record.date}</div>
-              <button class="export-single-history text-primary text-sm" data-index="${records.length - 1 - i}">
-                <i class="fa fa-download mr-1"></i>导出
-              </button>
+              <div class="flex gap-2">
+                <button class="export-single-history text-primary text-sm" data-index="${originalIndex}">
+                  <i class="fa fa-download mr-1"></i>导出
+                </button>
+                <button class="delete-history text-danger text-sm" data-index="${originalIndex}">
+                  <i class="fa fa-trash mr-1"></i>删除
+                </button>
+              </div>
             </div>
             <div class="text-sm text-gray-600 space-y-1">
               <div>得分：${record.correct}/${record.total}（${record.accuracy}）</div>
@@ -625,6 +687,14 @@
           btn.addEventListener('click', (e) => {
             const index = parseInt(e.target.closest('.export-single-history').dataset.index);
             exportSingleHistory(records[index]);
+          });
+        });
+        
+        // 为单个记录删除按钮添加事件
+        document.querySelectorAll('.delete-history').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.closest('.delete-history').dataset.index);
+            deleteHistoryRecord(index);
           });
         });
       }
@@ -701,7 +771,7 @@
       
       // 在表头添加新列
       if (lines.length > 0) {
-        lines[0] += ',用户答案,用时,是否正确';
+        lines[0] += ',用户答案,用时,是否正确,记录日期';
         
         // 为每道题添加用户答案和时间
         record.originalQuestions.forEach((question, index) => {
@@ -716,31 +786,18 @@
             const escapedUserAnswer = escapeCsvField(userAnswer);
             const escapedTimeUsed = escapeCsvField(timeUsed);
             const escapedIsCorrect = escapeCsvField(isCorrect);
+            const escapedDate = escapeCsvField(record.date);
             
-            lines[originalLineIndex] += `,${escapedUserAnswer},${escapedTimeUsed},${escapedIsCorrect}`;
+            lines[originalLineIndex] += `,${escapedUserAnswer},${escapedTimeUsed},${escapedIsCorrect},${escapedDate}`;
           }
         });
       }
       
       const csvContent = lines.join('\n');
-      
-      // 创建下载链接
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.setAttribute('href', url);
-      
-      // 处理文件名中的特殊字符
-      const safeDate = record.date.replace(/[/:]/g, '-');
-      a.setAttribute('download', `${record.subject}_历史记录_${safeDate}.csv`);
-      
-      a.style.visibility = 'hidden';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      return csvContent;
     }
 
-    // 导出所有历史记录
+    // 导出所有历史记录（包含所有题目）
     function exportAllHistory() {
       const subject = subjectSelect.value;
       const historyKey = subjectFileMap[subject].historyKey;
@@ -751,30 +808,39 @@
         return;
       }
       
-      // 创建汇总CSV
-      let csvContent = "日期,科目,总题数,做对题数,正确率,用时\n";
+      // 用于存储所有记录的CSV内容
+      let allCsvContent = '';
+      let isFirstRecord = true;
       
-      records.forEach(record => {
-        // 转义所有字段中的特殊字符
-        const date = escapeCsvField(record.date);
-        const subj = escapeCsvField(record.subject);
-        const total = escapeCsvField(record.total.toString());
-        const correct = escapeCsvField(record.correct.toString());
-        const accuracy = escapeCsvField(record.accuracy);
-        const time = escapeCsvField(record.time);
+      // 逐个处理每条记录
+      records.forEach((record, recordIndex) => {
+        // 获取单条记录的CSV内容
+        const recordCsv = exportSingleHistory(record);
+        const lines = recordCsv.split('\n');
         
-        csvContent += `${date},${subj},${total},${correct},${accuracy},${time}\n`;
+        if (lines.length === 0) return;
+        
+        // 对于第一条记录，保留表头
+        if (isFirstRecord) {
+          allCsvContent += lines.join('\n') + '\n';
+          isFirstRecord = false;
+        } else {
+          // 对于后续记录，跳过表头
+          if (lines.length > 1) {
+            allCsvContent += lines.slice(1).join('\n') + '\n';
+          }
+        }
       });
       
       // 创建下载链接
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([allCsvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.setAttribute('href', url);
       
       // 处理文件名中的特殊字符
       const safeDate = new Date().toLocaleDateString().replace(/\//g, '-');
-      a.setAttribute('download', `${subject}_所有历史记录_${safeDate}.csv`);
+      a.setAttribute('download', `${subject}_所有题目记录_${safeDate}.csv`);
       
       a.style.visibility = 'hidden';
       document.body.appendChild(a);
