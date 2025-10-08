@@ -43,6 +43,12 @@
       .input-focus {
         @apply focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none;
       }
+      .question-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        margin: 0.5rem 0;
+      }
     }
   </style>
 </head>
@@ -190,6 +196,28 @@
     let secondsElapsed = 0;
     // 存储原始CSV数据，用于导出
     let originalCsvData = '';
+
+    // 判断文本是否为图片URL
+    function isImageUrl(text) {
+      if (!text) return false;
+      // 简单判断是否为URL且以常见图片扩展名结尾
+      const urlPattern = /^(https?:\/\/)?.*\.(jpg|jpeg|png|gif|bmp|webp)$/i;
+      return urlPattern.test(text.trim());
+    }
+
+    // 将文本转换为包含图片的HTML（如果是图片URL则显示图片，否则显示文本）
+    function textToHtml(text) {
+      if (!text) return '';
+      
+      const trimmedText = text.trim();
+      if (isImageUrl(trimmedText)) {
+        // 是图片URL，返回img标签
+        return `<img src="${trimmedText}" class="question-image" alt="题目图片">`;
+      }
+      
+      // 不是图片URL，直接返回文本
+      return trimmedText;
+    }
 
     // 科目对应的题目文件和历史记录键名的映射
     const subjectFileMap = {
@@ -458,13 +486,13 @@
       typeBadge.textContent = question['题型'];
       questionContainer.appendChild(typeBadge);
       
-      // 题目内容
-      const questionText = document.createElement('h3');
-      questionText.className = 'text-lg font-medium mb-4 text-gray-800';
-      questionText.textContent = `题目 ${currentQuestionIndex + 1}: ${question['题目']}`;
-      questionContainer.appendChild(questionText);
+      // 题目内容（支持图片）
+      const questionTextContainer = document.createElement('div');
+      questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
+      questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: ${textToHtml(question['题目'])}`;
+      questionContainer.appendChild(questionTextContainer);
       
-      // 选择题显示选项
+      // 选择题显示选项（支持图片）
       if (question['题型'] === '选择题') {
         const choices = ['A', 'B', 'C', 'D'];
         const choicesContainer = document.createElement('div');
@@ -473,7 +501,10 @@
         choices.forEach(choice => {
           if (question[choice]) {
             const div = document.createElement('div');
-            div.className = 'flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
+            div.className = 'flex flex-col p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
+            
+            const radioContainer = document.createElement('div');
+            radioContainer.className = 'flex items-center';
             
             const radio = document.createElement('input');
             radio.type = 'radio';
@@ -487,22 +518,42 @@
             
             const label = document.createElement('label');
             label.htmlFor = `q${currentQuestionIndex}-${choice}`;
-            label.className = 'ml-3 text-gray-700';
-            label.textContent = `${choice}: ${question[choice]}`;
+            label.className = 'ml-3 text-gray-700 font-medium';
+            label.textContent = choice;
             
             radio.addEventListener('change', (e) => {
               userAnswers[currentQuestionIndex] = e.target.value;
             });
             
-            div.appendChild(radio);
-            div.appendChild(label);
+            radioContainer.appendChild(radio);
+            radioContainer.appendChild(label);
+            div.appendChild(radioContainer);
+            
+            // 选项内容（支持图片）
+            const choiceContent = document.createElement('div');
+            choiceContent.className = 'ml-7 mt-2 text-gray-700';
+            choiceContent.innerHTML = textToHtml(question[choice]);
+            div.appendChild(choiceContent);
+            
             choicesContainer.appendChild(div);
           }
         });
         
         questionContainer.appendChild(choicesContainer);
       } else {
-        // 填空题或材料题
+        // 填空题或材料题（支持图片）
+        const inputContainer = document.createElement('div');
+        inputContainer.className = 'space-y-3';
+        
+        // 如果题目内容包含图片，先显示图片
+        if (isImageUrl(question['题目'])) {
+          const img = document.createElement('img');
+          img.src = question['题目'];
+          img.className = 'question-image';
+          img.alt = '题目图片';
+          inputContainer.appendChild(img);
+        }
+        
         const input = document.createElement('textarea');
         input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[100px] resize-y';
         input.placeholder = `请输入${question['题型']}答案`;
@@ -511,7 +562,8 @@
           userAnswers[currentQuestionIndex] = e.target.value;
         });
         
-        questionContainer.appendChild(input);
+        inputContainer.appendChild(input);
+        questionContainer.appendChild(inputContainer);
       }
     }
 
@@ -567,7 +619,7 @@
       showResults();
     }
 
-    // 显示结果
+    // 显示结果（支持图片）
     function showResults() {
       resultContent.innerHTML = '';
       let correctCount = 0;
@@ -583,9 +635,9 @@
         
         resultItem.innerHTML = `
           <div class="font-medium mb-1">题目 ${index + 1} (${question['题型']})</div>
-          <div class="text-sm text-gray-600 mb-1">${question['题目']}</div>
-          <div class="text-sm"><span class="text-gray-600">你的答案：</span>${userAnswer || '未作答'}</div>
-          <div class="text-sm"><span class="text-gray-600">正确答案：</span>${question['答案']}</div>
+          <div class="text-sm text-gray-600 mb-1">${textToHtml(question['题目'])}</div>
+          <div class="text-sm"><span class="text-gray-600">你的答案：</span>${textToHtml(userAnswer || '未作答')}</div>
+          <div class="text-sm"><span class="text-gray-600">正确答案：</span>${textToHtml(question['答案'])}</div>
           <div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
             ${isCorrect ? '正确' : '错误'}
           </div>
