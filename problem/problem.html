@@ -273,12 +273,12 @@
         const values = lines[i].split(',').map(v => v.trim());
         const question = {};
         
+        // 从第一列获取题型
+        question['题型'] = values[0] || '选择题'; // 第一列作为题型
+        
         // 映射CSV字段到对象属性
         headers.forEach((header, index) => {
           switch(header) {
-            case '题型':
-              question['题型'] = '选择题'; // 默认为选择题
-              break;
             case '题面':
               question['题目'] = values[index];
               break;
@@ -314,6 +314,16 @@
       const choiceQuestions = allQuestions.filter(q => q['题型'] === '选择题');
       const takeChoices = Math.min(choiceCount, choiceQuestions.length);
       filtered.push(...choiceQuestions.slice(0, takeChoices));
+      
+      // 筛选填空题
+      const fillQuestions = allQuestions.filter(q => q['题型'] === '填空题');
+      const takeFills = Math.min(fillCount, fillQuestions.length);
+      filtered.push(...fillQuestions.slice(0, takeFills));
+      
+      // 筛选材料题（解答题）
+      const materialQuestions = allQuestions.filter(q => q['题型'] === '材料题' || q['题型'] === '解答题');
+      const takeMaterials = Math.min(materialCount, materialQuestions.length);
+      filtered.push(...materialQuestions.slice(0, takeMaterials));
       
       return filtered;
     }
