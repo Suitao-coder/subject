@@ -87,7 +87,7 @@
         </div>
         
         <div>
-          <label for="fill-count" class="block text-sm fontamine text-gray-700 mb-1.5">
+          <label for="fill-count" class="block text-sm font-medium text-gray-700 mb-1.5">
             <i class="fa fa-pencil mr-2 text-primary"></i>填空题数量
           </label>
           <input type="number" id="fill-count" min="0" value="0" 
@@ -100,19 +100,6 @@
           </label>
           <input type="number" id="material-count" min="0" value="0" 
                  class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
-        </div>
-        
-        <div>
-          <label for="file-encoding" class="block text-sm font-medium text-gray-700 mb-1.5">
-            <i class="fa fa-code mr-2 text-primary"></i>CSV文件编码格式
-          </label>
-          <select id="file-encoding" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
-            <option value="utf-8">UTF-8（推荐）</option>
-            <option value="gbk">GBK</option>
-            <option value="gb2312">GB2312</option>
-            <option value="iso-8859-1">ISO-8859-1</option>
-            <option value="auto">自动检测</option>
-          </select>
         </div>
         
         <div class="flex flex-wrap gap-3 mt-6">
@@ -298,7 +285,6 @@
     const choiceCountInput = document.getElementById('choice-count');
     const fillCountInput = document.getElementById('fill-count');
     const materialCountInput = document.getElementById('material-count');
-    const fileEncodingSelect = document.getElementById('file-encoding');
     const startBtn = document.getElementById('start-btn');
     const historyBtn = document.getElementById('history-btn');
     const timerSpan = document.getElementById('timer');
@@ -441,37 +427,6 @@
       return questions;
     }
 
-    // 尝试用不同编码解析文本
-    function tryDecodeWithEncodings(buffer, encoding) {
-      const encodings = [];
-      
-      if (encoding === 'auto') {
-        // 尝试多种编码
-        encodings.push('utf-8', 'gbk', 'gb2312', 'iso-8859-1');
-      } else {
-        encodings.push(encoding);
-      }
-      
-      for (const enc of encodings) {
-        try {
-          const decoder = new TextDecoder(enc, { fatal: true });
-          return decoder.decode(buffer);
-        } catch (e) {
-          console.log(`编码 ${enc} 解码失败，尝试下一种编码...`);
-        }
-      }
-      
-      // 如果所有编码都失败，尝试使用utf-8并忽略错误
-      try {
-        const decoder = new TextDecoder('utf-8', { fatal: false });
-        return decoder.decode(buffer);
-      } catch (e) {
-        // 最后手段：使用Latin1
-        const decoder = new TextDecoder('iso-8859-1', { fatal: false });
-        return decoder.decode(buffer);
-      }
-    }
-
     // 筛选符合条件的题目（随机排序）
     function filterQuestions(allQuestions, choiceCount, fillCount, materialCount) {
       const filtered = [];
@@ -501,7 +456,6 @@
       const choiceCount = parseInt(choiceCountInput.value) || 0;
       const fillCount = parseInt(fillCountInput.value) || 0;
       const materialCount = parseInt(materialCountInput.value) || 0;
-      const fileEncoding = fileEncodingSelect.value;
 
       // 验证输入
       if (choiceCount <= 0 && fillCount <= 0 && materialCount <= 0) {
@@ -509,11 +463,6 @@
         return;
       }
 
-      // 验证URL是否已填写
-      if (!questionFiles['选择题'] || !questionFiles['填空题'] || !questionFiles['材料题']) {
-        alert('请先在代码中填写三个CSV文件的URL');
-        return;
-      }
       
       try {
         // 并行加载三个CSV文件
@@ -527,17 +476,11 @@
           throw new Error('题目文件不存在');
         }
         
-        // 获取ArrayBuffer
-        const [choiceBuffer, fillBuffer, materialBuffer] = await Promise.all([
-          choiceResponse.arrayBuffer(),
-          fillResponse.arrayBuffer(),
-          materialResponse.arrayBuffer()
+        const [choiceText, fillText, materialText] = await Promise.all([
+          choiceResponse.text(),
+          fillResponse.text(),
+          materialResponse.text()
         ]);
-        
-        // 使用指定编码解码
-        const choiceText = tryDecodeWithEncodings(choiceBuffer, fileEncoding);
-        const fillText = tryDecodeWithEncodings(fillBuffer, fileEncoding);
-        const materialText = tryDecodeWithEncodings(materialBuffer, fileEncoding);
         
         // 解析三个CSV文件
         const choiceQuestions = parseCSV(choiceText, '选择题');
@@ -548,7 +491,7 @@
         const allQuestions = [...choiceQuestions, ...fillQuestions, ...materialQuestions];
         
         if (allQuestions.length === 0) {
-          alert('未解析到题目数据，请检查CSV格式和编码设置');
+          alert('未解析到题目数据，请检查CSV格式');
           return;
         }
         
@@ -578,7 +521,7 @@
         startQuiz();
       } catch (error) {
         console.error('加载题目出错:', error);
-        alert('加载题目失败，请确保题目文件存在且编码设置正确。错误信息：' + error.message);
+        alert('加载题目失败，请确保题目文件存在');
       }
     }
 
