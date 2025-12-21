@@ -197,6 +197,44 @@
     // 存储原始CSV数据，用于导出
     let originalCsvData = '';
 
+    // 数组随机排序（Fisher-Yates 洗牌算法）
+    function shuffleArray(array) {
+      const newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
+    }
+
+    // 处理选择题选项随机排序
+    function getRandomOptions(question) {
+      // 收集有效的选项
+      const options = [];
+      ['A', 'B', 'C', 'D'].forEach(key => {
+        if (question[key]) {
+          options.push({ key, value: question[key] });
+        }
+      });
+      
+      // 随机排序选项
+      const shuffledOptions = shuffleArray(options);
+      
+      // 找到正确答案对应的新选项字母
+      let newCorrectAnswer = '';
+      shuffledOptions.forEach((opt, index) => {
+        if (opt.key === question['答案']) {
+          // 索引0对应A，1对应B，依此类推
+          newCorrectAnswer = String.fromCharCode(65 + index);
+        }
+      });
+      
+      return {
+        options: shuffledOptions,
+        newCorrectAnswer: newCorrectAnswer
+      };
+    }
+
     // 判断文本是否为图片URL
     function isImageUrl(text) {
       if (!text) return false;
@@ -246,7 +284,7 @@
         historyKey: 'history_history'  
       },
       道法: {
-        questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/politics/politics_problem.csv',
+        questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/history/politics_problem.csv',
         historyKey: 'politics_history' 
       }
     };
@@ -374,6 +412,8 @@
               break;
             case '正确答案':
               question['答案'] = values[index];
+              // 保存原始答案，用于后续导出
+              question['originalAnswer'] = values[index];
               break;
             case '来源':
               question['来源'] = values[index];
@@ -394,22 +434,23 @@
     function filterQuestions(allQuestions, choiceCount, fillCount, materialCount) {
       const filtered = [];
       
-      // 筛选选择题
-      const choiceQuestions = allQuestions.filter(q => q['题型'] === '选择题');
+      // 筛选选择题并随机排序
+      const choiceQuestions = shuffleArray(allQuestions.filter(q => q['题型'] === '选择题'));
       const takeChoices = Math.min(choiceCount, choiceQuestions.length);
       filtered.push(...choiceQuestions.slice(0, takeChoices));
       
-      // 筛选填空题
-      const fillQuestions = allQuestions.filter(q => q['题型'] === '填空题');
+      // 筛选填空题并随机排序
+      const fillQuestions = shuffleArray(allQuestions.filter(q => q['题型'] === '填空题'));
       const takeFills = Math.min(fillCount, fillQuestions.length);
       filtered.push(...fillQuestions.slice(0, takeFills));
       
-      // 筛选材料题（解答题）
-      const materialQuestions = allQuestions.filter(q => q['题型'] === '材料题' || q['题型'] === '解答题');
+      // 筛选材料题（解答题）并随机排序
+      const materialQuestions = shuffleArray(allQuestions.filter(q => q['题型'] === '材料题' || q['题型'] === '解答题'));
       const takeMaterials = Math.min(materialCount, materialQuestions.length);
       filtered.push(...materialQuestions.slice(0, takeMaterials));
       
-      return filtered;
+      // 对所有选中的题目再次进行随机排序
+      return shuffleArray(filtered);
     }
 
     // 开始做题设置
@@ -445,6 +486,17 @@
           alert('没有足够的题目，请减少题目数量');
           return;
         }
+        
+        // 处理选择题的随机选项并更新正确答案
+        filteredQuestions.forEach(question => {
+          if (question['题型'] === '选择题') {
+            const { options, newCorrectAnswer } = getRandomOptions(question);
+            // 保存随机后的选项映射关系
+            question['shuffledOptions'] = options;
+            // 更新当前题目使用的正确答案（随机后的字母）
+            question['displayAnswer'] = newCorrectAnswer;
+          }
+        });
         
         questions = filteredQuestions;
         userAnswers = new Array(questions.length).fill('');
@@ -494,49 +546,50 @@
       
       // 选择题显示选项（支持图片）
       if (question['题型'] === '选择题') {
-        const choices = ['A', 'B', 'C', 'D'];
         const choicesContainer = document.createElement('div');
         choicesContainer.className = 'space-y-3';
         
-        choices.forEach(choice => {
-          if (question[choice]) {
-            const div = document.createElement('div');
-            div.className = 'flex flex-col p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
-            
-            const radioContainer = document.createElement('div');
-            radioContainer.className = 'flex items-center';
-            
-            const radio = document.createElement('input');
-            radio.type = 'radio';
-            radio.name = `question-${currentQuestionIndex}`;
-            radio.value = choice;
-            radio.id = `q${currentQuestionIndex}-${choice}`;
-            radio.className = 'w-4 h-4 text-primary focus:ring-primary';
-            if (userAnswers[currentQuestionIndex] === choice) {
-              radio.checked = true;
-            }
-            
-            const label = document.createElement('label');
-            label.htmlFor = `q${currentQuestionIndex}-${choice}`;
-            label.className = 'ml-3 text-gray-700 font-medium';
-            label.textContent = choice;
-            
-            radio.addEventListener('change', (e) => {
-              userAnswers[currentQuestionIndex] = e.target.value;
-            });
-            
-            radioContainer.appendChild(radio);
-            radioContainer.appendChild(label);
-            div.appendChild(radioContainer);
-            
-            // 选项内容（支持图片）
-            const choiceContent = document.createElement('div');
-            choiceContent.className = 'ml-7 mt-2 text-gray-700';
-            choiceContent.innerHTML = textToHtml(question[choice]);
-            div.appendChild(choiceContent);
-            
-            choicesContainer.appendChild(div);
+        // 使用随机排序后的选项
+        question['shuffledOptions'].forEach((option, index) => {
+          // 显示的选项字母（A、B、C、D）
+          const displayLetter = String.fromCharCode(65 + index);
+          
+          const div = document.createElement('div');
+          div.className = 'flex flex-col p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
+          
+          const radioContainer = document.createElement('div');
+          radioContainer.className = 'flex items-center';
+          
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = `question-${currentQuestionIndex}`;
+          radio.value = displayLetter;
+          radio.id = `q${currentQuestionIndex}-${displayLetter}`;
+          radio.className = 'w-4 h-4 text-primary focus:ring-primary';
+          if (userAnswers[currentQuestionIndex] === displayLetter) {
+            radio.checked = true;
           }
+          
+          const label = document.createElement('label');
+          label.htmlFor = `q${currentQuestionIndex}-${displayLetter}`;
+          label.className = 'ml-3 text-gray-700 font-medium';
+          label.textContent = displayLetter;
+          
+          radio.addEventListener('change', (e) => {
+            userAnswers[currentQuestionIndex] = e.target.value;
+          });
+          
+          radioContainer.appendChild(radio);
+          radioContainer.appendChild(label);
+          div.appendChild(radioContainer);
+          
+          // 选项内容（支持图片）
+          const choiceContent = document.createElement('div');
+          choiceContent.className = 'ml-7 mt-2 text-gray-700';
+          choiceContent.innerHTML = textToHtml(option.value);
+          div.appendChild(choiceContent);
+          
+          choicesContainer.appendChild(div);
         });
         
         questionContainer.appendChild(choicesContainer);
@@ -626,7 +679,22 @@
       
       questions.forEach((question, index) => {
         const userAnswer = userAnswers[index] || '';
-        const isCorrect = userAnswer === question['答案'];
+        let isCorrect = false;
+        let correctAnswerDisplay = '';
+        
+        if (question['题型'] === '选择题') {
+          // 选择题使用随机后的答案进行判断
+          isCorrect = userAnswer === question['displayAnswer'];
+          // 显示正确答案字母和对应的选项内容
+          const correctOption = question['shuffledOptions'].find((_, i) => 
+            String.fromCharCode(65 + i) === question['displayAnswer']
+          );
+          correctAnswerDisplay = `${question['displayAnswer']}: ${textToHtml(correctOption ? correctOption.value : '')}`;
+        } else {
+          // 其他题型直接比较原始答案
+          isCorrect = userAnswer === question['答案'];
+          correctAnswerDisplay = textToHtml(question['答案']);
+        }
         
         if (isCorrect) correctCount++;
         
@@ -637,7 +705,7 @@
           <div class="font-medium mb-1">题目 ${index + 1} (${question['题型']})</div>
           <div class="text-sm text-gray-600 mb-1">${textToHtml(question['题目'])}</div>
           <div class="text-sm"><span class="text-gray-600">你的答案：</span>${textToHtml(userAnswer || '未作答')}</div>
-          <div class="text-sm"><span class="text-gray-600">正确答案：</span>${textToHtml(question['答案'])}</div>
+          <div class="text-sm"><span class="text-gray-600">正确答案：</span>${correctAnswerDisplay}</div>
           <div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
             ${isCorrect ? '正确' : '错误'}
           </div>
@@ -783,13 +851,27 @@
           const originalLineIndex = question['originalLineIndex'];
           
           if (originalLineIndex && originalLineIndex < lines.length) { 
-            const userAnswer = userAnswers[index] || '未作答';
-            const isCorrect = userAnswer === question['答案'] ? '是' : '否';
+            let userAnswer = userAnswers[index] || '未作答';
+            let isCorrect = false;
+            
+            // 对于选择题，需要记录原始答案和用户选择的原始选项
+            if (question['题型'] === '选择题') {
+              isCorrect = userAnswer === question['displayAnswer'];
+              // 找到用户答案对应的原始选项字母
+              const userOptionIndex = question['shuffledOptions'].findIndex((_, i) => 
+                String.fromCharCode(65 + i) === userAnswer
+              );
+              if (userOptionIndex !== -1) {
+                userAnswer = `${userAnswer}(${question['shuffledOptions'][userOptionIndex].key})`;
+              }
+            } else {
+              isCorrect = userAnswer === question['答案'];
+            }
             
             // 转义特殊字符
             const escapedUserAnswer = escapeCsvField(userAnswer);
             const escapedTimeUsed = escapeCsvField(timeUsed);
-            const escapedIsCorrect = escapeCsvField(isCorrect);
+            const escapedIsCorrect = escapeCsvField(isCorrect ? '是' : '否');
             
             lines[originalLineIndex] += `,${escapedUserAnswer},${escapedTimeUsed},${escapedIsCorrect}`;
           }
@@ -831,13 +913,27 @@
           const originalLineIndex = question['originalLineIndex'];
           
           if (originalLineIndex && originalLineIndex < lines.length) {
-            const userAnswer = record.userAnswers[index] || '未作答';
-            const isCorrect = userAnswer === question['答案'] ? '是' : '否';
+            let userAnswer = record.userAnswers[index] || '未作答';
+            let isCorrect = false;
+            
+            // 对于选择题，需要记录原始答案和用户选择的原始选项
+            if (question['题型'] === '选择题') {
+              isCorrect = userAnswer === question['displayAnswer'];
+              // 找到用户答案对应的原始选项字母
+              const userOptionIndex = question['shuffledOptions'].findIndex((_, i) => 
+                String.fromCharCode(65 + i) === userAnswer
+              );
+              if (userOptionIndex !== -1) {
+                userAnswer = `${userAnswer}(${question['shuffledOptions'][userOptionIndex].key})`;
+              }
+            } else {
+              isCorrect = userAnswer === question['答案'];
+            }
             
             // 转义特殊字符
             const escapedUserAnswer = escapeCsvField(userAnswer);
             const escapedTimeUsed = escapeCsvField(timeUsed);
-            const escapedIsCorrect = escapeCsvField(isCorrect);
+            const escapedIsCorrect = escapeCsvField(isCorrect ? '是' : '否');
             const escapedDate = escapeCsvField(record.date);
             
             lines[originalLineIndex] += `,${escapedUserAnswer},${escapedTimeUsed},${escapedIsCorrect},${escapedDate}`;
@@ -914,4 +1010,3 @@
 </body>
 
 </html>
-
