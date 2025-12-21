@@ -463,12 +463,7 @@
         alert('请至少选择一种题型并设置数量');
         return;
       }
-
-      // 验证URL是否已填写
-      if (!questionFiles['选择题'] || !questionFiles['填空题'] || !questionFiles['材料题']) {
-        alert('请先在代码中填写三个CSV文件的URL');
-        return;
-      }
+      
       
       try {
         // 并行加载三个CSV文件
@@ -1029,3 +1024,4 @@
 </body>
 
 </html>
+
