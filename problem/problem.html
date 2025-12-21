@@ -197,6 +197,13 @@
     // 存储原始CSV数据，用于导出
     let originalCsvData = '';
 
+    // 三个CSV文件的URL（请用户自行修改）
+    const questionFiles = {
+      '选择题': '', // 请用户填写选择题CSV文件URL
+      '填空题': '', // 请用户填写填空题CSV文件URL
+      '材料题': ''  // 请用户填写材料题CSV文件URL
+    };
+
     // 数组随机排序（Fisher-Yates 洗牌算法）
     function shuffleArray(array) {
       const newArray = [...array];
@@ -252,40 +259,19 @@
       
       // 替换图片URL为img标签，保留其他文字
       return trimmedText.replace(imageUrlRegex, (match) => {
-        return `<img src="${match}" class="question-image" alt="图片">`;
+        return ``;
       });
     }
 
-    // 科目对应的题目文件和历史记录键名的映射
-    const subjectFileMap = {
-      语文: {
-        questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/chinese/chinese_problem.csv',
-        historyKey: 'chinese_history'
-      },
-      数学: {
-        questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/math/math_problem.csv',
-        historyKey:'math_history'      
-      },
-      英语: {
-        questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/english/english_problem.csv',
-        historyKey: 'english_history'  
-      },
-      物理: {
-        questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/physics/physics_problem.csv',
-        historyKey: 'physics_history'  
-      },
-      化学: {
-        questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/chemistry/chemistry_problem.csv',
-        historyKey: 'chemistry_history' 
-      },
-      历史: {
-        questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/history/history_problem.csv',
-        historyKey: 'history_history'  
-      },
-      道法: {
-        questionFile: 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/politics/politics_problem.csv',
-        historyKey: 'politics_history' 
-      }
+    // 科目对应的历史记录键名的映射
+    const subjectHistoryMap = {
+      语文: 'chinese_history',
+      数学: 'math_history',
+      英语: 'english_history',
+      物理: 'physics_history',
+      化学: 'chemistry_history',
+      历史: 'history_history',
+      道法: 'politics_history'
     };
 
     // 获取页面元素
@@ -349,7 +335,7 @@
     // 确认清空所有历史记录
     function confirmClearAllHistory() {
       const subject = subjectSelect.value;
-      const historyKey = subjectFileMap[subject].historyKey;
+      const historyKey = subjectHistoryMap[subject];
       const records = JSON.parse(localStorage.getItem(historyKey) || '[]');
       
       if (records.length === 0) {
@@ -367,7 +353,7 @@
     function deleteHistoryRecord(index) {
       if (confirm('确定要删除这条记录吗？此操作不可恢复。')) {
         const subject = subjectSelect.value;
-        const historyKey = subjectFileMap[subject].historyKey;
+        const historyKey = subjectHistoryMap[subject];
         let records = JSON.parse(localStorage.getItem(historyKey) || '[]');
         
         // 删除指定索引的记录
@@ -378,7 +364,7 @@
     }
 
     // 解析CSV文本为题目数组
-    function parseCSV(csvText) {
+    function parseCSV(csvText, questionType) {
       // 保存原始CSV数据，用于后续导出
       originalCsvData = csvText;
       
@@ -390,12 +376,17 @@
       
       // 解析每一行数据
       const questions = [];
+      let skipRemaining = false; // 用于标记是否跳过剩余题目
+      
       for (let i = 1; i < lines.length; i++) {
+        // 如果已经标记为跳过，则直接跳过后续所有题目
+        if (skipRemaining) break;
+        
         const values = lines[i].split(',').map(v => v.trim());
         const question = {};
         
-        // 从第一列获取题型
-        question['题型'] = values[0] || '选择题'; // 第一列作为题型
+        // 设置题型
+        question['题型'] = questionType;
         
         // 映射CSV字段到对象属性
         headers.forEach((header, index) => {
@@ -413,6 +404,11 @@
               question['答案'] = values[index];
               // 保存原始答案，用于后续导出
               question['originalAnswer'] = values[index];
+              
+              // 对于填空题和材料题，如果正确答案为空，则跳过该题及后续所有题目
+              if ((questionType === '填空题' || questionType === '材料题') && !values[index]) {
+                skipRemaining = true;
+              }
               break;
             case '来源':
               question['来源'] = values[index];
@@ -421,6 +417,9 @@
               question[header] = values[index];
           }
         });
+        
+        // 如果当前题目需要跳过，则不添加到结果中
+        if (skipRemaining) continue;
         
         // 保存原始行索引，用于导出时准确匹配
         question['originalLineIndex'] = i;
@@ -444,7 +443,7 @@
       filtered.push(...fillQuestions.slice(0, takeFills));
       
       // 筛选材料题（解答题）并随机排序
-      const materialQuestions = shuffleArray(allQuestions.filter(q => q['题型'] === '材料题' || q['题型'] === '解答题'));
+      const materialQuestions = shuffleArray(allQuestions.filter(q => q['题型'] === '材料题'));
       const takeMaterials = Math.min(materialCount, materialQuestions.length);
       filtered.push(...materialQuestions.slice(0, takeMaterials));
       
@@ -465,14 +464,37 @@
         return;
       }
 
-      const csvFileName = subjectFileMap[subject].questionFile;
+      // 验证URL是否已填写
+      if (!questionFiles['选择题'] || !questionFiles['填空题'] || !questionFiles['材料题']) {
+        alert('请先在代码中填写三个CSV文件的URL');
+        return;
+      }
       
       try {
-        const response = await fetch(csvFileName);
-        if (!response.ok) throw new Error('题目文件不存在');
+        // 并行加载三个CSV文件
+        const [choiceResponse, fillResponse, materialResponse] = await Promise.all([
+          fetch(questionFiles['选择题']),
+          fetch(questionFiles['填空题']),
+          fetch(questionFiles['材料题'])
+        ]);
         
-        const csvText = await response.text();
-        const allQuestions = parseCSV(csvText);
+        if (!choiceResponse.ok || !fillResponse.ok || !materialResponse.ok) {
+          throw new Error('题目文件不存在');
+        }
+        
+        const [choiceText, fillText, materialText] = await Promise.all([
+          choiceResponse.text(),
+          fillResponse.text(),
+          materialResponse.text()
+        ]);
+        
+        // 解析三个CSV文件
+        const choiceQuestions = parseCSV(choiceText, '选择题');
+        const fillQuestions = parseCSV(fillText, '填空题');
+        const materialQuestions = parseCSV(materialText, '材料题');
+        
+        // 合并所有题目
+        const allQuestions = [...choiceQuestions, ...fillQuestions, ...materialQuestions];
         
         if (allQuestions.length === 0) {
           alert('未解析到题目数据，请检查CSV格式');
@@ -681,38 +703,42 @@
           );
           correctAnswerDisplay = `${question['displayAnswer']}: ${textToHtml(correctOption ? correctOption.value : '')}`;
         } else {
-          // 其他题型直接比较原始答案
-          isCorrect = userAnswer === question['答案'];
+          // 填空题和材料题不判断对错，只显示答案
+          isCorrect = true; // 填空题和材料题不计入正确计数
           correctAnswerDisplay = textToHtml(question['答案']);
         }
         
-        if (isCorrect) correctCount++;
+        if (isCorrect && question['题型'] === '选择题') correctCount++;
         
         const resultItem = document.createElement('div');
         resultItem.className = `p-3 rounded-lg ${isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'}`;
+        
+        // 填空题和材料题不显示对错标记
+        const showCorrectness = question['题型'] === '选择题';
         
         resultItem.innerHTML = `
           <div class="font-medium mb-1">题目 ${index + 1} (${question['题型']})</div>
           <div class="text-sm text-gray-600 mb-1">${textToHtml(question['题目'])}</div>
           <div class="text-sm"><span class="text-gray-600">你的答案：</span>${textToHtml(userAnswer || '未作答')}</div>
           <div class="text-sm"><span class="text-gray-600">正确答案：</span>${correctAnswerDisplay}</div>
-          <div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
+          ${showCorrectness ? `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
             ${isCorrect ? '正确' : '错误'}
-          </div>
+          </div>` : ''}
         `;
         
         resultContent.appendChild(resultItem);
       });
       
-      // 添加总分
+      // 添加总分（只计算选择题）
       const scoreItem = document.createElement('div');
       scoreItem.className = 'p-3 bg-primary/5 rounded-lg text-center mt-4';
       scoreItem.innerHTML = `
         <div class="text-lg font-bold text-primary">
-          总得分：${correctCount}/${questions.length}
+          总得分：${correctCount}/${questions.filter(q => q['题型'] === '选择题').length}
         </div>
-        <div class="text-sm text-gray-600">正确率：${((correctCount/questions.length)*100).toFixed(1)}%</div>
+        <div class="text-sm text-gray-600">正确率：${questions.filter(q => q['题型'] === '选择题').length > 0 ? ((correctCount/questions.filter(q => q['题型'] === '选择题').length)*100).toFixed(1) : '0'}%</div>
         <div class="text-sm text-gray-600">用时：${timerSpan.textContent}</div>
+        <div class="text-sm text-gray-600 mt-1">注：填空题和材料题不计分</div>
       `;
       resultContent.prepend(scoreItem);
       
@@ -726,7 +752,7 @@
     // 保存历史记录到localStorage
     function saveHistory(correctCount) {
       const subject = subjectSelect.value;
-      const historyKey = subjectFileMap[subject].historyKey;
+      const historyKey = subjectHistoryMap[subject];
       
       // 构建历史记录对象
       const historyRecord = {
@@ -734,7 +760,7 @@
         subject: subject,
         total: questions.length,
         correct: correctCount,
-        accuracy: ((correctCount/questions.length)*100).toFixed(1) + '%',
+        accuracy: questions.filter(q => q['题型'] === '选择题').length > 0 ? ((correctCount/questions.filter(q => q['题型'] === '选择题').length)*100).toFixed(1) + '%' : '0%',
         time: timerSpan.textContent,
         // 保存题目原始数据
         originalQuestions: [...questions],
@@ -754,7 +780,7 @@
     // 显示历史记录
     function showHistory() {
       const subject = subjectSelect.value;
-      const historyKey = subjectFileMap[subject].historyKey;
+      const historyKey = subjectHistoryMap[subject];
       const records = JSON.parse(localStorage.getItem(historyKey) || '[]');
       
       historyList.innerHTML = '';
@@ -784,8 +810,9 @@
               </div>
             </div>
             <div class="text-sm text-gray-600 space-y-1">
-              <div>得分：${record.correct}/${record.total}（${record.accuracy}）</div>
+              <div>得分：${record.correct}/${record.originalQuestions.filter(q => q['题型'] === '选择题').length}（${record.accuracy}）</div>
               <div>用时：${record.time}</div>
+              <div class="text-xs text-gray-500">注：填空题和材料题不计分</div>
             </div>
           `;
           
@@ -855,7 +882,8 @@
                 userAnswer = `${userAnswer}(${question['shuffledOptions'][userOptionIndex].key})`;
               }
             } else {
-              isCorrect = userAnswer === question['答案'];
+              // 填空题和材料题不判断对错
+              isCorrect = true;
             }
             
             // 转义特殊字符
@@ -917,7 +945,8 @@
                 userAnswer = `${userAnswer}(${question['shuffledOptions'][userOptionIndex].key})`;
               }
             } else {
-              isCorrect = userAnswer === question['答案'];
+              // 填空题和材料题不判断对错
+              isCorrect = true;
             }
             
             // 转义特殊字符
@@ -938,7 +967,7 @@
     // 导出所有历史记录（包含所有题目）
     function exportAllHistory() {
       const subject = subjectSelect.value;
-      const historyKey = subjectFileMap[subject].historyKey;
+      const historyKey = subjectHistoryMap[subject];
       const records = JSON.parse(localStorage.getItem(historyKey) || '[]');
       
       if (records.length === 0) {
