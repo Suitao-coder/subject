@@ -208,6 +208,17 @@
       '材料题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/material-based.csv'  // 请用户填写材料题CSV文件URL
     };
 
+    // 科目与文件URL映射
+    const subjectFileMap = {
+      '语文': { choice: '', fill: '', material: '' },
+      '数学': { choice: '', fill: '', material: '' },
+      '英语': { choice: '', fill: '', material: '' },
+      '物理': { choice: '', fill: '', material: '' },
+      '化学': { choice: '', fill: '', material: '' },
+      '历史': { choice: '', fill: '', material: '' },
+      '道法': { choice: '', fill: '', material: '' }
+    };
+
     // 数组随机排序（Fisher-Yates 洗牌算法）
     function shuffleArray(array) {
       const newArray = [...array];
@@ -244,13 +255,6 @@
         options: shuffledOptions,
         newCorrectAnswer: newCorrectAnswer
       };
-    }
-
-    // 判断文本是否为图片URL（单独的URL）
-    function isImageUrl(text) {
-      if (!text) return false;
-      const urlPattern = /^(https?:\/\/)?.*\.(jpg|jpeg|png|gif|bmp|webp)$/i;
-      return urlPattern.test(text.trim());
     }
 
     // 解析文本中的图片URL，将图片URL替换为img标签，同时保留其他文字
@@ -367,8 +371,29 @@
       }
     }
 
+    // 检测文本编码
+    function detectEncoding(buffer) {
+      const encodings = ['utf-8', 'gbk', 'gb2312', 'iso-8859-1', 'big5'];
+      
+      for (const encoding of encodings) {
+        try {
+          const decoder = new TextDecoder(encoding, { fatal: true });
+          const text = decoder.decode(buffer);
+          // 检查是否包含中文字符来判断是否是正确的编码
+          if (/[\u4e00-\u9fff]/.test(text) || text.includes('题面') || text.includes('正确答案')) {
+            return encoding;
+          }
+        } catch (e) {
+          // 继续尝试下一个编码
+        }
+      }
+      
+      // 如果没有检测到，默认使用utf-8
+      return 'utf-8';
+    }
+
     // 解析CSV文本为题目数组
-    function parseCSV(csvText, questionType) {
+    function parseCSV(csvText, questionType, selectedSubject) {
       const lines = csvText.trim().split('\n');
       if (lines.length < 2) return [];
       
@@ -378,11 +403,33 @@
       // 解析表头
       const headers = lines[0].split(',').map(h => h.trim());
       
+      // 检查是否有科目列
+      const hasSubjectColumn = headers.includes('科目');
+      
       // 解析每一行数据
       const questions = [];
       
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
+        const line = lines[i];
+        // 处理CSV中的引号和逗号
+        const values = [];
+        let inQuotes = false;
+        let currentValue = '';
+        
+        for (let j = 0; j < line.length; j++) {
+          const char = line[j];
+          
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            values.push(currentValue.trim());
+            currentValue = '';
+          } else {
+            currentValue += char;
+          }
+        }
+        values.push(currentValue.trim()); // 添加最后一个值
+        
         const question = {};
         
         // 设置题型
@@ -390,28 +437,39 @@
         
         // 映射CSV字段到对象属性
         headers.forEach((header, index) => {
-          switch(header) {
-            case '题面':
-              question['题目'] = values[index];
-              break;
-            case 'A':
-            case 'B':
-            case 'C':
-            case 'D':
-              question[header] = values[index];
-              break;
-            case '正确答案':
-              question['答案'] = values[index];
-              // 保存原始答案，用于后续导出
-              question['originalAnswer'] = values[index];
-              break;
-            case '来源':
-              question['来源'] = values[index];
-              break;
-            default:
-              question[header] = values[index];
+          if (index < values.length) {
+            const value = values[index];
+            switch(header) {
+              case '题面':
+                question['题目'] = value;
+                break;
+              case 'A':
+              case 'B':
+              case 'C':
+              case 'D':
+                question[header] = value;
+                break;
+              case '正确答案':
+                question['答案'] = value;
+                // 保存原始答案，用于后续导出
+                question['originalAnswer'] = value;
+                break;
+              case '科目':
+                question['科目'] = value;
+                break;
+              case '来源':
+                question['来源'] = value;
+                break;
+              default:
+                question[header] = value;
+            }
           }
         });
+        
+        // 如果有科目列，检查是否匹配当前选择的科目
+        if (hasSubjectColumn && question['科目'] && question['科目'] !== selectedSubject) {
+          continue; // 跳过不匹配的科目
+        }
         
         // 对于填空题和材料题，如果正确答案为空，则跳过该题及后续所有题目
         if ((questionType === '填空题' || questionType === '材料题') && !question['答案']) {
@@ -463,35 +521,55 @@
         return;
       }
 
+      // 获取当前科目的文件URL
+      const subjectFiles = subjectFileMap[subject];
+      if (!subjectFiles.choice || !subjectFiles.fill || !subjectFiles.material) {
+        alert('请先在代码中填写当前科目的三个CSV文件URL');
+        return;
+      }
       
       try {
         // 并行加载三个CSV文件
         const [choiceResponse, fillResponse, materialResponse] = await Promise.all([
-          fetch(questionFiles['选择题']),
-          fetch(questionFiles['填空题']),
-          fetch(questionFiles['材料题'])
+          fetch(subjectFiles.choice),
+          fetch(subjectFiles.fill),
+          fetch(subjectFiles.material)
         ]);
         
         if (!choiceResponse.ok || !fillResponse.ok || !materialResponse.ok) {
           throw new Error('题目文件不存在');
         }
         
-        const [choiceText, fillText, materialText] = await Promise.all([
-          choiceResponse.text(),
-          fillResponse.text(),
-          materialResponse.text()
+        // 获取ArrayBuffer
+        const [choiceBuffer, fillBuffer, materialBuffer] = await Promise.all([
+          choiceResponse.arrayBuffer(),
+          fillResponse.arrayBuffer(),
+          materialResponse.arrayBuffer()
         ]);
         
+        // 自动检测编码并解码
+        const choiceEncoding = detectEncoding(choiceBuffer);
+        const fillEncoding = detectEncoding(fillBuffer);
+        const materialEncoding = detectEncoding(materialBuffer);
+        
+        const decoder1 = new TextDecoder(choiceEncoding);
+        const decoder2 = new TextDecoder(fillEncoding);
+        const decoder3 = new TextDecoder(materialEncoding);
+        
+        const choiceText = decoder1.decode(choiceBuffer);
+        const fillText = decoder2.decode(fillBuffer);
+        const materialText = decoder3.decode(materialBuffer);
+        
         // 解析三个CSV文件
-        const choiceQuestions = parseCSV(choiceText, '选择题');
-        const fillQuestions = parseCSV(fillText, '填空题');
-        const materialQuestions = parseCSV(materialText, '材料题');
+        const choiceQuestions = parseCSV(choiceText, '选择题', subject);
+        const fillQuestions = parseCSV(fillText, '填空题', subject);
+        const materialQuestions = parseCSV(materialText, '材料题', subject);
         
         // 合并所有题目
         const allQuestions = [...choiceQuestions, ...fillQuestions, ...materialQuestions];
         
         if (allQuestions.length === 0) {
-          alert('未解析到题目数据，请检查CSV格式');
+          alert('未解析到题目数据，请检查CSV格式和内容');
           return;
         }
         
@@ -521,7 +599,7 @@
         startQuiz();
       } catch (error) {
         console.error('加载题目出错:', error);
-        alert('加载题目失败，请确保题目文件存在');
+        alert('加载题目失败，请确保题目文件存在。错误信息：' + error.message);
       }
     }
 
