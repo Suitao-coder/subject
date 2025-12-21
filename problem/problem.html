@@ -235,26 +235,25 @@
       };
     }
 
-    // 判断文本是否为图片URL
+    // 判断文本是否为图片URL（单独的URL）
     function isImageUrl(text) {
       if (!text) return false;
-      // 简单判断是否为URL且以常见图片扩展名结尾
       const urlPattern = /^(https?:\/\/)?.*\.(jpg|jpeg|png|gif|bmp|webp)$/i;
       return urlPattern.test(text.trim());
     }
 
-    // 将文本转换为包含图片的HTML（如果是图片URL则显示图片，否则显示文本）
+    // 解析文本中的图片URL，将图片URL替换为img标签，同时保留其他文字
     function textToHtml(text) {
       if (!text) return '';
       
       const trimmedText = text.trim();
-      if (isImageUrl(trimmedText)) {
-        // 是图片URL，返回img标签
-        return `<img src="${trimmedText}" class="question-image" alt="题目图片">`;
-      }
+      // 匹配文本中的所有图片URL（支持http/https，各种图片后缀）
+      const imageUrlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|bmp|webp))/gi;
       
-      // 不是图片URL，直接返回文本
-      return trimmedText;
+      // 替换图片URL为img标签，保留其他文字
+      return trimmedText.replace(imageUrlRegex, (match) => {
+        return `<img src="${match}" class="question-image" alt="图片">`;
+      });
     }
 
     // 科目对应的题目文件和历史记录键名的映射
@@ -430,7 +429,7 @@
       return questions;
     }
 
-    // 筛选符合条件的题目
+    // 筛选符合条件的题目（随机排序）
     function filterQuestions(allQuestions, choiceCount, fillCount, materialCount) {
       const filtered = [];
       
@@ -480,7 +479,7 @@
           return;
         }
         
-        // 筛选出对应题型和数量的题目
+        // 筛选出对应题型和数量的题目（随机）
         const filteredQuestions = filterQuestions(allQuestions, choiceCount, fillCount, materialCount);
         if (filteredQuestions.length === 0) {
           alert('没有足够的题目，请减少题目数量');
@@ -538,13 +537,13 @@
       typeBadge.textContent = question['题型'];
       questionContainer.appendChild(typeBadge);
       
-      // 题目内容（支持图片）
+      // 题目内容（支持文字+图片混合）
       const questionTextContainer = document.createElement('div');
       questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
       questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: ${textToHtml(question['题目'])}`;
       questionContainer.appendChild(questionTextContainer);
       
-      // 选择题显示选项（支持图片）
+      // 选择题显示选项（支持文字+图片混合，且选项随机）
       if (question['题型'] === '选择题') {
         const choicesContainer = document.createElement('div');
         choicesContainer.className = 'space-y-3';
@@ -583,7 +582,7 @@
           radioContainer.appendChild(label);
           div.appendChild(radioContainer);
           
-          // 选项内容（支持图片）
+          // 选项内容（支持文字+图片混合）
           const choiceContent = document.createElement('div');
           choiceContent.className = 'ml-7 mt-2 text-gray-700';
           choiceContent.innerHTML = textToHtml(option.value);
@@ -594,18 +593,9 @@
         
         questionContainer.appendChild(choicesContainer);
       } else {
-        // 填空题或材料题（支持图片）
+        // 填空题或材料题（支持文字+图片混合）
         const inputContainer = document.createElement('div');
         inputContainer.className = 'space-y-3';
-        
-        // 如果题目内容包含图片，先显示图片
-        if (isImageUrl(question['题目'])) {
-          const img = document.createElement('img');
-          img.src = question['题目'];
-          img.className = 'question-image';
-          img.alt = '题目图片';
-          inputContainer.appendChild(img);
-        }
         
         const input = document.createElement('textarea');
         input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[100px] resize-y';
@@ -672,7 +662,7 @@
       showResults();
     }
 
-    // 显示结果（支持图片）
+    // 显示结果（支持文字+图片混合）
     function showResults() {
       resultContent.innerHTML = '';
       let correctCount = 0;
@@ -1010,4 +1000,3 @@
 </body>
 
 </html>
-
