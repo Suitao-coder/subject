@@ -267,7 +267,7 @@
       
       // 替换图片URL为img标签，保留其他文字
       return trimmedText.replace(imageUrlRegex, (match) => {
-        return ``;
+        return `<img src="${match}" class="question-image" alt="题目图片" loading="lazy">`;
       });
     }
 
@@ -523,10 +523,10 @@
 
       // 获取当前科目的文件URL
       const subjectFiles = subjectFileMap[subject];
-      // if (!subjectFiles.choice || !subjectFiles.fill || !subjectFiles.material) {
-      //   alert('请先在代码中填写当前科目的三个CSV文件URL');
-      //   return;
-      // }
+      if (!subjectFiles.choice || !subjectFiles.fill || !subjectFiles.material) {
+        alert('请先在代码中填写当前科目的三个CSV文件URL');
+        return;
+      }
       
       try {
         // 并行加载三个CSV文件
@@ -631,26 +631,11 @@
       typeBadge.textContent = question['题型'];
       questionContainer.appendChild(typeBadge);
       
-      // 对于材料题，显示题面内容
-      if (question['题型'] === '材料题') {
-        // 材料题题面
-        const materialTextContainer = document.createElement('div');
-        materialTextContainer.className = 'text-base font-medium mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-primary';
-        materialTextContainer.innerHTML = `<strong>材料：</strong>${textToHtml(question['题目'])}`;
-        questionContainer.appendChild(materialTextContainer);
-        
-        // 材料题问题
-        const questionTextContainer = document.createElement('div');
-        questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
-        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: ${textToHtml(question['问题'] || '请根据材料回答问题')}`;
-        questionContainer.appendChild(questionTextContainer);
-      } else {
-        // 选择题和填空题直接显示题目
-        const questionTextContainer = document.createElement('div');
-        questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
-        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: ${textToHtml(question['题目'])}`;
-        questionContainer.appendChild(questionTextContainer);
-      }
+      // 题目内容（支持文字+图片混合）
+      const questionTextContainer = document.createElement('div');
+      questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
+      questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: ${textToHtml(question['题目'])}`;
+      questionContainer.appendChild(questionTextContainer);
       
       // 选择题显示选项（支持文字+图片混合，且选项随机）
       if (question['题型'] === '选择题') {
@@ -805,7 +790,7 @@
         
         resultItem.innerHTML = `
           <div class="font-medium mb-1">题目 ${index + 1} (${question['题型']})</div>
-          <div class="text-sm text-gray-600 mb-1">${textToHtml(question['题型'] === '材料题' ? (question['题目'] + ' ' + (question['问题'] || '')) : question['题目'])}</div>
+          <div class="text-sm text-gray-600 mb-1">${textToHtml(question['题目'])}</div>
           <div class="text-sm"><span class="text-gray-600">你的答案：</span>${textToHtml(userAnswer || '未作答')}</div>
           <div class="text-sm"><span class="text-gray-600">正确答案：</span>${correctAnswerDisplay}</div>
           ${showCorrectness ? `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
@@ -1133,8 +1118,3 @@
 </body>
 
 </html>
-
-
-
-
-
