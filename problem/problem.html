@@ -516,17 +516,17 @@
       const materialCount = parseInt(materialCountInput.value) || 0;
 
       // 验证输入
-      // if (choiceCount <= 0 && fillCount <= 0 && materialCount <= 0) {
-      //   alert('请至少选择一种题型并设置数量');
-      //   return;
-      // }
-
-      // 获取当前科目的文件URL
-      const subjectFiles = subjectFileMap[subject];
-      if (!subjectFiles.choice || !subjectFiles.fill || !subjectFiles.material) {
-        alert('请先在代码中填写当前科目的三个CSV文件URL');
+      if (choiceCount <= 0 && fillCount <= 0 && materialCount <= 0) {
+        alert('请至少选择一种题型并设置数量');
         return;
       }
+
+      // 获取当前科目的文件URL
+      // const subjectFiles = subjectFileMap[subject];
+      // if (!subjectFiles.choice || !subjectFiles.fill || !subjectFiles.material) {
+      //   alert('请先在代码中填写当前科目的三个CSV文件URL');
+      //   return;
+      // }
       
       try {
         // 并行加载三个CSV文件
@@ -1133,4 +1133,5 @@
 </body>
 
 </html>
+
 
