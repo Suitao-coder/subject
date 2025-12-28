@@ -89,7 +89,7 @@
           <label for="choice-count" class="block text-sm font-medium text-gray-700 mb-1.5">
             <i class="fa fa-list-ul mr-2 text-primary"></i>选择题数量
           </label>
-          <input type="number" id="choice-count" min="0" value="0" 
+          <input type="number" id="choice-count" min="0" value="2" 
                  class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
         </div>
         
@@ -97,15 +97,15 @@
           <label for="fill-count" class="block text-sm font-medium text-gray-700 mb-1.5">
             <i class="fa fa-pencil mr-2 text-primary"></i>填空题数量
           </label>
-          <input type="number" id="fill-count" min="0" value="0" 
+          <input type="number" id="fill-count" min="0" value="1" 
                  class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
         </div>
         
         <div>
           <label for="material-count" class="block text-sm font-medium text-gray-700 mb-1.5">
-            <i class="fa fa-file-text mr-2 text-primary"></i>材料题（解答题）数量
+            <i class="fa fa-file-text mr-2 text-primary"></i>材料题数量
           </label>
-          <input type="number" id="material-count" min="0" value="0" 
+          <input type="number" id="material-count" min="0" value="1" 
                  class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
         </div>
         
@@ -258,7 +258,7 @@
       if (!text) return '';
       
       const trimmedText = text.trim();
-      // 匹配Markdown格式的图片标记  和纯图片URL
+      // 匹配Markdown格式的图片标记 和纯图片URL
       const markdownImageRegex = /!\[.*?\]\((https?:\/\/[^\s]+)\)/gi;
       const plainUrlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|bmp|webp|svg))/gi;
       
@@ -266,12 +266,12 @@
       
       // 先处理Markdown格式的图片
       result = result.replace(markdownImageRegex, (match, url) => {
-        return ``;
+        return `<img src="${url}" class="question-image" alt="图片">`;
       });
       
       // 再处理纯图片URL
       result = result.replace(plainUrlRegex, (url) => {
-        return ``;
+        return `<img src="${url}" class="question-image" alt="图片">`;
       });
       
       return result;
@@ -595,9 +595,22 @@
           continue; // 跳过不匹配的科目
         }
         
-        // 对于填空题和材料题，如果正确答案为空，则跳过该题及后续所有题目
-        if ((questionType === '填空题' || questionType === '材料题') && !question['答案'] && !question['答案1']) {
-          break;
+        // 检查是否有必要的数据
+        let hasData = false;
+        
+        if (questionType === '选择题') {
+          // 选择题需要有题目和答案
+          hasData = question['题目'] && question['答案'];
+        } else if (questionType === '填空题') {
+          // 填空题需要有题目
+          hasData = question['题目'];
+        } else if (questionType === '材料题') {
+          // 材料题需要有材料内容或问题
+          hasData = question['材料内容'] || question['问题'] || question['问题1'];
+        }
+        
+        if (!hasData) {
+          continue; // 跳过无效数据
         }
         
         // 保存原始行索引，用于导出时准确匹配
@@ -709,7 +722,8 @@
         });
         
         questions = filteredQuestions;
-        userAnswers = new Array(questions.length).fill('');
+        // 初始化用户答案数组
+        userAnswers = new Array(questions.length).fill().map(() => ({}));
         currentQuestionIndex = 0;
         secondsElapsed = 0;
         
@@ -763,93 +777,190 @@
         questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
         
         // 构建问题内容
-        let questionContent = '';
+        let hasQuestions = false;
+        
         if (question['问题']) {
-          questionContent = question['问题'];
+          // 如果只有一个问题
+          hasQuestions = true;
+          const questionDiv = document.createElement('div');
+          questionDiv.className = 'mb-4 p-3 bg-gray-50 rounded-lg';
+          questionDiv.innerHTML = `
+            <div class="font-medium text-gray-700 mb-2">问题：</div>
+            <div class="question-content text-base">${textToHtml(question['问题'])}</div>
+          `;
+          questionContainer.appendChild(questionDiv);
+          
+          // 创建单个答题框
+          const inputContainer = document.createElement('div');
+          inputContainer.className = 'mb-6';
+          
+          const input = document.createElement('textarea');
+          input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[100px] resize-y';
+          input.placeholder = '请输入答案';
+          input.value = userAnswers[currentQuestionIndex][1] || '';
+          input.dataset.questionIndex = 1;
+          input.addEventListener('input', (e) => {
+            userAnswers[currentQuestionIndex][1] = e.target.value;
+          });
+          
+          inputContainer.appendChild(input);
+          questionContainer.appendChild(inputContainer);
         } else {
-          // 如果有多个问题，按顺序显示
+          // 如果有多个问题
           for (let i = 1; i <= 10; i++) {
             const problemKey = `问题${i}`;
+            
             if (question[problemKey]) {
-              questionContent += `${i}. ${question[problemKey]}<br>`;
+              hasQuestions = true;
+              const questionDiv = document.createElement('div');
+              questionDiv.className = 'mb-4 p-3 bg-gray-50 rounded-lg';
+              questionDiv.innerHTML = `
+                <div class="font-medium text-gray-700 mb-2">第${i}问：</div>
+                <div class="question-content text-base">${textToHtml(question[problemKey])}</div>
+              `;
+              questionContainer.appendChild(questionDiv);
+              
+              // 创建多个答题框
+              const inputContainer = document.createElement('div');
+              inputContainer.className = 'mb-6';
+              
+              const input = document.createElement('textarea');
+              input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[80px] resize-y';
+              input.placeholder = `请输入第${i}问答案`;
+              input.dataset.questionIndex = i;
+              // 对于多问材料题，我们需要保存每个问题的答案
+              input.value = userAnswers[currentQuestionIndex][i] || '';
+              input.addEventListener('input', (e) => {
+                userAnswers[currentQuestionIndex][i] = e.target.value;
+              });
+              
+              inputContainer.appendChild(input);
+              questionContainer.appendChild(inputContainer);
             }
           }
         }
         
-        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: <div class="question-content mt-2">${textToHtml(questionContent || '请根据材料回答问题')}</div>`;
-        questionContainer.appendChild(questionTextContainer);
-      } else {
-        // 选择题和填空题直接显示题目
+        if (!hasQuestions) {
+          const noQuestionMsg = document.createElement('div');
+          noQuestionMsg.className = 'text-gray-500 text-center py-4';
+          noQuestionMsg.textContent = '暂无问题';
+          questionContainer.appendChild(noQuestionMsg);
+        }
+      } else if (question['题型'] === '填空题') {
+        // 填空题直接显示题目
         const questionTextContainer = document.createElement('div');
         questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
         questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: <div class="question-content mt-2">${textToHtml(question['题目'])}</div>`;
         questionContainer.appendChild(questionTextContainer);
-      }
-      
-      // 选择题显示选项（支持文字+图片混合，且选项随机）
-      if (question['题型'] === '选择题') {
-        const choicesContainer = document.createElement('div');
-        choicesContainer.className = 'space-y-3';
         
-        // 使用随机排序后的选项
-        question['shuffledOptions'].forEach((option, index) => {
-          // 显示的选项字母（A、B、C、D）
-          const displayLetter = String.fromCharCode(65 + index);
-          
-          const div = document.createElement('div');
-          div.className = 'flex flex-col p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
-          
-          const radioContainer = document.createElement('div');
-          radioContainer.className = 'flex items-center';
-          
-          const radio = document.createElement('input');
-          radio.type = 'radio';
-          radio.name = `question-${currentQuestionIndex}`;
-          radio.value = displayLetter;
-          radio.id = `q${currentQuestionIndex}-${displayLetter}`;
-          radio.className = 'w-4 h-4 text-primary focus:ring-primary';
-          if (userAnswers[currentQuestionIndex] === displayLetter) {
-            radio.checked = true;
-          }
-          
-          const label = document.createElement('label');
-          label.htmlFor = `q${currentQuestionIndex}-${displayLetter}`;
-          label.className = 'ml-3 text-gray-700 font-medium';
-          label.textContent = displayLetter;
-          
-          radio.addEventListener('change', (e) => {
-            userAnswers[currentQuestionIndex] = e.target.value;
-          });
-          
-          radioContainer.appendChild(radio);
-          radioContainer.appendChild(label);
-          div.appendChild(radioContainer);
-          
-          // 选项内容（支持文字+图片混合）
-          const choiceContent = document.createElement('div');
-          choiceContent.className = 'ml-7 mt-2 text-gray-700';
-          choiceContent.innerHTML = textToHtml(option.value);
-          div.appendChild(choiceContent);
-          
-          choicesContainer.appendChild(div);
-        });
-        
-        questionContainer.appendChild(choicesContainer);
-      } else {
-        // 填空题或材料题（支持文字+图片混合）
+        // 填空题可能有多个空
         const inputContainer = document.createElement('div');
         inputContainer.className = 'space-y-3';
         
-        const input = document.createElement('textarea');
-        input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[100px] resize-y';
-        input.placeholder = `请输入${question['题型']}答案`;
-        input.value = userAnswers[currentQuestionIndex] || '';
-        input.addEventListener('input', (e) => {
-          userAnswers[currentQuestionIndex] = e.target.value;
-        });
+        // 统计有多少个空
+        let blankCount = 0;
+        for (let i = 1; i <= 10; i++) {
+          if (question[`答案${i}`]) {
+            blankCount++;
+          }
+        }
         
-        inputContainer.appendChild(input);
+        if (blankCount > 0) {
+          // 如果有多个空，为每个空创建一个输入框
+          for (let i = 1; i <= blankCount; i++) {
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'mb-4';
+            
+            const label = document.createElement('label');
+            label.className = 'block text-sm font-medium text-gray-700 mb-1';
+            label.textContent = `第${i}空：`;
+            inputGroup.appendChild(label);
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus';
+            input.placeholder = `请输入第${i}空答案`;
+            input.dataset.blankIndex = i;
+            input.value = userAnswers[currentQuestionIndex][i] || '';
+            input.addEventListener('input', (e) => {
+              userAnswers[currentQuestionIndex][i] = e.target.value;
+            });
+            
+            inputGroup.appendChild(input);
+            inputContainer.appendChild(inputGroup);
+          }
+        } else {
+          // 如果只有一个空，使用单个输入框
+          const input = document.createElement('textarea');
+          input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[100px] resize-y';
+          input.placeholder = '请输入填空题答案';
+          input.value = userAnswers[currentQuestionIndex][1] || '';
+          input.dataset.blankIndex = 1;
+          input.addEventListener('input', (e) => {
+            userAnswers[currentQuestionIndex][1] = e.target.value;
+          });
+          
+          inputContainer.appendChild(input);
+        }
+        
         questionContainer.appendChild(inputContainer);
+      } else {
+        // 选择题显示题目
+        const questionTextContainer = document.createElement('div');
+        questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
+        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: <div class="question-content mt-2">${textToHtml(question['题目'])}</div>`;
+        questionContainer.appendChild(questionTextContainer);
+        
+        // 选择题显示选项（支持文字+图片混合，且选项随机）
+        if (question['题型'] === '选择题') {
+          const choicesContainer = document.createElement('div');
+          choicesContainer.className = 'space-y-3';
+          
+          // 使用随机排序后的选项
+          question['shuffledOptions'].forEach((option, index) => {
+            // 显示的选项字母（A、B、C、D）
+            const displayLetter = String.fromCharCode(65 + index);
+            
+            const div = document.createElement('div');
+            div.className = 'flex flex-col p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
+            
+            const radioContainer = document.createElement('div');
+            radioContainer.className = 'flex items-center';
+            
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = `question-${currentQuestionIndex}`;
+            radio.value = displayLetter;
+            radio.id = `q${currentQuestionIndex}-${displayLetter}`;
+            radio.className = 'w-4 h-4 text-primary focus:ring-primary';
+            if (userAnswers[currentQuestionIndex][1] === displayLetter) {
+              radio.checked = true;
+            }
+            
+            const label = document.createElement('label');
+            label.htmlFor = `q${currentQuestionIndex}-${displayLetter}`;
+            label.className = 'ml-3 text-gray-700 font-medium';
+            label.textContent = displayLetter;
+            
+            radio.addEventListener('change', (e) => {
+              userAnswers[currentQuestionIndex][1] = e.target.value;
+            });
+            
+            radioContainer.appendChild(radio);
+            radioContainer.appendChild(label);
+            div.appendChild(radioContainer);
+            
+            // 选项内容（支持文字+图片混合）
+            const choiceContent = document.createElement('div');
+            choiceContent.className = 'ml-7 mt-2 text-gray-700';
+            choiceContent.innerHTML = textToHtml(option.value);
+            div.appendChild(choiceContent);
+            
+            choicesContainer.appendChild(div);
+          });
+          
+          questionContainer.appendChild(choicesContainer);
+        }
       }
     }
 
@@ -909,72 +1020,119 @@
     function showResults() {
       resultContent.innerHTML = '';
       let correctCount = 0;
+      let totalSelectQuestions = questions.filter(q => q['题型'] === '选择题').length;
       
       questions.forEach((question, index) => {
-        const userAnswer = userAnswers[index] || '';
+        const userAnswer = userAnswers[index] || {};
         let isCorrect = false;
         let correctAnswerDisplay = '';
+        let userAnswerDisplay = '';
         
         if (question['题型'] === '选择题') {
           // 选择题使用随机后的答案进行判断
-          isCorrect = userAnswer === question['displayAnswer'];
+          isCorrect = userAnswer[1] === question['displayAnswer'];
           // 显示正确答案字母和对应的选项内容
           const correctOption = question['shuffledOptions'].find((_, i) => 
             String.fromCharCode(65 + i) === question['displayAnswer']
           );
           correctAnswerDisplay = `${question['displayAnswer']}: ${textToHtml(correctOption ? correctOption.value : '')}`;
-        } else {
-          // 填空题和材料题不判断对错，只显示答案
-          isCorrect = true; // 填空题和材料题不计入正确计数
-          // 构建正确答案显示
+          userAnswerDisplay = textToHtml(userAnswer[1] || '未作答');
+        } else if (question['题型'] === '填空题') {
+          // 填空题不判断对错，只显示答案
+          isCorrect = true; // 填空题不计入正确计数
+          
+          // 构建填空题答案显示
+          let allAnswers = [];
+          for (let i = 1; i <= 10; i++) {
+            const answerKey = `答案${i}`;
+            if (question[answerKey]) {
+              allAnswers.push(`${i}. ${question[answerKey]}`);
+            }
+          }
+          if (allAnswers.length > 0) {
+            correctAnswerDisplay = allAnswers.map(a => textToHtml(a)).join('<br>');
+          } else if (question['答案']) {
+            correctAnswerDisplay = textToHtml(question['答案']);
+          }
+          
+          // 构建用户答案显示
+          let userAnswersArray = [];
+          for (let i = 1; i <= 10; i++) {
+            if (userAnswer[i]) {
+              userAnswersArray.push(`${i}. ${userAnswer[i]}`);
+            }
+          }
+          userAnswerDisplay = userAnswersArray.length > 0 ? 
+            userAnswersArray.map(a => textToHtml(a)).join('<br>') : '未作答';
+        } else if (question['题型'] === '材料题') {
+          // 材料题不判断对错，只显示答案
+          isCorrect = true; // 材料题不计入正确计数
+          
+          // 构建材料题答案显示
           if (question['答案']) {
+            // 如果只有一个答案
             correctAnswerDisplay = textToHtml(question['答案']);
           } else {
-            // 对于有多问的材料题，显示所有答案
-            let allAnswers = '';
+            // 如果有多个答案
+            let allAnswers = [];
             for (let i = 1; i <= 10; i++) {
               const answerKey = `答案${i}`;
               if (question[answerKey]) {
-                allAnswers += `${i}. ${question[answerKey]}<br>`;
+                allAnswers.push(`${i}. ${question[answerKey]}`);
               }
             }
-            correctAnswerDisplay = textToHtml(allAnswers);
+            correctAnswerDisplay = allAnswers.map(a => textToHtml(a)).join('<br>');
           }
+          
+          // 构建用户答案显示
+          let userAnswersArray = [];
+          for (let i = 1; i <= 10; i++) {
+            if (userAnswer[i]) {
+              userAnswersArray.push(`${i}. ${userAnswer[i]}`);
+            }
+          }
+          userAnswerDisplay = userAnswersArray.length > 0 ? 
+            userAnswersArray.map(a => textToHtml(a)).join('<br>') : '未作答';
         }
         
         if (isCorrect && question['题型'] === '选择题') correctCount++;
         
         const resultItem = document.createElement('div');
-        resultItem.className = `p-3 rounded-lg ${isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'}`;
+        resultItem.className = `p-3 rounded-lg ${isCorrect && question['题型'] === '选择题' ? 'bg-green-50 border border-green-100' : 'bg-gray-50 border border-gray-200'}`;
         
-        // 填空题和材料题不显示对错标记
+        // 只有选择题显示对错标记
         const showCorrectness = question['题型'] === '选择题';
         
         // 构建题目显示内容
         let questionText = '';
         if (question['题型'] === '材料题') {
           questionText = `<strong>材料：</strong><div class="material-content mb-2">${textToHtml(question['材料内容'] || '')}</div>`;
-          let questionContent = '';
+          
           if (question['问题']) {
-            questionContent = question['问题'];
+            questionText += `<strong>问题：</strong><div class="question-content">${textToHtml(question['问题'])}</div>`;
           } else {
-            // 如果有多个问题，按顺序显示
+            // 显示多问问题
+            let questionsText = '';
             for (let i = 1; i <= 10; i++) {
               const problemKey = `问题${i}`;
               if (question[problemKey]) {
-                questionContent += `${i}. ${question[problemKey]}<br>`;
+                questionsText += `${i}. ${question[problemKey]}<br>`;
               }
             }
+            if (questionsText) {
+              questionText += `<strong>问题：</strong><div class="question-content">${textToHtml(questionsText)}</div>`;
+            }
           }
-          questionText += `<strong>问题：</strong><div class="question-content">${textToHtml(questionContent || '请根据材料回答问题')}</div>`;
+        } else if (question['题型'] === '填空题') {
+          questionText = textToHtml(question['题目']);
         } else {
           questionText = textToHtml(question['题目']);
         }
         
         resultItem.innerHTML = `
           <div class="font-medium mb-1">题目 ${index + 1} (${question['题型']})</div>
-          <div class="text-sm text-gray-600 mb-1">${questionText}</div>
-          <div class="text-sm"><span class="text-gray-600">你的答案：</span>${textToHtml(userAnswer || '未作答')}</div>
+          <div class="text-sm text-gray-600 mb-2">${questionText}</div>
+          <div class="text-sm mb-1"><span class="text-gray-600">你的答案：</span>${userAnswerDisplay}</div>
           <div class="text-sm"><span class="text-gray-600">正确答案：</span>${correctAnswerDisplay}</div>
           ${showCorrectness ? `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
             ${isCorrect ? '正确' : '错误'}
@@ -989,9 +1147,9 @@
       scoreItem.className = 'p-3 bg-primary/5 rounded-lg text-center mt-4';
       scoreItem.innerHTML = `
         <div class="text-lg font-bold text-primary">
-          总得分：${correctCount}/${questions.filter(q => q['题型'] === '选择题').length}
+          总得分：${correctCount}/${totalSelectQuestions}
         </div>
-        <div class="text-sm text-gray-600">正确率：${questions.filter(q => q['题型'] === '选择题').length > 0 ? ((correctCount/questions.filter(q => q['题型'] === '选择题').length)*100).toFixed(1) : '0'}%</div>
+        <div class="text-sm text-gray-600">正确率：${totalSelectQuestions > 0 ? ((correctCount/totalSelectQuestions)*100).toFixed(1) : '0'}%</div>
         <div class="text-sm text-gray-600">用时：${timerSpan.textContent}</div>
         <div class="text-sm text-gray-600 mt-1">注：填空题和材料题不计分</div>
       `;
@@ -1015,7 +1173,8 @@
         subject: subject,
         total: questions.length,
         correct: correctCount,
-        accuracy: questions.filter(q => q['题型'] === '选择题').length > 0 ? ((correctCount/questions.filter(q => q['题型'] === '选择题').length)*100).toFixed(1) + '%' : '0%',
+        accuracy: questions.filter(q => q['题型'] === '选择题').length > 0 ? 
+          ((correctCount/questions.filter(q => q['题型'] === '选择题').length)*100).toFixed(1) + '%' : '0%',
         time: timerSpan.textContent,
         // 保存题目原始数据
         originalQuestions: questions.map(q => ({
@@ -1136,25 +1295,28 @@
         
         if (originalLineIndex < csvLines.length) {
           const originalLine = csvLines[originalLineIndex];
-          let userAnswer = userAnswers[index] || '未作答';
+          let userAnswer = userAnswers[index] || {};
+          let userAnswerStr = '';
           let isCorrect = '未判断';
           
-          // 对于选择题，需要记录原始答案和用户选择的原始选项
+          // 构建用户答案字符串
           if (question['题型'] === '选择题') {
-            const correct = userAnswer === question['displayAnswer'];
+            userAnswerStr = userAnswer[1] || '未作答';
+            const correct = userAnswer[1] === question['displayAnswer'];
             isCorrect = correct ? '正确' : '错误';
-            
-            // 找到用户答案对应的原始选项字母
-            const userOptionIndex = question['shuffledOptions'].findIndex((_, i) => 
-              String.fromCharCode(65 + i) === userAnswer
-            );
-            if (userOptionIndex !== -1) {
-              userAnswer = `${userAnswer}(${question['shuffledOptions'][userOptionIndex].key})`;
+          } else if (question['题型'] === '填空题' || question['题型'] === '材料题') {
+            // 对于填空题和材料题，合并所有小问的答案
+            const answerParts = [];
+            for (let i = 1; i <= 10; i++) {
+              if (userAnswer[i]) {
+                answerParts.push(`${i}:${userAnswer[i]}`);
+              }
             }
+            userAnswerStr = answerParts.join('; ') || '未作答';
           }
           
           // 转义特殊字符
-          const escapedUserAnswer = escapeCsvField(userAnswer);
+          const escapedUserAnswer = escapeCsvField(userAnswerStr);
           const escapedTimeUsed = escapeCsvField(timeUsed);
           const escapedIsCorrect = escapeCsvField(isCorrect);
           const escapedQuestionType = escapeCsvField(question['题型']);
@@ -1203,25 +1365,28 @@
         
         if (originalLineIndex < csvLines.length) {
           const originalLine = csvLines[originalLineIndex];
-          let userAnswer = record.userAnswers[index] || '未作答';
+          let userAnswer = record.userAnswers[index] || {};
+          let userAnswerStr = '';
           let isCorrect = '未判断';
           
-          // 对于选择题，需要记录原始答案和用户选择的原始选项
+          // 构建用户答案字符串
           if (question['题型'] === '选择题') {
-            const correct = userAnswer === question['displayAnswer'];
+            userAnswerStr = userAnswer[1] || '未作答';
+            const correct = userAnswer[1] === question['displayAnswer'];
             isCorrect = correct ? '正确' : '错误';
-            
-            // 找到用户答案对应的原始选项字母
-            const userOptionIndex = question['shuffledOptions'].findIndex((_, i) => 
-              String.fromCharCode(65 + i) === userAnswer
-            );
-            if (userOptionIndex !== -1) {
-              userAnswer = `${userAnswer}(${question['shuffledOptions'][userOptionIndex].key})`;
+          } else if (question['题型'] === '填空题' || question['题型'] === '材料题') {
+            // 对于填空题和材料题，合并所有小问的答案
+            const answerParts = [];
+            for (let i = 1; i <= 10; i++) {
+              if (userAnswer[i]) {
+                answerParts.push(`${i}:${userAnswer[i]}`);
+              }
             }
+            userAnswerStr = answerParts.join('; ') || '未作答';
           }
           
           // 转义特殊字符
-          const escapedUserAnswer = escapeCsvField(userAnswer);
+          const escapedUserAnswer = escapeCsvField(userAnswerStr);
           const escapedTimeUsed = escapeCsvField(timeUsed);
           const escapedIsCorrect = escapeCsvField(isCorrect);
           const escapedQuestionType = escapeCsvField(question['题型']);
