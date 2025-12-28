@@ -208,22 +208,11 @@
       '材料题': ''
     };
 
-    // 三个CSV文件的URL（请用户自行修改）
+    // 三个CSV文件的URL（使用统一的CSV文件）
     const questionFiles = {
-      '选择题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/multiple-choice.csv', // 请用户填写选择题CSV文件URL
-      '填空题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/blank-filling.csv', // 请用户填写填空题CSV文件URL
-      '材料题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/material-based.csv'  // 请用户填写材料题CSV文件URL
-    };
-
-    // 科目与文件URL映射
-    const subjectFileMap = {
-      '语文': { choice: '', fill: '', material: '' },
-      '数学': { choice: '', fill: '', material: '' },
-      '英语': { choice: '', fill: '', material: '' },
-      '物理': { choice: '', fill: '', material: '' },
-      '化学': { choice: '', fill: '', material: '' },
-      '历史': { choice: '', fill: '', material: '' },
-      '道法': { choice: '', fill: '', material: '' }
+      '选择题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/multiple-choice.csv',
+      '填空题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/blank-filling.csv',
+      '材料题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/material-based.csv'
     };
 
     // 数组随机排序（Fisher-Yates 洗牌算法）
@@ -269,7 +258,7 @@
       if (!text) return '';
       
       const trimmedText = text.trim();
-      // 匹配Markdown格式的图片标记 ![](url) 和纯图片URL
+      // 匹配Markdown格式的图片标记  和纯图片URL
       const markdownImageRegex = /!\[.*?\]\((https?:\/\/[^\s]+)\)/gi;
       const plainUrlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|bmp|webp|svg))/gi;
       
@@ -277,12 +266,12 @@
       
       // 先处理Markdown格式的图片
       result = result.replace(markdownImageRegex, (match, url) => {
-        return `<img src="${url}" alt="图片" class="question-image" />`;
+        return ``;
       });
       
       // 再处理纯图片URL
       result = result.replace(plainUrlRegex, (url) => {
-        return `<img src="${url}" alt="图片" class="question-image" />`;
+        return ``;
       });
       
       return result;
@@ -483,10 +472,70 @@
                 question['题目'] = value;
                 break;
               case '材料内容':
-                question['题目'] = value; // 材料题的内容字段
+                question['材料内容'] = value; // 材料题的题面内容
                 break;
               case '问题':
                 question['问题'] = value;
+                break;
+              case '第1问题面':
+                question['问题1'] = value;
+                break;
+              case '第1问答案':
+                question['答案1'] = value;
+                break;
+              case '第2问题面':
+                question['问题2'] = value;
+                break;
+              case '第2问答案':
+                question['答案2'] = value;
+                break;
+              case '第3问题面':
+                question['问题3'] = value;
+                break;
+              case '第3问答案':
+                question['答案3'] = value;
+                break;
+              case '第4问题面':
+                question['问题4'] = value;
+                break;
+              case '第4问答案':
+                question['答案4'] = value;
+                break;
+              case '第5问题面':
+                question['问题5'] = value;
+                break;
+              case '第5问答案':
+                question['答案5'] = value;
+                break;
+              case '第6问题面':
+                question['问题6'] = value;
+                break;
+              case '第6问答案':
+                question['答案6'] = value;
+                break;
+              case '第7问题面':
+                question['问题7'] = value;
+                break;
+              case '第7问答案':
+                question['答案7'] = value;
+                break;
+              case '第8问题面':
+                question['问题8'] = value;
+                break;
+              case '第8问答案':
+                question['答案8'] = value;
+                break;
+              case '第9问题面':
+                question['问题9'] = value;
+                break;
+              case '第9问答案':
+                question['答案9'] = value;
+                break;
+              case '第10问题面':
+                question['问题10'] = value;
+                break;
+              case '第10问答案':
+                question['答案10'] = value;
                 break;
               case 'A':
               case 'B':
@@ -498,6 +547,36 @@
                 question['答案'] = value;
                 // 保存原始答案，用于后续导出
                 question['originalAnswer'] = value;
+                break;
+              case '第1空答案':
+                question['答案1'] = value;
+                break;
+              case '第2空答案':
+                question['答案2'] = value;
+                break;
+              case '第3空答案':
+                question['答案3'] = value;
+                break;
+              case '第4空答案':
+                question['答案4'] = value;
+                break;
+              case '第5空答案':
+                question['答案5'] = value;
+                break;
+              case '第6空答案':
+                question['答案6'] = value;
+                break;
+              case '第7空答案':
+                question['答案7'] = value;
+                break;
+              case '第8空答案':
+                question['答案8'] = value;
+                break;
+              case '第9空答案':
+                question['答案9'] = value;
+                break;
+              case '第10空答案':
+                question['答案10'] = value;
                 break;
               case '科目':
                 question['科目'] = value;
@@ -517,7 +596,7 @@
         }
         
         // 对于填空题和材料题，如果正确答案为空，则跳过该题及后续所有题目
-        if ((questionType === '填空题' || questionType === '材料题') && !question['答案']) {
+        if ((questionType === '填空题' || questionType === '材料题') && !question['答案'] && !question['答案1']) {
           break;
         }
         
@@ -565,20 +644,13 @@
         alert('请至少选择一种题型并设置数量');
         return;
       }
-
-      // 获取当前科目的文件URL
-      const subjectFiles = subjectFileMap[subject];
-      // if (!subjectFiles.choice || !subjectFiles.fill || !subjectFiles.material) {
-      //   alert('请先在代码中填写当前科目的三个CSV文件URL');
-      //   return;
-      // }
       
       try {
         // 并行加载三个CSV文件
         const [choiceResponse, fillResponse, materialResponse] = await Promise.all([
-          fetch(subjectFiles.choice),
-          fetch(subjectFiles.fill),
-          fetch(subjectFiles.material)
+          fetch(questionFiles['选择题']),
+          fetch(questionFiles['填空题']),
+          fetch(questionFiles['材料题'])
         ]);
         
         if (!choiceResponse.ok || !fillResponse.ok || !materialResponse.ok) {
@@ -676,18 +748,35 @@
       typeBadge.textContent = question['题型'];
       questionContainer.appendChild(typeBadge);
       
-      // 对于材料题，显示题面内容
+      // 对于材料题，显示材料内容（题面）
       if (question['题型'] === '材料题') {
         // 材料题题面
-        const materialTextContainer = document.createElement('div');
-        materialTextContainer.className = 'text-base font-medium mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-primary';
-        materialTextContainer.innerHTML = `<strong>材料：</strong><div class="material-content mt-2">${textToHtml(question['题目'])}</div>`;
-        questionContainer.appendChild(materialTextContainer);
+        if (question['材料内容']) {
+          const materialTextContainer = document.createElement('div');
+          materialTextContainer.className = 'text-base font-medium mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-primary';
+          materialTextContainer.innerHTML = `<strong>材料：</strong><div class="material-content mt-2">${textToHtml(question['材料内容'])}</div>`;
+          questionContainer.appendChild(materialTextContainer);
+        }
         
         // 材料题问题
         const questionTextContainer = document.createElement('div');
         questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
-        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: <div class="question-content mt-2">${textToHtml(question['问题'] || '请根据材料回答问题')}</div>`;
+        
+        // 构建问题内容
+        let questionContent = '';
+        if (question['问题']) {
+          questionContent = question['问题'];
+        } else {
+          // 如果有多个问题，按顺序显示
+          for (let i = 1; i <= 10; i++) {
+            const problemKey = `问题${i}`;
+            if (question[problemKey]) {
+              questionContent += `${i}. ${question[problemKey]}<br>`;
+            }
+          }
+        }
+        
+        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: <div class="question-content mt-2">${textToHtml(questionContent || '请根据材料回答问题')}</div>`;
         questionContainer.appendChild(questionTextContainer);
       } else {
         // 选择题和填空题直接显示题目
@@ -837,7 +926,20 @@
         } else {
           // 填空题和材料题不判断对错，只显示答案
           isCorrect = true; // 填空题和材料题不计入正确计数
-          correctAnswerDisplay = textToHtml(question['答案']);
+          // 构建正确答案显示
+          if (question['答案']) {
+            correctAnswerDisplay = textToHtml(question['答案']);
+          } else {
+            // 对于有多问的材料题，显示所有答案
+            let allAnswers = '';
+            for (let i = 1; i <= 10; i++) {
+              const answerKey = `答案${i}`;
+              if (question[answerKey]) {
+                allAnswers += `${i}. ${question[answerKey]}<br>`;
+              }
+            }
+            correctAnswerDisplay = textToHtml(allAnswers);
+          }
         }
         
         if (isCorrect && question['题型'] === '选择题') correctCount++;
@@ -851,8 +953,20 @@
         // 构建题目显示内容
         let questionText = '';
         if (question['题型'] === '材料题') {
-          questionText = `<strong>材料：</strong><div class="material-content mb-2">${textToHtml(question['题目'])}</div>`;
-          questionText += `<strong>问题：</strong><div class="question-content">${textToHtml(question['问题'] || '请根据材料回答问题')}</div>`;
+          questionText = `<strong>材料：</strong><div class="material-content mb-2">${textToHtml(question['材料内容'] || '')}</div>`;
+          let questionContent = '';
+          if (question['问题']) {
+            questionContent = question['问题'];
+          } else {
+            // 如果有多个问题，按顺序显示
+            for (let i = 1; i <= 10; i++) {
+              const problemKey = `问题${i}`;
+              if (question[problemKey]) {
+                questionContent += `${i}. ${question[problemKey]}<br>`;
+              }
+            }
+          }
+          questionText += `<strong>问题：</strong><div class="question-content">${textToHtml(questionContent || '请根据材料回答问题')}</div>`;
         } else {
           questionText = textToHtml(question['题目']);
         }
