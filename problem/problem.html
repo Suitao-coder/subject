@@ -49,6 +49,13 @@
         border-radius: 4px;
         margin: 0.5rem 0;
       }
+      .material-content img, .question-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        margin: 0.5rem 0;
+        display: block;
+      }
     }
   </style>
 </head>
@@ -262,13 +269,45 @@
       if (!text) return '';
       
       const trimmedText = text.trim();
-      // 匹配文本中的所有图片URL（支持http/https，各种图片后缀）
-      const imageUrlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|bmp|webp))/gi;
+      // 匹配Markdown格式的图片标记 ![](url) 和纯图片URL
+      const markdownImageRegex = /!\[.*?\]\((https?:\/\/[^\s]+)\)/gi;
+      const plainUrlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|bmp|webp|svg))/gi;
       
-      // 替换图片URL为img标签，保留其他文字
-      return trimmedText.replace(imageUrlRegex, (match) => {
-        return `<img src="${match}" class="question-image" alt="题目图片" loading="lazy">`;
+      let result = trimmedText;
+      
+      // 先处理Markdown格式的图片
+      result = result.replace(markdownImageRegex, (match, url) => {
+        return `<img src="${url}" alt="图片" class="question-image" />`;
       });
+      
+      // 再处理纯图片URL
+      result = result.replace(plainUrlRegex, (url) => {
+        return `<img src="${url}" alt="图片" class="question-image" />`;
+      });
+      
+      return result;
+    }
+
+    // 解析文本中的图片URL，但只提取URL（用于答案比较）
+    function extractImageUrls(text) {
+      if (!text) return [];
+      
+      const imageUrls = [];
+      const markdownImageRegex = /!\[.*?\]\((https?:\/\/[^\s]+)\)/gi;
+      const plainUrlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|bmp|webp|svg))/gi;
+      
+      // 匹配Markdown格式的图片
+      let match;
+      while ((match = markdownImageRegex.exec(text)) !== null) {
+        imageUrls.push(match[1]);
+      }
+      
+      // 匹配纯图片URL
+      while ((match = plainUrlRegex.exec(text)) !== null) {
+        imageUrls.push(match[0]);
+      }
+      
+      return imageUrls;
     }
 
     // 科目对应的历史记录键名的映射
@@ -443,6 +482,12 @@
               case '题面':
                 question['题目'] = value;
                 break;
+              case '材料内容':
+                question['题目'] = value; // 材料题的内容字段
+                break;
+              case '问题':
+                question['问题'] = value;
+                break;
               case 'A':
               case 'B':
               case 'C':
@@ -523,10 +568,10 @@
 
       // 获取当前科目的文件URL
       const subjectFiles = subjectFileMap[subject];
-      if (!subjectFiles.choice || !subjectFiles.fill || !subjectFiles.material) {
-        alert('请先在代码中填写当前科目的三个CSV文件URL');
-        return;
-      }
+      // if (!subjectFiles.choice || !subjectFiles.fill || !subjectFiles.material) {
+      //   alert('请先在代码中填写当前科目的三个CSV文件URL');
+      //   return;
+      // }
       
       try {
         // 并行加载三个CSV文件
@@ -631,11 +676,26 @@
       typeBadge.textContent = question['题型'];
       questionContainer.appendChild(typeBadge);
       
-      // 题目内容（支持文字+图片混合）
-      const questionTextContainer = document.createElement('div');
-      questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
-      questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: ${textToHtml(question['题目'])}`;
-      questionContainer.appendChild(questionTextContainer);
+      // 对于材料题，显示题面内容
+      if (question['题型'] === '材料题') {
+        // 材料题题面
+        const materialTextContainer = document.createElement('div');
+        materialTextContainer.className = 'text-base font-medium mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-primary';
+        materialTextContainer.innerHTML = `<strong>材料：</strong><div class="material-content mt-2">${textToHtml(question['题目'])}</div>`;
+        questionContainer.appendChild(materialTextContainer);
+        
+        // 材料题问题
+        const questionTextContainer = document.createElement('div');
+        questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
+        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: <div class="question-content mt-2">${textToHtml(question['问题'] || '请根据材料回答问题')}</div>`;
+        questionContainer.appendChild(questionTextContainer);
+      } else {
+        // 选择题和填空题直接显示题目
+        const questionTextContainer = document.createElement('div');
+        questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
+        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: <div class="question-content mt-2">${textToHtml(question['题目'])}</div>`;
+        questionContainer.appendChild(questionTextContainer);
+      }
       
       // 选择题显示选项（支持文字+图片混合，且选项随机）
       if (question['题型'] === '选择题') {
@@ -788,9 +848,18 @@
         // 填空题和材料题不显示对错标记
         const showCorrectness = question['题型'] === '选择题';
         
+        // 构建题目显示内容
+        let questionText = '';
+        if (question['题型'] === '材料题') {
+          questionText = `<strong>材料：</strong><div class="material-content mb-2">${textToHtml(question['题目'])}</div>`;
+          questionText += `<strong>问题：</strong><div class="question-content">${textToHtml(question['问题'] || '请根据材料回答问题')}</div>`;
+        } else {
+          questionText = textToHtml(question['题目']);
+        }
+        
         resultItem.innerHTML = `
           <div class="font-medium mb-1">题目 ${index + 1} (${question['题型']})</div>
-          <div class="text-sm text-gray-600 mb-1">${textToHtml(question['题目'])}</div>
+          <div class="text-sm text-gray-600 mb-1">${questionText}</div>
           <div class="text-sm"><span class="text-gray-600">你的答案：</span>${textToHtml(userAnswer || '未作答')}</div>
           <div class="text-sm"><span class="text-gray-600">正确答案：</span>${correctAnswerDisplay}</div>
           ${showCorrectness ? `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
