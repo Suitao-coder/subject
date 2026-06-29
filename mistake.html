@@ -9,6 +9,16 @@
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <!-- Tailwind 配置 -->
     <script>
@@ -729,6 +739,16 @@
         </div>
     </div>
 
+    <!-- 图片放大查看层 -->
+    <div id="imageZoomModal" class="fixed inset-0 bg-black/80 z-[60] hidden items-center justify-center p-4">
+        <div class="relative max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <button type="button" id="closeImageZoomModal" class="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer">
+                <i class="fa fa-times"></i>
+            </button>
+            <img id="imageZoomModalImage" src="" alt="放大图片" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+        </div>
+    </div>
+
     <!-- 通知提示框 -->
     <div id="notification" class="fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center">
         <i id="notificationIcon" class="mr-3 text-xl"></i>
@@ -793,6 +813,7 @@
             
             // 初始化模态框
             initModals();
+            initImageZoom();
             
             // 初始化页面数据
             refreshQuestionAndSubjectViews();
@@ -983,6 +1004,57 @@
             });
         }
 
+        function initImageZoom() {
+            const modal = document.getElementById('imageZoomModal');
+            const modalImage = document.getElementById('imageZoomModalImage');
+            const closeBtn = document.getElementById('closeImageZoomModal');
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modalImage.removeAttribute('src');
+                modalImage.removeAttribute('alt');
+            };
+
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeModal();
+            });
+
+            document.addEventListener('dblclick', function(e) {
+                const target = e.target;
+                if (!(target instanceof HTMLElement)) return;
+                if (target.id === 'imageZoomModalImage') {
+                    closeModal();
+                    return;
+                }
+                if (!target.matches('img.zoomable-image')) return;
+
+                modalImage.src = target.src;
+                modalImage.alt = target.alt || '放大图片';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+        }
+
+        function renderLatexContent(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function renderMathJaxContent(root = document) {
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise(root.querySelectorAll('.math-content')).catch(() => {});
+            }
+        }
+
         function renderQuestionOptionsSection() {
             const type = document.getElementById('questionType').value;
             const section = document.getElementById('questionOptionsSection');
@@ -1005,7 +1077,7 @@
                         <input type="file" class="hidden option-photo-input" data-index="${index}" accept="image/*">
                     </div>
                     <textarea class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" rows="2" placeholder="请输入选项内容" data-option-index="${index}">${option.text || ''}</textarea>
-                    ${option.photo ? `<div class="mt-2"><img src="${option.photo}" class="h-20 object-cover rounded border border-gray-200"></div>` : ''}
+                    ${option.photo ? `<div class="mt-2"><img src="${option.photo}" alt="选项图片" class="h-20 object-cover rounded border border-gray-200 zoomable-image cursor-zoom-in"></div>` : ''}
                 </div>
             `).join('');
 
@@ -1053,7 +1125,7 @@
             } else {
                 questionContainer.innerHTML = currentQuestionImages.map((photo, index) => `
                     <div class="relative group rounded-lg overflow-hidden border border-gray-200 bg-white">
-                        <img src="${photo}" alt="题目照片 ${index + 1}" class="w-full h-24 object-cover">
+                        <img src="${photo}" alt="题目照片 ${index + 1}" class="w-full h-24 object-cover zoomable-image cursor-zoom-in">
                         <button type="button" class="absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" data-type="question" data-index="${index}">
                             <i class="fa fa-times text-xs"></i>
                         </button>
@@ -1067,7 +1139,7 @@
             } else {
                 explanationContainer.innerHTML = currentExplanationImages.map((photo, index) => `
                     <div class="relative group rounded-lg overflow-hidden border border-gray-200 bg-white">
-                        <img src="${photo}" alt="解析照片 ${index + 1}" class="w-full h-24 object-cover">
+                        <img src="${photo}" alt="解析照片 ${index + 1}" class="w-full h-24 object-cover zoomable-image cursor-zoom-in">
                         <button type="button" class="absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" data-type="explanation" data-index="${index}">
                             <i class="fa fa-times text-xs"></i>
                         </button>
@@ -1431,12 +1503,12 @@
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">题目内容</h4>
-                        <div class="p-4 bg-gray-50 rounded-lg">${question.content}</div>
+                        <div class="p-4 bg-gray-50 rounded-lg"><div class="math-content">${renderLatexContent(question.content || '')}</div></div>
                     </div>
                     
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">正确答案</h4>
-                        <div class="p-4 bg-green-50 rounded-lg text-green-800">${question.answer}</div>
+                        <div class="p-4 bg-green-50 rounded-lg text-green-800"><div class="math-content">${renderLatexContent(question.answer || '')}</div></div>
                     </div>
 
                     ${question.type === 'choice' && question.options && question.options.length ? `
@@ -1446,8 +1518,8 @@
                             ${question.options.map(option => `
                                 <div class="p-3 border border-gray-200 rounded-lg bg-gray-50">
                                     <div class="font-medium text-gray-800">${option.label || ''}</div>
-                                    ${option.text ? `<div class="mt-1 text-sm text-gray-700">${option.text}</div>` : ''}
-                                    ${option.photo ? `<img src="${option.photo}" class="mt-2 h-20 object-cover rounded border border-gray-200">` : ''}
+                                    ${option.text ? `<div class="mt-1 text-sm text-gray-700"><div class="math-content">${renderLatexContent(option.text)}</div></div>` : ''}
+                                    ${option.photo ? `<img src="${option.photo}" alt="选项图片" class="mt-2 h-20 object-cover rounded border border-gray-200 zoomable-image cursor-zoom-in">` : ''}
                                 </div>
                             `).join('')}
                         </div>
@@ -1458,7 +1530,7 @@
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">题目照片</h4>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            ${question.photos.map(photo => `<img src="${photo}" alt="题目照片" class="w-full h-32 object-cover rounded-lg border border-gray-200">`).join('')}
+                            ${question.photos.map(photo => `<img src="${photo}" alt="题目照片" class="w-full h-32 object-cover rounded-lg border border-gray-200 zoomable-image cursor-zoom-in">`).join('')}
                         </div>
                     </div>
                     ` : ''}
@@ -1466,10 +1538,10 @@
                     ${question.explanation || (question.explanationPhotos && question.explanationPhotos.length) ? `
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">解析/错误原因</h4>
-                        <div class="p-4 bg-blue-50 rounded-lg text-blue-800">${question.explanation || ''}</div>
+                        <div class="p-4 bg-blue-50 rounded-lg text-blue-800"><div class="math-content">${renderLatexContent(question.explanation || '')}</div></div>
                         ${question.explanationPhotos && question.explanationPhotos.length ? `
                         <div class="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-                            ${question.explanationPhotos.map(photo => `<img src="${photo}" alt="解析照片" class="w-full h-32 object-cover rounded-lg border border-gray-200">`).join('')}
+                            ${question.explanationPhotos.map(photo => `<img src="${photo}" alt="解析照片" class="w-full h-32 object-cover rounded-lg border border-gray-200 zoomable-image cursor-zoom-in">`).join('')}
                         </div>
                         ` : ''}
                     </div>
@@ -1507,6 +1579,7 @@
             `;
             
             document.getElementById('questionDetailContent').innerHTML = detailContent;
+            renderMathJaxContent(document.getElementById('questionDetailContent'));
             document.getElementById('questionDetailModal').classList.remove('hidden');
             document.getElementById('questionDetailModal').classList.add('flex');
         }
@@ -1561,7 +1634,7 @@
                 item.className = 'p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors';
                 item.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
-                        <span class="text-sm font-medium text-gray-900 line-clamp-2">${question.content}</span>
+                        <span class="text-sm font-medium text-gray-900 line-clamp-2"><span class="math-content">${renderLatexContent(question.content || '')}</span></span>
                         <span class="text-xs px-2 py-1 rounded-full bg-gray-100 ${difficultyClass}">${difficultyText}</span>
                     </div>
                     <div class="flex justify-between items-center text-sm">
@@ -1576,6 +1649,7 @@
                 });
                 
                 container.appendChild(item);
+                renderMathJaxContent(item);
             });
         }
 
@@ -1680,7 +1754,7 @@
                         <input type="checkbox" class="mastery-toggle h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" data-id="${question.id}" ${question.status === 'mastered' ? 'checked' : ''}>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900 line-clamp-2">${question.content}</div>
+                        <div class="text-sm font-medium text-gray-900 line-clamp-2"><span class="math-content">${renderLatexContent(question.content || '')}</span></div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm text-gray-500">${subjectName}</div>
@@ -1713,6 +1787,8 @@
                 
                 tableBody.appendChild(row);
             });
+
+            renderMathJaxContent(tableBody);
 
             document.querySelectorAll('.mastery-toggle').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
@@ -2439,7 +2515,7 @@
                                             <input type="checkbox" class="mt-1 export-question-checkbox" data-id="${question.id}" ${checked ? 'checked' : ''}>
                                             <div class="flex-1">
                                                 <div class="flex items-center justify-between gap-2">
-                                                    <div class="text-sm font-medium text-gray-900">${(question.content || '').substring(0, 50)}${(question.content || '').length > 50 ? '...' : ''}</div>
+                                                    <div class="text-sm font-medium text-gray-900">${renderLatexContent((question.content || '').substring(0, 50))}${(question.content || '').length > 50 ? '...' : ''}</div>
                                                     <div class="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700">${subjectName}</div>
                                                 </div>
                                                 <div class="mt-2 text-xs text-gray-500">难度：${getQuestionDifficultyText(question)} · 来源：${question.source || '未填写'}</div>
@@ -2490,6 +2566,7 @@
             });
 
             updateExportSelectionSummary();
+            renderMathJaxContent(container);
         }
 
         function updateExportSelectionSummary() {
@@ -2542,7 +2619,7 @@
             showNotification('已导出 CSV 文件', 'success');
         }
 
-        function generateWordDocument() {
+        async function generateWordDocument() {
             const selectedQuestions = questions.filter(q => exportSelection.includes(q.id));
             if (selectedQuestions.length === 0) {
                 showNotification('请先选择要导出的错题', 'warning');
@@ -2552,9 +2629,7 @@
             const mode = document.querySelector('input[name="exportContentMode"]:checked')?.value || 'question';
             const includeAnswerInfo = mode === 'answer' || mode === 'both';
             const includeQuestionInfo = mode === 'question' || mode === 'both';
-            const subjectMap = Object.fromEntries(subjects.map(s => [s.id, s.name]));
             const typeOrder = ['choice', 'fill', 'other'];
-            const typeLabels = { choice: '选择题', fill: '填空题', other: '其他' };
             const orderedQuestions = typeOrder.flatMap(type => {
                 return selectedQuestions.filter(q => (q.type || 'other') === type).sort((a, b) => {
                     const ai = exportOrder.indexOf(a.id);
@@ -2566,27 +2641,120 @@
                 });
             });
 
-            let number = 1;
-            const content = orderedQuestions.map(q => {
-                const subjectName = subjectMap[q.subjectId] || '未知科目';
-                const difficultyText = getQuestionDifficultyText(q);
-                const sourceText = q.source || '未填写';
-                const questionText = q.content ? q.content : '';
-                const photoMarkup = q.photos && q.photos.length ? '<div style="margin-top:6px;"><img src="' + q.photos[0] + '" style="max-width:100%; height:auto; max-height: 3.6em; object-fit: contain;" /></div>' : '';
-                const optionsMarkup = q.type === 'choice' && q.options && q.options.length ? `
-                    <div style="margin-top:8px;">
-                        ${q.options.map(option => `<div style="margin-top:4px;">${option.label}. ${option.text || ''}</div>`).join('')}
-                    </div>
-                ` : '';
-                const questionMarkup = includeQuestionInfo ? `<div style="font-weight: bold; margin-bottom: 8px;">${number++}. ${questionText}</div>` : `<div style="font-weight: bold; margin-bottom: 8px;">${number++}. </div>`;
-                return `
+            // helper: convert text with LaTeX ($...$ or $$...$$) to HTML where math is inlined as SVG images
+            async function convertTextToHtmlWithMath(text) {
+                if (!text) return '';
+                const parts = [];
+                // regex matches $$...$$ (display) or $...$ (inline), non-greedy
+                const regex = /(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g;
+                let lastIndex = 0;
+                let m;
+                while ((m = regex.exec(text)) !== null) {
+                    const idx = m.index;
+                    if (idx > lastIndex) {
+                        const plain = text.slice(lastIndex, idx);
+                        parts.push({type: 'text', content: plain});
+                    }
+                    parts.push({type: 'math', content: m[0]});
+                    lastIndex = regex.lastIndex;
+                }
+                if (lastIndex < text.length) {
+                    parts.push({type: 'text', content: text.slice(lastIndex)});
+                }
+
+                const outParts = [];
+                for (const part of parts) {
+                    if (part.type === 'text') {
+                        const escaped = String(part.content)
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/\n/g, '<br>');
+                        outParts.push(escaped);
+                    } else {
+                        // math segment
+                        const raw = part.content;
+                        let display = false;
+                        let tex = raw;
+                        if (raw.startsWith('$$') && raw.endsWith('$$')) {
+                            display = true;
+                            tex = raw.slice(2, -2);
+                        } else if (raw.startsWith('$') && raw.endsWith('$')) {
+                            tex = raw.slice(1, -1);
+                        }
+                        try {
+                            const node = await MathJax.tex2svgPromise(tex, {display: display});
+                            const svg = node.outerHTML;
+                            const b64 = btoa(unescape(encodeURIComponent(svg)));
+                            const dataUrl = 'data:image/svg+xml;base64,' + b64;
+                            outParts.push(`<img src="${dataUrl}" style="vertical-align: middle; max-width:100%; height:auto;"/>`);
+                        } catch (e) {
+                            // fallback: show raw tex escaped
+                            const fallback = String(raw).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            outParts.push(`<code>${fallback}</code>`);
+                        }
+                    }
+                }
+                return outParts.join('');
+            }
+
+            // process all questions and build blocks with math converted to inline SVGs
+            const questionBlocks = [];
+            const answerBlocks = [];
+            let questionNumber = 1;
+            let answerNumber = 1;
+
+            for (const q of orderedQuestions) {
+                // question part
+                if (includeQuestionInfo) {
+                    const qTextHtml = await convertTextToHtmlWithMath(q.content || '');
+                    const photoMarkup = q.photos && q.photos.length ? '<div style="margin-top:6px;"><img src="' + q.photos[0] + '" style="max-width:100%; height:auto; max-height: 3.6em; object-fit: contain;" /></div>' : '';
+                    let optionsMarkup = '';
+                    if (q.type === 'choice' && q.options && q.options.length) {
+                        const optionLines = [];
+                        for (const option of q.options) {
+                            const optHtml = await convertTextToHtmlWithMath(option.text || '');
+                            optionLines.push(`<div style="margin-top:4px;">${option.label}. ${optHtml}</div>`);
+                        }
+                        optionsMarkup = `<div style="margin-top:8px;">${optionLines.join('')}</div>`;
+                    }
+                    questionBlocks.push(`
                     <div style="page-break-inside: avoid; margin-bottom: 20px;">
-                        ${questionMarkup}
+                        <div style="font-weight: bold; margin-bottom: 8px;">第 ${questionNumber} 题${qTextHtml ? `：${qTextHtml}` : ''}</div>
                         ${photoMarkup}
                         ${optionsMarkup}
                     </div>
-                `;
-            }).join('');
+                `);
+                    questionNumber++;
+                }
+
+                // answer part
+                if (includeAnswerInfo) {
+                    const answerHtml = await convertTextToHtmlWithMath(q.answer || '');
+                    const answerPhotosMarkup = q.explanationPhotos && q.explanationPhotos.length ? `
+                    <div style="margin-top:8px;">
+                        ${q.explanationPhotos.map(photo => `<img src="${photo}" style="max-width:100%; height:auto; max-height: 8em; object-fit: contain; margin-top:6px;" />`).join('')}
+                    </div>
+                ` : '';
+                    answerBlocks.push(`
+                    <div style="page-break-inside: avoid; margin-bottom: 20px;">
+                        <div style="font-weight: bold; margin-bottom: 8px;">第 ${answerNumber} 题 答案</div>
+                        <div>${answerHtml}</div>
+                        ${answerPhotosMarkup}
+                    </div>
+                `);
+                    answerNumber++;
+                }
+            }
+
+            let content = '';
+            if (mode === 'question') {
+                content = questionBlocks.join('');
+            } else if (mode === 'answer') {
+                content = answerBlocks.join('');
+            } else {
+                content = `${questionBlocks.join('')}<div style="page-break-inside: avoid; margin-top: 24px; margin-bottom: 20px;"><div style="font-weight: bold; font-size: 13pt;">答案解析</div></div>${answerBlocks.join('')}`;
+            }
 
             const html = `
                 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
