@@ -19,6 +19,11 @@
         };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- KaTeX for TeX -> MathML conversion -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <!-- html-docx-js to convert HTML to .docx -->
+    <script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
     
     <!-- Tailwind 配置 -->
     <script>
@@ -55,6 +60,40 @@
             }
             .input-focus {
                 @apply focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+            }
+            .math-content {
+                display: block;
+                max-width: 100%;
+                white-space: normal;
+                word-wrap: break-word;
+                line-height: 1.85;
+            }
+            .katex {
+                display: block;
+                max-width: 100%;
+                line-height: 1.85 !important;
+            }
+            #questionDetailContent .math-content,
+            #questionDetailContent .katex {
+                display: block;
+                width: auto;
+                max-width: calc(100vw - 5rem);
+                white-space: normal;
+                word-wrap: break-word;
+                overflow-wrap: anywhere;
+                line-height: 2.3 !important;
+                margin-bottom: 1rem;
+                padding-right: 0.5rem;
+                font-size: 1.05rem;
+            }
+            #questionDetailContent .math-content {
+                font-size: 1.05rem;
+            }
+            #questionDetailContent .katex {
+                font-size: 1.1rem !important;
+            }
+            #questionDetailContent h4 {
+                font-size: 0.95rem;
             }
             .fade-in {
                 animation: fadeIn 0.3s ease-in-out;
@@ -2032,18 +2071,12 @@
             
             // 添加图表切换事件
             document.getElementById('bySubjectBtn').addEventListener('click', function() {
-                this.classList.add('bg-primary/10', 'text-primary');
-                this.classList.remove('text-gray-600', 'hover:bg-gray-100');
-                document.getElementById('byDifficultyBtn').classList.remove('bg-primary/10', 'text-primary');
-                document.getElementById('byDifficultyBtn').classList.add('text-gray-600', 'hover:bg-gray-100');
+                setActiveSubjectsButton('subject');
                 updateSubjectsChart('subject');
             });
             
             document.getElementById('byDifficultyBtn').addEventListener('click', function() {
-                this.classList.add('bg-primary/10', 'text-primary');
-                this.classList.remove('text-gray-600', 'hover:bg-gray-100');
-                document.getElementById('bySubjectBtn').classList.remove('bg-primary/10', 'text-primary');
-                document.getElementById('bySubjectBtn').classList.add('text-gray-600', 'hover:bg-gray-100');
+                setActiveSubjectsButton('difficulty');
                 updateSubjectsChart('difficulty');
             });
             
@@ -2079,6 +2112,8 @@
 
         // 更新所有图表
         function updateCharts() {
+            setActiveSubjectsButton('subject');
+            setActiveTrendButton('week');
             updateSubjectsChart('subject');
             updateTrendChart('week');
             updateMasteryChart();
@@ -2086,29 +2121,48 @@
             updateWeakPoints();
         }
 
-        // 更新错题分布图表
-        function updateSubjectsChart(type) {
+        // 设置活跃的分布切换按钮
+        function setActiveSubjectsButton(type) {
+            const subjectBtn = document.getElementById('bySubjectBtn');
+            const difficultyBtn = document.getElementById('byDifficultyBtn');
+
+            subjectBtn.classList.remove('bg-primary/10', 'text-primary');
+            subjectBtn.classList.add('text-gray-600', 'hover:bg-gray-100');
+            difficultyBtn.classList.remove('bg-primary/10', 'text-primary');
+            difficultyBtn.classList.add('text-gray-600', 'hover:bg-gray-100');
+
             if (type === 'subject') {
-                // 按科目分布
+                subjectBtn.classList.add('bg-primary/10', 'text-primary');
+                subjectBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+            } else {
+                difficultyBtn.classList.add('bg-primary/10', 'text-primary');
+                difficultyBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+            }
+        }
+
+        function updateSubjectsChart(type) {
+            if (!window.subjectsChart) return;
+
+            if (type === 'subject') {
                 const subjectData = {};
                 subjects.forEach(subject => {
                     subjectData[subject.id] = {
                         name: subject.name,
-                        color: subject.color,
+                        color: subject.color || 'rgba(59, 130, 246, 0.7)',
                         count: 0
                     };
                 });
-                
+
                 questions.forEach(question => {
                     if (subjectData[question.subjectId]) {
                         subjectData[question.subjectId].count++;
                     }
                 });
-                
+
                 const labels = [];
                 const data = [];
                 const colors = [];
-                
+
                 Object.values(subjectData).forEach(item => {
                     if (item.count > 0) {
                         labels.push(item.name);
@@ -2116,28 +2170,27 @@
                         colors.push(item.color);
                     }
                 });
-                
-                window.subjectsChart.data.labels = labels;
-                window.subjectsChart.data.datasets[0].data = data;
-                window.subjectsChart.data.datasets[0].backgroundColor = colors;
+
+                window.subjectsChart.data.labels = labels.length ? labels : ['无数据'];
+                window.subjectsChart.data.datasets[0].data = data.length ? data : [1];
+                window.subjectsChart.data.datasets[0].backgroundColor = colors.length ? colors : ['rgba(209, 213, 219, 0.8)'];
             } else {
-                // 按难度分布
                 const difficultyData = {
                     easy: { count: 0, label: '简单', color: 'rgba(16, 185, 129, 0.7)' },
                     medium: { count: 0, label: '中等', color: 'rgba(245, 158, 11, 0.7)' },
                     hard: { count: 0, label: '困难', color: 'rgba(239, 68, 68, 0.7)' }
                 };
-                
+
                 questions.forEach(question => {
                     if (difficultyData[question.difficulty]) {
                         difficultyData[question.difficulty].count++;
                     }
                 });
-                
+
                 const labels = [];
                 const data = [];
                 const colors = [];
-                
+
                 Object.values(difficultyData).forEach(item => {
                     if (item.count > 0) {
                         labels.push(item.label);
@@ -2145,12 +2198,12 @@
                         colors.push(item.color);
                     }
                 });
-                
-                window.subjectsChart.data.labels = labels;
-                window.subjectsChart.data.datasets[0].data = data;
-                window.subjectsChart.data.datasets[0].backgroundColor = colors;
+
+                window.subjectsChart.data.labels = labels.length ? labels : ['无数据'];
+                window.subjectsChart.data.datasets[0].data = data.length ? data : [1];
+                window.subjectsChart.data.datasets[0].backgroundColor = colors.length ? colors : ['rgba(209, 213, 219, 0.8)'];
             }
-            
+
             window.subjectsChart.update();
         }
 
@@ -2642,6 +2695,37 @@
             });
 
             // helper: convert text with LaTeX ($...$ or $$...$$) to HTML where math is inlined as SVG images
+            async function loadMathMlToOmmlLib() {
+                if (window.mml2omml) return window.mml2omml;
+                if (window.mathmlToOmml) return window.mathmlToOmml;
+
+                const importUrls = [
+                    'https://cdn.jsdelivr.net/npm/mathml2omml@0.5.0/dist/index.js',
+                    'https://cdn.jsdelivr.net/npm/@hungknguyen/mathml2omml@0.4.6/dist/index.esm.js'
+                ];
+
+                for (const url of importUrls) {
+                    try {
+                        const module = await import(url);
+                        if (module?.mml2omml) {
+                            window.mml2omml = module.mml2omml;
+                            return module.mml2omml;
+                        }
+                        if (module?.default) {
+                            window.mml2omml = module.default;
+                            return module.default;
+                        }
+                    } catch (e) {
+                        console.warn(`MathML→OMML dynamic import failed for ${url}:`, e);
+                    }
+                }
+
+                console.warn('MathML→OMML converter unavailable in browser. Falling back to SVG math rendering.');
+                return null;
+            }
+
+            const mathMlToOmmlConverterPromise = loadMathMlToOmmlLib();
+
             async function convertTextToHtmlWithMath(text) {
                 if (!text) return '';
                 const parts = [];
@@ -2682,6 +2766,41 @@
                         } else if (raw.startsWith('$') && raw.endsWith('$')) {
                             tex = raw.slice(1, -1);
                         }
+
+                        const converter = await mathMlToOmmlConverterPromise;
+                        let converted = null;
+                        const math2mml = typeof MathJax?.tex2mmlPromise === 'function'
+                            ? MathJax.tex2mmlPromise
+                            : (typeof MathJax?.tex2mml === 'function' ? (tex, options) => Promise.resolve(MathJax.tex2mml(tex, options)) : null);
+
+                        if (converter && math2mml) {
+                            try {
+                                const mathml = await math2mml(tex, {display});
+                                try {
+                                    converted = converter(mathml);
+                                    outParts.push(converted);
+                                    continue;
+                                } catch (e) {
+                                    console.warn('MathML→OMML conversion failed:', {
+                                        tex,
+                                        mathml,
+                                        error: e
+                                    });
+                                }
+                            } catch (e) {
+                                console.warn('MathJax math-to-MathML conversion failed:', {
+                                    tex,
+                                    error: e
+                                });
+                            }
+                        } else {
+                            if (!converter) {
+                                console.warn('No MathML→OMML converter available for expression:', raw);
+                            } else {
+                                console.warn('No MathJax MathML converter available; using SVG fallback for expression:', raw);
+                            }
+                        }
+
                         try {
                             const node = await MathJax.tex2svgPromise(tex, {display: display});
                             const svg = node.outerHTML;
@@ -2689,7 +2808,6 @@
                             const dataUrl = 'data:image/svg+xml;base64,' + b64;
                             outParts.push(`<img src="${dataUrl}" style="vertical-align: middle; max-width:100%; height:auto;"/>`);
                         } catch (e) {
-                            // fallback: show raw tex escaped
                             const fallback = String(raw).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                             outParts.push(`<code>${fallback}</code>`);
                         }
@@ -2757,7 +2875,7 @@
             }
 
             const html = `
-                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns="http://www.w3.org/TR/REC-html40">
                 <head>
                     <meta charset="utf-8"><title>错题整理</title>
                     <style>
@@ -2782,15 +2900,72 @@
                 </html>
             `;
 
-            const blob = new Blob([html], { type: 'application/msword' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `错题整理_${formatDateForFile(new Date())}.doc`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            async function ensureHtmlDocx() {
+                const tryDetect = () => {
+                    return (window.HTMLDocx && typeof window.HTMLDocx.asBlob === 'function') ? window.HTMLDocx
+                        : (window.htmlDocx && typeof window.htmlDocx.asBlob === 'function') ? window.htmlDocx
+                        : (window.HTMLDocxJs && typeof window.HTMLDocxJs.asBlob === 'function') ? window.HTMLDocxJs
+                        : (window.html_docx && typeof window.html_docx.asBlob === 'function') ? window.html_docx
+                        : null;
+                };
+                let lib = tryDetect();
+                if (lib) return lib;
+
+                const url = 'https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js';
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = url;
+                    s.async = true;
+                    s.onload = () => resolve();
+                    s.onerror = () => reject(new Error('Failed to load html-docx-js'));
+                    document.head.appendChild(s);
+                }).catch(e => {
+                    console.warn('动态加载 html-docx-js 失败：', e);
+                });
+
+                lib = tryDetect();
+                if (!lib) {
+                    console.warn('html-docx-js unavailable: falling back to .doc output.');
+                }
+                return lib;
+            }
+
+            const docxLib = await ensureHtmlDocx();
+
+            if (docxLib) {
+                try {
+                    const converted = docxLib.asBlob(html);
+                    const url = URL.createObjectURL(converted);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `错题整理_${formatDateForFile(new Date())}.docx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    console.error('html-docx-js conversion failed:', e);
+                    const blob = new Blob([html], { type: 'application/msword' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `错题整理_${formatDateForFile(new Date())}.doc`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            } else {
+                const blob = new Blob([html], { type: 'application/msword' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `错题整理_${formatDateForFile(new Date())}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
             showNotification('已导出 Word 文档', 'success');
             closeExportModal();
         }
