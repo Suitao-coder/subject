@@ -795,9 +795,7 @@
             initModals();
             
             // 初始化页面数据
-            renderDashboard();
-            renderQuestions();
-            renderSubjects();
+            refreshQuestionAndSubjectViews();
             initCharts();
             
             // 监听滚动事件，改变导航栏样式
@@ -812,6 +810,13 @@
                 }
             });
         });
+
+        function refreshQuestionAndSubjectViews() {
+            renderQuestions();
+            renderSubjects();
+            renderDashboard();
+            updateCharts();
+        }
 
         // 初始化导航
         function initNavigation() {
@@ -2491,6 +2496,52 @@
             document.getElementById('exportSelectionSummary').textContent = `已选择 ${exportSelection.length} 道题`;
         }
 
+        function exportQuestionsAsCsv() {
+            if (questions.length === 0) {
+                showNotification('没有可导出的错题', 'warning');
+                return;
+            }
+
+            const subjectMap = Object.fromEntries(subjects.map(s => [s.id, s.name]));
+            const headers = ['序号', '题型', '题目内容', '正确答案', '解析', '科目', '难度', '来源', '是否掌握', '选项', '题目图片', '解析图片'];
+            const rows = questions.map((q, index) => {
+                const optionsText = Array.isArray(q.options) && q.options.length
+                    ? q.options.map(option => `${option.label || ''}. ${option.text || ''}`).join('；')
+                    : '';
+                const questionPhotos = Array.isArray(q.photos) ? q.photos.length : 0;
+                const explanationPhotos = Array.isArray(q.explanationPhotos) ? q.explanationPhotos.length : 0;
+                return [
+                    index + 1,
+                    q.type === 'choice' ? '选择题' : q.type === 'fill' ? '填空题' : '其他',
+                    q.content || '',
+                    q.answer || '',
+                    q.explanation || '',
+                    subjectMap[q.subjectId] || '未知科目',
+                    q.difficulty || '',
+                    q.source || '',
+                    q.status === 'mastered' ? '已掌握' : '未掌握',
+                    optionsText,
+                    questionPhotos,
+                    explanationPhotos
+                ];
+            });
+
+            const csvContent = [headers, ...rows]
+                .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(','))
+                .join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `错题梳理_${formatDateForFile(new Date())}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showNotification('已导出 CSV 文件', 'success');
+        }
+
         function generateWordDocument() {
             const selectedQuestions = questions.filter(q => exportSelection.includes(q.id));
             if (selectedQuestions.length === 0) {
@@ -2576,7 +2627,7 @@
             closeExportModal();
         }
 
-        document.getElementById('organizeQuestionsBtn').addEventListener('click', openExportModal);
+        document.getElementById('organizeQuestionsBtn').addEventListener('click', exportQuestionsAsCsv);
 
         document.getElementById('exportQuestionsBtn').addEventListener('click', openExportModal);
         document.getElementById('closeExportModal').addEventListener('click', closeExportModal);
