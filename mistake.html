@@ -2741,16 +2741,13 @@
             const mode = document.querySelector('input[name="exportContentMode"]:checked')?.value || 'question';
             const includeAnswerInfo = mode === 'answer' || mode === 'both';
             const includeQuestionInfo = mode === 'question' || mode === 'both';
-            const typeOrder = ['choice', 'fill', 'other'];
-            const orderedQuestions = typeOrder.flatMap(type => {
-                return selectedQuestions.filter(q => (q.type || 'other') === type).sort((a, b) => {
-                    const ai = exportOrder.indexOf(a.id);
-                    const bi = exportOrder.indexOf(b.id);
-                    if (ai === -1 && bi === -1) return 0;
-                    if (ai === -1) return 1;
-                    if (bi === -1) return -1;
-                    return ai - bi;
-                });
+            const orderedQuestions = selectedQuestions.slice().sort((a, b) => {
+                const ai = exportOrder.indexOf(a.id);
+                const bi = exportOrder.indexOf(b.id);
+                if (ai === -1 && bi === -1) return 0;
+                if (ai === -1) return 1;
+                if (bi === -1) return -1;
+                return ai - bi;
             });
 
             function renderTextWithMath(text) {
@@ -2797,16 +2794,13 @@
 
             const questionBlocks = [];
             const answerBlocks = [];
-            let qIndex = 1;
-            let aIndex = 1;
-            for (const q of orderedQuestions) {
+            for (const [index, q] of orderedQuestions.entries()) {
+                const itemNumber = index + 1;
                 if (includeQuestionInfo) {
-                    questionBlocks.push(renderQuestionBlock(q, qIndex));
-                    qIndex++;
+                    questionBlocks.push(renderQuestionBlock(q, itemNumber));
                 }
                 if (includeAnswerInfo) {
-                    answerBlocks.push(renderAnswerBlock(q, aIndex));
-                    aIndex++;
+                    answerBlocks.push(renderAnswerBlock(q, itemNumber));
                 }
             }
 
