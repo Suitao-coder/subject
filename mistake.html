@@ -114,6 +114,12 @@
                     break-inside: avoid !important;
                     margin-bottom: 12px !important;
                 }
+                #exportPrintArea .print-page-break {
+                    page-break-before: always !important;
+                    break-before: page !important;
+                    height: 0 !important;
+                    margin: 0 !important;
+                }
                 #exportPrintArea .print-title {
                     font-size: 16pt !important;
                     font-weight: bold !important;
@@ -2765,7 +2771,7 @@
                     : '';
                 return `
                     <div class="print-section">
-                        <div class="print-title">第 ${index + 1} 题</div>
+                        <div class="print-title">第 ${index} 题</div>
                         ${contentHtml ? `<div class="print-subtitle math-content">题目：${contentHtml}</div>` : ''}
                         ${photoHtml}
                         ${optionsHtml}
@@ -2781,7 +2787,7 @@
                     : '';
                 return `
                     <div class="print-section">
-                        <div class="print-title">第 ${index + 1} 题 答案</div>
+                        <div class="print-title">第 ${index} 题 答案</div>
                         ${answerHtml}
                         ${explanationHtml}
                         ${photosHtml}
@@ -2808,7 +2814,7 @@
                 ? questionBlocks.join('')
                 : mode === 'answer'
                     ? answerBlocks.join('')
-                    : `${questionBlocks.join('')}<div class="print-section"><div class="print-title">答案解析</div></div>${answerBlocks.join('')}`;
+                    : `${questionBlocks.join('')}<div class="print-page-break"></div><div class="print-section"><div class="print-title">答案解析</div></div>${answerBlocks.join('')}`;
 
             const printArea = document.getElementById('exportPrintArea');
             printArea.innerHTML = `
