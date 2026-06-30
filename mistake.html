@@ -74,15 +74,17 @@
                 line-height: 1.85 !important;
             }
             #questionDetailContent .math-content,
-            #questionDetailContent .katex {
+            #questionDetailContent .katex,
+            #paperDetailPage .math-content,
+            #paperDetailPage .katex {
                 display: block;
                 width: auto;
                 max-width: calc(100vw - 5rem);
                 white-space: normal;
                 word-wrap: break-word;
                 overflow-wrap: anywhere;
-                line-height: 2.3 !important;
-                margin-bottom: 1rem;
+                line-height: 2.4 !important;
+                margin-bottom: 1.2rem;
                 padding-right: 0.5rem;
                 font-size: 1.05rem;
             }
@@ -204,6 +206,9 @@
                     <a href="#subjects" class="nav-link text-gray-600 hover:text-primary transition-colors">
                         <i class="fa fa-folder-open mr-1"></i> 科目管理
                     </a>
+                    <a href="#papers" class="nav-link text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa fa-file-text-o mr-1"></i> 试卷
+                    </a>
                     <a href="#statistics" class="nav-link text-gray-600 hover:text-primary transition-colors">
                         <i class="fa fa-bar-chart mr-1"></i> 学习分析
                     </a>
@@ -253,6 +258,9 @@
                 </a>
                 <a href="#subjects" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
                     <i class="fa fa-folder-open mr-2"></i>科目管理
+                </a>
+                <a href="#papers" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
+                    <i class="fa fa-file-text-o mr-2"></i>试卷
                 </a>
                 <a href="#statistics" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
                     <i class="fa fa-bar-chart mr-2"></i>学习分析
@@ -533,6 +541,56 @@
                     暂无科目，请添加科目
                 </div>
             </div>
+        </section>
+
+        <!-- 试卷页面 -->
+        <section id="papersPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+            <div class="mb-8">
+                <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">试卷</h1>
+                <p class="text-gray-600 mt-1">创建试卷并添加已有错题，管理与导出您的试卷</p>
+            </div>
+            <div class="flex flex-wrap gap-4 mb-8">
+                <button id="createPaperBtn" class="flex items-center bg-primary text-white px-6 py-3 rounded-lg shadow-sm btn-effect cursor-pointer">
+                    <i class="fa fa-plus-circle mr-2"></i> 创建试卷
+                </button>
+                <button id="exportPaperBtn" class="flex items-center bg-white text-gray-700 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                    <i class="fa fa-download mr-2"></i> 导出试卷
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="papersList">
+                <div class="col-span-full text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm">
+                    暂无试卷，请先创建试卷
+                </div>
+            </div>
+        </section>
+
+        <!-- 试卷详情页面 -->
+        <section id="paperDetailPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+            <div class="mb-8 flex flex-col gap-4">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">试卷详情</h1>
+                        <p class="text-gray-600 mt-1">查看试卷中的错题内容与答案</p>
+                    </div>
+                    <button id="backToPapersBtn" class="inline-flex items-center bg-white text-gray-700 px-5 py-2.5 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                        <i class="fa fa-arrow-left mr-2"></i> 返回试卷
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <h2 id="paperDetailName" class="text-xl font-semibold text-gray-900"></h2>
+                            <p id="paperDetailDescription" class="text-sm text-gray-500 mt-2"></p>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            <div>创建于 <span id="paperDetailDate"></span></div>
+                            <div class="mt-2">题目数量：<span id="paperDetailCount"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 gap-6" id="paperDetailQuestionsList"></div>
         </section>
 
         <!-- 统计分析页面 -->
@@ -835,6 +893,90 @@
         </div>
     </div>
 
+    <!-- 创建试卷弹窗 -->
+    <div id="createPaperModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">创建试卷</h3>
+                    <p class="text-sm text-gray-500 mt-1">请输入试卷名称并从已有错题中选择加入试卷</p>
+                </div>
+                <button id="closeCreatePaperModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input type="text" id="paperNameInput" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="试卷名称">
+                    <input type="text" id="paperDescriptionInput" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="试卷描述（可选）">
+                    <button type="button" id="selectAllPaperQuestionsBtn" class="px-3 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 cursor-pointer">全选当前</button>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-3 items-center">
+                    <label class="text-sm text-gray-700">试卷题目筛选</label>
+                    <select id="paperSubjectFilter" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white cursor-pointer">
+                        <option value="">所有科目</option>
+                    </select>
+                    <select id="paperMasteryFilter" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white cursor-pointer">
+                        <option value="">所有题目</option>
+                        <option value="mastered">仅已掌握</option>
+                        <option value="pending">仅未掌握</option>
+                    </select>
+                    <input type="text" id="paperExportSearch" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="搜索题面或答案">
+                </div>
+                <div class="mt-3 text-sm text-gray-500" id="paperSelectionSummary">已选 0 道题</div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" id="paperQuestionsList"></div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="cancelCreatePaperBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 cursor-pointer">取消</button>
+                <button type="button" id="savePaperBtn" class="px-4 py-2 rounded-lg bg-primary text-white cursor-pointer">
+                    <i class="fa fa-save mr-2"></i> 保存试卷
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导出试卷弹窗 -->
+    <div id="exportPapersModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">导出试卷</h3>
+                    <p class="text-sm text-gray-500 mt-1">可搜索试卷后勾选导出，并设置打印顺序</p>
+                </div>
+                <button id="closeExportPapersModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input type="text" id="exportPaperSearch" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="搜索试卷名称或描述">
+                    <button type="button" id="selectAllExportPaperBtn" class="px-3 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 cursor-pointer">全选当前</button>
+                    <button type="button" id="clearExportPaperSelectionBtn" class="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer">清空选择</button>
+                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                        <span>已选试卷：</span><span id="exportPaperSelectionSummary">0</span>
+                    </div>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-3 items-center">
+                    <label class="text-sm text-gray-700">导出内容</label>
+                    <label class="text-sm text-gray-700"><input type="radio" name="exportPaperContentMode" value="question" checked> 纯题目</label>
+                    <label class="text-sm text-gray-700"><input type="radio" name="exportPaperContentMode" value="answer"> 纯答案解析</label>
+                    <label class="text-sm text-gray-700"><input type="radio" name="exportPaperContentMode" value="both"> 题目加答案</label>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" id="exportPapersList"></div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="cancelExportPapersBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 cursor-pointer">取消</button>
+                <button type="button" id="exportPaperWordBtn" class="px-4 py-2 rounded-lg bg-primary text-white cursor-pointer">
+                    <i class="fa fa-file-pdf-o mr-2"></i> 导出 PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="exportPrintArea" class="hidden"></div>
 
     <!-- 图片放大查看层 -->
@@ -882,6 +1024,7 @@
         let currentPage = 'dashboard';
         let questions = JSON.parse(localStorage.getItem('questions')) || [];
         let subjects = JSON.parse(localStorage.getItem('subjects')) || [];
+        let papers = JSON.parse(localStorage.getItem('papers')) || [];
         let currentQuestionId = null;
         let currentSubjectId = null;
         let deleteType = ''; // 'question' 或 'subject'
@@ -889,6 +1032,11 @@
         let currentQuestionImages = [];
         let currentExplanationImages = [];
         let currentQuestionOptions = [];
+        let currentPaperSelection = [];
+        let currentPaperOrder = [];
+        let currentPaperDetailId = null;
+        let exportPaperSelection = [];
+        let exportPaperOrder = [];
         const itemsPerPage = 10;
         const MAX_QUESTION_PHOTOS = 10;
         const MAX_QUESTION_PHOTO_SIZE = 50 * 1024 * 1024;
@@ -916,6 +1064,7 @@
             // 初始化页面数据和图表
             initCharts();
             refreshQuestionAndSubjectViews();
+            renderPaperList();
 
             // 监听滚动事件，改变导航栏样式
             window.addEventListener('scroll', function() {
@@ -2554,23 +2703,6 @@
             document.getElementById('exportQuestionsModal').classList.remove('flex');
         }
 
-        function loadExportSubjectOptions() {
-            const select = document.getElementById('exportSubjectFilter');
-            const currentValue = select.value;
-            while (select.options.length > 1) {
-                select.remove(1);
-            }
-            subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject.id;
-                option.textContent = subject.name;
-                select.appendChild(option);
-            });
-            if (currentValue) {
-                select.value = currentValue;
-            }
-        }
-
         function renderExportQuestionsList() {
             const container = document.getElementById('exportQuestionsList');
             const searchTerm = document.getElementById('exportSearch').value.toLowerCase();
@@ -2592,7 +2724,8 @@
                 filteredQuestions = filteredQuestions.filter(q =>
                     (q.content || '').toLowerCase().includes(searchTerm) ||
                     (q.answer || '').toLowerCase().includes(searchTerm) ||
-                    (q.explanation || '').toLowerCase().includes(searchTerm)
+                    (q.explanation || '').toLowerCase().includes(searchTerm) ||
+                    (q.knowledgePoint || '').toLowerCase().includes(searchTerm)
                 );
             }
 
@@ -2606,9 +2739,9 @@
                 fill: filteredQuestions.filter(q => (q.type || 'other') === 'fill'),
                 other: filteredQuestions.filter(q => !['choice', 'fill'].includes(q.type || 'other'))
             };
-
             const typeLabels = { choice: '选择题', fill: '填空题', other: '其他' };
             const sections = ['choice', 'fill', 'other'];
+
             container.innerHTML = sections.map(type => {
                 const items = grouped[type];
                 if (!items.length) return '';
@@ -2679,6 +2812,540 @@
 
             updateExportSelectionSummary();
             renderMathJaxContent(container);
+        }
+
+        function loadExportSubjectOptions() {
+            const select = document.getElementById('exportSubjectFilter');
+            const currentValue = select.value;
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.id;
+                option.textContent = subject.name;
+                select.appendChild(option);
+            });
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        }
+
+        function openCreatePaperModal() {
+            if (questions.length === 0) {
+                showNotification('请先添加错题后再创建试卷', 'warning');
+                return;
+            }
+            currentPaperSelection = [];
+            currentPaperOrder = [];
+            document.getElementById('paperNameInput').value = '';
+            document.getElementById('paperDescriptionInput').value = '';
+            document.getElementById('paperExportSearch').value = '';
+            document.getElementById('paperSubjectFilter').value = '';
+            document.getElementById('paperMasteryFilter').value = '';
+            loadSubjectOptions('paperSubjectFilter');
+            renderPaperQuestionsList();
+            updatePaperSelectionSummary();
+            const modal = document.getElementById('createPaperModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCreatePaperModal() {
+            const modal = document.getElementById('createPaperModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderPaperQuestionsList() {
+            const container = document.getElementById('paperQuestionsList');
+            const searchTerm = document.getElementById('paperExportSearch').value.toLowerCase();
+            const subjectFilter = document.getElementById('paperSubjectFilter').value;
+            const masteryFilter = document.getElementById('paperMasteryFilter').value;
+
+            loadSubjectOptions('paperSubjectFilter');
+
+            let filteredQuestions = [...questions];
+            if (subjectFilter) {
+                filteredQuestions = filteredQuestions.filter(q => q.subjectId === subjectFilter);
+            }
+            if (masteryFilter) {
+                filteredQuestions = filteredQuestions.filter(q => {
+                    if (masteryFilter === 'mastered') return q.status === 'mastered';
+                    if (masteryFilter === 'pending') return q.status !== 'mastered';
+                    return true;
+                });
+            }
+            if (searchTerm) {
+                filteredQuestions = filteredQuestions.filter(q =>
+                    (q.content || '').toLowerCase().includes(searchTerm) ||
+                    (q.answer || '').toLowerCase().includes(searchTerm) ||
+                    (q.explanation || '').toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (filteredQuestions.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500">暂无匹配错题，请调整筛选条件</div>';
+                return;
+            }
+
+            const grouped = {
+                choice: filteredQuestions.filter(q => (q.type || 'other') === 'choice'),
+                fill: filteredQuestions.filter(q => (q.type || 'other') === 'fill'),
+                other: filteredQuestions.filter(q => !['choice', 'fill'].includes(q.type || 'other'))
+            };
+            const typeLabels = { choice: '选择题', fill: '填空题', other: '其他' };
+            const sections = ['choice', 'fill', 'other'];
+
+            container.innerHTML = sections.map(type => {
+                const items = grouped[type];
+                if (!items.length) return '';
+                return `
+                    <div class="rounded-xl border border-gray-200 bg-white p-4">
+                        <div class="font-semibold text-gray-800 mb-3">${typeLabels[type]}</div>
+                        <div class="space-y-2">
+                            ${items.map(question => {
+                                const subject = subjects.find(s => s.id === question.subjectId);
+                                const subjectName = subject ? subject.name : '未知科目';
+                                const checked = currentPaperSelection.includes(question.id);
+                                const orderIndex = currentPaperOrder.indexOf(question.id);
+                                return `
+                                    <div class="rounded-lg border border-gray-200 p-3">
+                                        <div class="flex items-start gap-2">
+                                            <input type="checkbox" class="mt-1 paper-question-checkbox" data-id="${question.id}" ${checked ? 'checked' : ''}>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <div class="text-sm font-medium text-gray-900">${renderLatexContent((question.content || '').substring(0, 50))}${(question.content || '').length > 50 ? '...' : ''}</div>
+                                                    <div class="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700">${subjectName}</div>
+                                                </div>
+                                                <div class="mt-2 text-xs text-gray-500">难度：${getQuestionDifficultyText(question)} · 来源：${question.source || '未填写'}</div>
+                                                <div class="mt-2 flex items-center gap-2">
+                                                    <button type="button" class="text-xs text-primary paper-move-up" data-id="${question.id}">上移</button>
+                                                    <button type="button" class="text-xs text-primary paper-move-down" data-id="${question.id}">下移</button>
+                                                    <span class="text-xs text-gray-500">顺序：${orderIndex >= 0 ? orderIndex + 1 : '-'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.paper-question-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const id = this.getAttribute('data-id');
+                    if (this.checked) {
+                        if (!currentPaperSelection.includes(id)) {
+                            currentPaperSelection.push(id);
+                            currentPaperOrder.push(id);
+                        }
+                    } else {
+                        currentPaperSelection = currentPaperSelection.filter(item => item !== id);
+                        currentPaperOrder = currentPaperOrder.filter(item => item !== id);
+                    }
+                    updatePaperSelectionSummary();
+                    renderPaperQuestionsList();
+                });
+            });
+
+            document.querySelectorAll('.paper-move-up, .paper-move-down').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const index = currentPaperOrder.indexOf(id);
+                    if (index === -1) return;
+                    if (this.classList.contains('paper-move-up') && index > 0) {
+                        [currentPaperOrder[index - 1], currentPaperOrder[index]] = [currentPaperOrder[index], currentPaperOrder[index - 1]];
+                    } else if (this.classList.contains('paper-move-down') && index < currentPaperOrder.length - 1) {
+                        [currentPaperOrder[index], currentPaperOrder[index + 1]] = [currentPaperOrder[index + 1], currentPaperOrder[index]];
+                    }
+                    renderPaperQuestionsList();
+                });
+            });
+
+            updatePaperSelectionSummary();
+            renderMathJaxContent(container);
+        }
+
+        function selectAllPaperQuestions() {
+            const visibleIds = Array.from(document.querySelectorAll('.paper-question-checkbox')).map(cb => cb.getAttribute('data-id'));
+            currentPaperSelection = Array.from(new Set([...currentPaperSelection, ...visibleIds]));
+            currentPaperOrder = Array.from(new Set([...currentPaperOrder, ...visibleIds]));
+            updatePaperSelectionSummary();
+            renderPaperQuestionsList();
+        }
+
+        function updatePaperSelectionSummary() {
+            document.getElementById('paperSelectionSummary').textContent = `已选 ${currentPaperSelection.length} 道题`;
+        }
+
+        function savePaper() {
+            const name = document.getElementById('paperNameInput').value.trim();
+            const description = document.getElementById('paperDescriptionInput').value.trim();
+            if (!name) {
+                showNotification('试卷名称不能为空', 'error');
+                return;
+            }
+            if (currentPaperSelection.length === 0) {
+                showNotification('请先选择试卷题目', 'warning');
+                return;
+            }
+            const paper = {
+                id: generateId(),
+                name,
+                description,
+                questionIds: currentPaperOrder.slice(),
+                createDate: new Date().toISOString()
+            };
+            papers.unshift(paper);
+            localStorage.setItem('papers', JSON.stringify(papers));
+            showNotification('试卷已创建', 'success');
+            closeCreatePaperModal();
+            renderPaperList();
+        }
+
+        function renderPaperList() {
+            const container = document.getElementById('papersList');
+            if (!papers.length) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm">
+                        暂无试卷，请先创建试卷
+                    </div>
+                `;
+                return;
+            }
+            container.innerHTML = '';
+            papers.forEach(paper => {
+                const row = document.createElement('div');
+                const questionCount = Array.isArray(paper.questionIds) ? paper.questionIds.length : 0;
+                row.className = 'bg-white rounded-xl shadow-sm overflow-hidden card-shadow hover:shadow-md transition-all';
+                row.innerHTML = `
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-900">${paper.name}</h3>
+                                <p class="text-sm text-gray-500 mt-2">${paper.description || '无描述'}</p>
+                            </div>
+                            <div class="text-right text-sm text-gray-500">
+                                创建于 ${formatDate(paper.createDate)}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-sm text-gray-600">
+                            <span>题目数量：<span class="font-medium">${questionCount}</span></span>
+                            <div class="flex items-center gap-4">
+                                <button class="text-primary hover:underline view-paper" data-id="${paper.id}">查看</button>
+                                <button class="text-primary hover:underline delete-paper" data-id="${paper.id}">删除</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+            document.querySelectorAll('.delete-paper').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    papers = papers.filter(p => p.id !== id);
+                    localStorage.setItem('papers', JSON.stringify(papers));
+                    renderPaperList();
+                    showNotification('试卷已删除', 'success');
+                });
+            });
+            document.querySelectorAll('.view-paper').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    openPaperDetail(id);
+                });
+            });
+        }
+
+        function openPaperDetail(paperId) {
+            const paper = papers.find(p => p.id === paperId);
+            if (!paper) {
+                showNotification('未找到该试卷', 'error');
+                return;
+            }
+            currentPaperDetailId = paperId;
+            renderPaperDetailPage(paper);
+            switchPage('paperDetail');
+        }
+
+        function renderPaperDetailPage(paper) {
+            document.getElementById('paperDetailName').textContent = paper.name;
+            document.getElementById('paperDetailDescription').textContent = paper.description || '无描述';
+            document.getElementById('paperDetailDate').textContent = formatDate(paper.createDate);
+            const questionIds = Array.isArray(paper.questionIds) ? paper.questionIds : [];
+            document.getElementById('paperDetailCount').textContent = questionIds.length;
+            const container = document.getElementById('paperDetailQuestionsList');
+            if (!questionIds.length) {
+                container.innerHTML = '<div class="bg-white rounded-xl shadow-sm p-6 text-center text-gray-500">该试卷尚未添加任何题目</div>';
+                return;
+            }
+            container.innerHTML = questionIds.map((questionId, index) => {
+                const question = questions.find(q => q.id === questionId);
+                if (!question) {
+                    return `<div class="bg-white rounded-xl shadow-sm p-6 text-gray-500">第 ${index + 1} 题已删除或不存在</div>`;
+                }
+                const subject = subjects.find(s => s.id === question.subjectId);
+                const subjectName = subject ? subject.name : '未知科目';
+                const difficultyText = getQuestionDifficultyText(question);
+                return `
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <div class="text-sm text-gray-500 mb-2">第 ${index + 1} 题 · ${question.type === 'choice' ? '选择题' : question.type === 'fill' ? '填空题' : '其他'}</div>
+                                <div class="text-gray-900 font-medium line-clamp-2 mb-3"><span class="math-content">${renderLatexContent(question.content || '未填写题面')}</span></div>
+                                <div class="flex flex-wrap gap-3 text-xs text-gray-500">
+                                    <span>科目：${subjectName}</span>
+                                    <span>难度：${difficultyText}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="view-question-detail self-start text-primary hover:underline text-sm" data-id="${question.id}">查看</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            container.querySelectorAll('.view-question-detail').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    showQuestionDetail(id);
+                });
+            });
+            renderMathJaxContent(container);
+        }
+
+        function openExportPapersModal() {
+            if (papers.length === 0) {
+                showNotification('没有可导出的试卷', 'warning');
+                return;
+            }
+            exportPaperSelection = [];
+            exportPaperOrder = [];
+            document.getElementById('exportPaperSearch').value = '';
+            document.querySelector('input[name="exportPaperContentMode"][value="question"]').checked = true;
+            renderExportPapersList();
+            updateExportPaperSelectionSummary();
+            const modal = document.getElementById('exportPapersModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeExportPapersModal() {
+            const modal = document.getElementById('exportPapersModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderExportPapersList() {
+            const container = document.getElementById('exportPapersList');
+            const searchTerm = document.getElementById('exportPaperSearch').value.toLowerCase();
+            let filteredPapers = [...papers];
+            if (searchTerm) {
+                filteredPapers = filteredPapers.filter(p =>
+                    p.name.toLowerCase().includes(searchTerm) ||
+                    (p.description || '').toLowerCase().includes(searchTerm)
+                );
+            }
+            if (!filteredPapers.length) {
+                container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500">暂无匹配试卷</div>';
+                return;
+            }
+            container.innerHTML = filteredPapers.map(paper => {
+                const checked = exportPaperSelection.includes(paper.id);
+                const orderIndex = exportPaperOrder.indexOf(paper.id);
+                return `
+                    <div class="rounded-xl border border-gray-200 bg-white p-4">
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" class="mt-1 export-paper-checkbox" data-id="${paper.id}" ${checked ? 'checked' : ''}>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div>
+                                        <div class="font-semibold text-gray-900">${paper.name}</div>
+                                        <div class="text-xs text-gray-500 mt-1">${paper.description || '无描述'}</div>
+                                    </div>
+                                    <div class="text-xs text-gray-500">${formatDate(paper.createDate)}</div>
+                                </div>
+                                <div class="mt-3 text-xs text-gray-500">题目数量：${Array.isArray(paper.questionIds) ? paper.questionIds.length : 0}</div>
+                                <div class="mt-3 flex items-center gap-2">
+                                    <button type="button" class="text-xs text-primary export-paper-move-up" data-id="${paper.id}">上移</button>
+                                    <button type="button" class="text-xs text-primary export-paper-move-down" data-id="${paper.id}">下移</button>
+                                    <span class="text-xs text-gray-500">顺序：${orderIndex >= 0 ? orderIndex + 1 : '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.export-paper-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const id = this.getAttribute('data-id');
+                    if (this.checked) {
+                        if (!exportPaperSelection.includes(id)) {
+                            exportPaperSelection.push(id);
+                            exportPaperOrder.push(id);
+                        }
+                    } else {
+                        exportPaperSelection = exportPaperSelection.filter(item => item !== id);
+                        exportPaperOrder = exportPaperOrder.filter(item => item !== id);
+                    }
+                    updateExportPaperSelectionSummary();
+                    renderExportPapersList();
+                });
+            });
+
+            document.querySelectorAll('.export-paper-move-up, .export-paper-move-down').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const index = exportPaperOrder.indexOf(id);
+                    if (index === -1) return;
+                    if (this.classList.contains('export-paper-move-up') && index > 0) {
+                        [exportPaperOrder[index - 1], exportPaperOrder[index]] = [exportPaperOrder[index], exportPaperOrder[index - 1]];
+                    } else if (this.classList.contains('export-paper-move-down') && index < exportPaperOrder.length - 1) {
+                        [exportPaperOrder[index], exportPaperOrder[index + 1]] = [exportPaperOrder[index + 1], exportPaperOrder[index]];
+                    }
+                    renderExportPapersList();
+                });
+            });
+
+            updateExportPaperSelectionSummary();
+        }
+
+        function updateExportPaperSelectionSummary() {
+            document.getElementById('exportPaperSelectionSummary').textContent = exportPaperSelection.length;
+        }
+
+        function selectAllExportPapers() {
+            const visibleIds = Array.from(document.querySelectorAll('.export-paper-checkbox')).map(cb => cb.getAttribute('data-id'));
+            exportPaperSelection = Array.from(new Set([...exportPaperSelection, ...visibleIds]));
+            exportPaperOrder = Array.from(new Set([...exportPaperOrder, ...visibleIds]));
+            updateExportPaperSelectionSummary();
+            renderExportPapersList();
+        }
+
+        async function generatePapersPdfDocument() {
+            const selectedPapers = papers.filter(paper => exportPaperSelection.includes(paper.id));
+            if (selectedPapers.length === 0) {
+                showNotification('请先选择要导出的试卷', 'warning');
+                return;
+            }
+            const orderedPapers = selectedPapers.slice().sort((a, b) => {
+                const ai = exportPaperOrder.indexOf(a.id);
+                const bi = exportPaperOrder.indexOf(b.id);
+                if (ai === -1 && bi === -1) return 0;
+                if (ai === -1) return 1;
+                if (bi === -1) return -1;
+                return ai - bi;
+            });
+            const mode = document.querySelector('input[name="exportPaperContentMode"]:checked')?.value || 'question';
+
+            function renderTextWithMath(text) {
+                return String(text || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\n/g, '<br>');
+            }
+
+            function renderQuestionBlock(q, index) {
+                const contentHtml = q.content ? renderTextWithMath(q.content) : '';
+                const photoHtml = q.photos && q.photos.length ? `<img src="${q.photos[0]}" alt="题目图片">` : '';
+                const optionsHtml = q.type === 'choice' && q.options && q.options.length
+                    ? `<div class="print-options">${q.options.map(option => `
+                            <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
+                        `).join('')}</div>`
+                    : '';
+                return `
+                    <div class="print-section">
+                        <div class="print-title">第 ${index} 题</div>
+                        ${contentHtml ? `<div class="print-subtitle math-content">题目：${contentHtml}</div>` : ''}
+                        ${photoHtml}
+                        ${optionsHtml}
+                    </div>
+                `;
+            }
+
+            function renderAnswerBlock(q, index) {
+                const answerHtml = q.answer ? `<div class="math-content">${renderTextWithMath(q.answer)}</div>` : '';
+                const explanationHtml = q.explanation ? `<div class="print-subtitle math-content">解析：${renderTextWithMath(q.explanation)}</div>` : '';
+                const photosHtml = q.explanationPhotos && q.explanationPhotos.length
+                    ? `<div>${q.explanationPhotos.map(photo => `<img src="${photo}" alt="解析图片">`).join('')}</div>`
+                    : '';
+                return `
+                    <div class="print-section">
+                        <div class="print-title">第 ${index} 题 答案</div>
+                        ${answerHtml}
+                        ${explanationHtml}
+                        ${photosHtml}
+                    </div>
+                `;
+            }
+
+            const paperBlocks = orderedPapers.map((paper, paperIndex) => {
+                const questionsContent = [];
+                const answersContent = [];
+                (paper.questionIds || []).forEach((questionId, questionIndex) => {
+                    const question = questions.find(q => q.id === questionId);
+                    if (!question) return;
+                    const itemNumber = questionIndex + 1;
+                    if (mode === 'question' || mode === 'both') {
+                        questionsContent.push(renderQuestionBlock(question, itemNumber));
+                    }
+                    if (mode === 'answer' || mode === 'both') {
+                        answersContent.push(renderAnswerBlock(question, itemNumber));
+                    }
+                });
+
+                const questionSection = questionsContent.length
+                    ? `<div class="print-section">${questionsContent.join('')}</div>`
+                    : '';
+                const answerSection = answersContent.length
+                    ? `<div class="print-page-break"></div><div class="print-section"><div class="print-title">试卷答案</div></div>${answersContent.join('')}`
+                    : '';
+
+                return `
+                    <div class="print-section">
+                        <div class="print-title">试卷：${paper.name}</div>
+                        <div class="print-meta">${paper.description || '无描述'}</div>
+                        ${questionSection}
+                        ${answerSection}
+                    </div>
+                    <div class="print-page-break"></div>
+                `;
+            }).join('');
+
+            const printArea = document.getElementById('exportPrintArea');
+            printArea.innerHTML = `
+                <div class="print-root">
+                    <div class="print-section">
+                        <div class="print-title">试卷导出</div>
+                        <div class="print-meta">导出时间：${formatDate(new Date().toISOString())}</div>
+                    </div>
+                    ${paperBlocks}
+                </div>
+            `;
+
+            const beforePrint = () => {
+                printArea.classList.remove('hidden');
+            };
+            const afterPrint = () => {
+                printArea.classList.add('hidden');
+                window.removeEventListener('afterprint', afterPrint);
+            };
+
+            beforePrint();
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                try {
+                    await MathJax.typesetPromise(printArea.querySelectorAll('.math-content'));
+                } catch (e) {
+                    console.warn('MathJax typeset failed for paper export:', e);
+                }
+            }
+            window.addEventListener('afterprint', afterPrint);
+            window.print();
+            closeExportPapersModal();
+            showNotification('已准备导出试卷 PDF，打印窗口已打开', 'success');
         }
 
         function updateExportSelectionSummary() {
@@ -2868,6 +3535,29 @@
         document.getElementById('exportSearch').addEventListener('input', renderExportQuestionsList);
         document.getElementById('exportSubjectFilter').addEventListener('change', renderExportQuestionsList);
         document.getElementById('exportMasteryFilter').addEventListener('change', renderExportQuestionsList);
+        document.getElementById('createPaperBtn').addEventListener('click', openCreatePaperModal);
+        document.getElementById('exportPaperBtn').addEventListener('click', openExportPapersModal);
+        document.getElementById('closeCreatePaperModal').addEventListener('click', closeCreatePaperModal);
+        document.getElementById('cancelCreatePaperBtn').addEventListener('click', closeCreatePaperModal);
+        document.getElementById('selectAllPaperQuestionsBtn').addEventListener('click', selectAllPaperQuestions);
+        document.getElementById('savePaperBtn').addEventListener('click', savePaper);
+        document.getElementById('paperExportSearch').addEventListener('input', renderPaperQuestionsList);
+        document.getElementById('paperSubjectFilter').addEventListener('change', renderPaperQuestionsList);
+        document.getElementById('paperMasteryFilter').addEventListener('change', renderPaperQuestionsList);
+        document.getElementById('closeExportPapersModal').addEventListener('click', closeExportPapersModal);
+        document.getElementById('cancelExportPapersBtn').addEventListener('click', closeExportPapersModal);
+        document.getElementById('exportPaperWordBtn').addEventListener('click', generatePapersPdfDocument);
+        document.getElementById('exportPaperSearch').addEventListener('input', renderExportPapersList);
+        document.getElementById('selectAllExportPaperBtn').addEventListener('click', selectAllExportPapers);
+        document.getElementById('clearExportPaperSelectionBtn').addEventListener('click', function() {
+            exportPaperSelection = [];
+            exportPaperOrder = [];
+            renderExportPapersList();
+            updateExportPaperSelectionSummary();
+        });
+        document.getElementById('backToPapersBtn').addEventListener('click', function() {
+            switchPage('papers');
+        });
 
         // 复习计划按钮事件
         document.getElementById('reviewPlanBtn').addEventListener('click', function() {
