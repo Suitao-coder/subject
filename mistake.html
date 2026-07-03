@@ -9,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
         window.MathJax = {
             tex: {
@@ -559,6 +560,9 @@
                 <button id="createPaperBtn" class="flex items-center bg-primary text-white px-6 py-3 rounded-lg shadow-sm btn-effect cursor-pointer">
                     <i class="fa fa-plus-circle mr-2"></i> 创建试卷
                 </button>
+                <button id="importPaperBtn" class="flex items-center bg-white text-gray-700 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                    <i class="fa fa-file-excel-o mr-2"></i> 导入试卷
+                </button>
                 <button id="exportPaperBtn" class="flex items-center bg-white text-gray-700 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
                     <i class="fa fa-download mr-2"></i> 导出试卷
                 </button>
@@ -938,6 +942,56 @@
                 <button type="button" id="cancelCreatePaperBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 cursor-pointer">取消</button>
                 <button type="button" id="savePaperBtn" class="px-4 py-2 rounded-lg bg-primary text-white cursor-pointer">
                     <i class="fa fa-save mr-2"></i> 保存试卷
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入试卷弹窗 -->
+    <div id="importPaperModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">导入试卷</h3>
+                    <p class="text-sm text-gray-500 mt-1">请填写试卷名称、科目，并上传符合格式的 XLSX 文件</p>
+                </div>
+                <button id="closeImportPaperModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6 overflow-y-auto">
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">试卷名称 <span class="text-danger">*</span></label>
+                        <input type="text" id="importPaperNameInput" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入试卷名称">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">科目 <span class="text-danger">*</span></label>
+                        <input type="text" id="importPaperSubjectInput" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入科目名称，若科目不存在则自动创建">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">试卷描述</label>
+                        <textarea id="importPaperDescriptionInput" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="可选：为导入试卷添加描述"></textarea>
+                    </div>
+                    <div class="border border-dashed border-gray-300 rounded-lg p-5 bg-gray-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">XLSX 文件</p>
+                                <p class="text-xs text-gray-500 mt-1">文件第一行必须为：序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源</p>
+                            </div>
+                            <button type="button" id="selectImportPaperFileBtn" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
+                                <i class="fa fa-upload mr-2"></i> 选择 XLSX
+                            </button>
+                        </div>
+                        <input type="file" id="importPaperFileInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
+                        <p class="text-xs text-gray-500 mt-3" id="importPaperFileName">未选择文件</p>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="cancelImportPaperBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 cursor-pointer">取消</button>
+                <button type="button" id="confirmImportPaperBtn" class="px-4 py-2 rounded-lg bg-primary text-white cursor-pointer">
+                    <i class="fa fa-save mr-2"></i> 导入并创建试卷
                 </button>
             </div>
         </div>
@@ -3257,6 +3311,175 @@
             });
         }
 
+        function openImportPaperModal() {
+            document.getElementById('importPaperNameInput').value = '';
+            document.getElementById('importPaperSubjectInput').value = '';
+            document.getElementById('importPaperDescriptionInput').value = '';
+            document.getElementById('importPaperFileInput').value = '';
+            document.getElementById('importPaperFileName').textContent = '未选择文件';
+            const modal = document.getElementById('importPaperModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeImportPaperModal() {
+            const modal = document.getElementById('importPaperModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function parseXlsxFile(file, callback, errorCallback) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+                    callback(rows);
+                } catch (err) {
+                    errorCallback(err);
+                }
+            };
+            reader.onerror = function(err) {
+                errorCallback(err);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function findOrCreateSubjectByName(name) {
+            const trimmedName = String(name || '').trim();
+            if (!trimmedName) return null;
+            let subject = subjects.find(s => s.name.toLowerCase() === trimmedName.toLowerCase());
+            if (!subject) {
+                subject = {
+                    id: generateId(),
+                    name: trimmedName,
+                    color: '#3B82F6',
+                    description: '',
+                    createDate: new Date().toISOString()
+                };
+                subjects.push(subject);
+                localStorage.setItem('subjects', JSON.stringify(subjects));
+            }
+            return subject;
+        }
+
+        function handleImportPaperFileSelection(event) {
+            const file = event.target.files && event.target.files[0];
+            const fileNameEl = document.getElementById('importPaperFileName');
+            if (!file) {
+                fileNameEl.textContent = '未选择文件';
+                return;
+            }
+            fileNameEl.textContent = file.name;
+        }
+
+        function confirmImportPaper() {
+            const paperName = document.getElementById('importPaperNameInput').value.trim();
+            const paperSubject = document.getElementById('importPaperSubjectInput').value.trim();
+            const paperDescription = document.getElementById('importPaperDescriptionInput').value.trim();
+            const fileInput = document.getElementById('importPaperFileInput');
+            const file = fileInput.files && fileInput.files[0];
+            if (!paperName) {
+                showNotification('请输入试卷名称', 'error');
+                return;
+            }
+            if (!paperSubject) {
+                showNotification('请输入试卷科目', 'error');
+                return;
+            }
+            if (!file) {
+                showNotification('请选择 XLSX 文件', 'error');
+                return;
+            }
+            if (!file.name.toLowerCase().endsWith('.xlsx')) {
+                showNotification('请选择 XLSX 格式文件', 'error');
+                return;
+            }
+            parseXlsxFile(file, function(rows) {
+                if (!Array.isArray(rows) || rows.length < 2) {
+                    showNotification('XLSX 文件内容不足', 'error');
+                    return;
+                }
+                const header = Array.isArray(rows[0]) ? rows[0].map(item => String(item || '').replace(/\s+/g, '')) : [];
+                const expectedHeader = ['序号','题型','题面','选项A','选项B','选项C','选项D','答案','解析','难度','知识点','来源'];
+                const normalizedHeader = header.map(item => item.replace(/\uFEFF/g, '')).slice(0, expectedHeader.length);
+                const headerMatch = expectedHeader.every((col, idx) => normalizedHeader[idx] === col);
+                if (!headerMatch) {
+                    showNotification('XLSX 首行格式不匹配，请检查字段顺序和名称', 'error');
+                    return;
+                }
+                const subject = findOrCreateSubjectByName(paperSubject);
+                if (!subject) {
+                    showNotification('科目名称无效', 'error');
+                    return;
+                }
+                const addedQuestionIds = [];
+                for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
+                    const row = rows[rowIndex];
+                    if (!row || row.length < expectedHeader.length) continue;
+                    const questionType = String(row[1] || '').trim();
+                    const question = {
+                        id: generateId(),
+                        type: /选择/.test(questionType) || /choice/i.test(questionType) ? 'choice'
+                            : /填空/.test(questionType) || /fill/i.test(questionType) ? 'fill'
+                            : 'other',
+                        content: String(row[2] || '').trim(),
+                        answer: String(row[7] || '').trim(),
+                        explanation: String(row[8] || '').trim(),
+                        difficulty: String(row[9] || '').trim(),
+                        knowledgePoint: String(row[10] || '').trim(),
+                        source: String(row[11] || '').trim(),
+                        subjectId: subject.id,
+                        status: 'pending',
+                        date: new Date().toISOString(),
+                        photos: [],
+                        explanationPhotos: [],
+                        options: []
+                    };
+                    if (question.type === 'choice') {
+                        question.options = [
+                            { label: 'A', text: String(row[3] || '').trim(), photo: '' },
+                            { label: 'B', text: String(row[4] || '').trim(), photo: '' },
+                            { label: 'C', text: String(row[5] || '').trim(), photo: '' },
+                            { label: 'D', text: String(row[6] || '').trim(), photo: '' }
+                        ];
+                    }
+                    if (!question.content && (!question.options || question.options.every(opt => !opt.text))) {
+                        continue;
+                    }
+                    questions.push(question);
+                    addedQuestionIds.push(question.id);
+                }
+                if (!addedQuestionIds.length) {
+                    showNotification('未从 XLSX 中解析出有效题目', 'error');
+                    return;
+                }
+                const newPaper = {
+                    id: generateId(),
+                    name: paperName,
+                    description: paperDescription,
+                    questionIds: addedQuestionIds,
+                    createDate: new Date().toISOString()
+                };
+                papers.unshift(newPaper);
+                localStorage.setItem('questions', JSON.stringify(questions));
+                localStorage.setItem('subjects', JSON.stringify(subjects));
+                localStorage.setItem('papers', JSON.stringify(papers));
+                renderSubjects();
+                renderQuestions();
+                renderDashboard();
+                updateCharts();
+                renderPaperList();
+                closeImportPaperModal();
+                showNotification(`已导入 ${addedQuestionIds.length} 道题并创建试卷“${paperName}”`, 'success');
+            }, function() {
+                showNotification('读取 XLSX 文件失败，请重试', 'error');
+            });
+        }
+
         function openExportPapersModal() {
             if (papers.length === 0) {
                 showNotification('没有可导出的试卷', 'warning');
@@ -3681,6 +3904,14 @@
         document.getElementById('exportSubjectFilter').addEventListener('change', renderExportQuestionsList);
         document.getElementById('exportMasteryFilter').addEventListener('change', renderExportQuestionsList);
         document.getElementById('createPaperBtn').addEventListener('click', openCreatePaperModal);
+        document.getElementById('importPaperBtn').addEventListener('click', openImportPaperModal);
+        document.getElementById('selectImportPaperFileBtn').addEventListener('click', function() {
+            document.getElementById('importPaperFileInput').click();
+        });
+        document.getElementById('importPaperFileInput').addEventListener('change', handleImportPaperFileSelection);
+        document.getElementById('closeImportPaperModal').addEventListener('click', closeImportPaperModal);
+        document.getElementById('cancelImportPaperBtn').addEventListener('click', closeImportPaperModal);
+        document.getElementById('confirmImportPaperBtn').addEventListener('click', confirmImportPaper);
         document.getElementById('exportPaperBtn').addEventListener('click', openExportPapersModal);
         document.getElementById('closeCreatePaperModal').addEventListener('click', closeCreatePaperModal);
         document.getElementById('cancelCreatePaperBtn').addEventListener('click', closeCreatePaperModal);
