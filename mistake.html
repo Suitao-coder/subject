@@ -217,6 +217,58 @@
                 border: 2px dashed #3B82F6;
                 background: #eff6ff;
             }
+            /* 知识点折叠/展开 */
+            .kp-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                height: 20px;
+                cursor: pointer;
+                transition: transform 0.2s ease;
+                font-size: 12px;
+                color: #6b7280;
+                flex-shrink: 0;
+            }
+            .kp-toggle.collapsed {
+                transform: rotate(-90deg);
+            }
+            .kp-children {
+                overflow: hidden;
+                transition: max-height 0.3s ease, opacity 0.3s ease;
+                max-height: 5000px;
+                opacity: 1;
+            }
+            .kp-children.collapsed {
+                max-height: 0;
+                opacity: 0;
+            }
+            .kp-subject-toggle {
+                cursor: pointer;
+                user-select: none;
+                transition: color 0.2s;
+            }
+            .kp-subject-toggle:hover {
+                opacity: 0.8;
+            }
+            .kp-subject-toggle i {
+                transition: transform 0.2s ease;
+                font-size: 14px;
+                margin-right: 4px;
+            }
+            .kp-subject-toggle.collapsed i {
+                transform: rotate(-90deg);
+            }
+            .kp-subject-body {
+                transition: max-height 0.3s ease, opacity 0.3s ease;
+                max-height: 10000px;
+                opacity: 1;
+                overflow: hidden;
+            }
+            .kp-subject-body.collapsed {
+                max-height: 0;
+                opacity: 0;
+            }
         }
     </style>
 </head>
@@ -278,6 +330,9 @@
                     <a href="#statistics" class="nav-link text-gray-600 hover:text-primary transition-colors">
                         <i class="fa fa-bar-chart mr-1"></i> 学习分析
                     </a>
+                    <a href="#knowledgePoints" class="nav-link text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa fa-tags mr-1"></i> 知识点
+                    </a>
                 </div>
                 
                 <div class="flex items-center">
@@ -333,6 +388,9 @@
                 </a>
                 <a href="#statistics" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
                     <i class="fa fa-bar-chart mr-2"></i>学习分析
+                </a>
+                <a href="#knowledgePoints" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
+                    <i class="fa fa-tags mr-2"></i>知识点
                 </a>
             </div>
         </div>
@@ -564,6 +622,9 @@
                                     难度
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    知识点
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     添加日期
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -577,7 +638,7 @@
                         <tbody id="questionsTableBody" class="bg-white divide-y divide-gray-200">
                             <!-- 错题数据将通过JS动态生成 -->
                             <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="9" class="px-6 py-12 text-center text-gray-500">
                                     暂无错题记录，请添加错题
                                 </td>
                             </tr>
@@ -770,6 +831,30 @@
                 </div>
             </div>
         </section>
+
+        <!-- 知识点管理页面 -->
+        <section id="knowledgePointsPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+            <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">知识点管理</h1>
+                    <p class="text-gray-600 mt-1">管理各科目的知识点树，支持多级分类</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select id="kpFilterSubject" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white text-sm">
+                        <option value="">全部科目</option>
+                    </select>
+                    <button id="addKnowledgePointBtn" class="flex items-center bg-primary text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
+                        <i class="fa fa-plus-circle mr-1"></i> 添加知识点
+                    </button>
+                    <button id="importKnowledgePointsBtn" class="flex items-center bg-teal-500 text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
+                        <i class="fa fa-upload mr-1"></i> 批量导入
+                    </button>
+                </div>
+            </div>
+            <div id="knowledgePointTree" class="bg-white rounded-xl p-6 shadow-sm card-shadow min-h-[200px]">
+                <p class="text-gray-500 text-center py-8">暂无知识点，点击"添加知识点"开始创建</p>
+            </div>
+        </section>
     </main>
 
     <!-- 添加/编辑错题模态框 -->
@@ -856,7 +941,9 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label for="questionKnowledgePoint" class="block text-sm font-medium text-gray-700 mb-1">知识点</label>
-                            <input type="text" id="questionKnowledgePoint" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入知识点">
+                            <select id="questionKnowledgePoint" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white">
+                                <option value="">请先选择科目</option>
+                            </select>
                         </div>
                         
                         <div>
@@ -1033,6 +1120,10 @@
                                 <span class="text-sm text-gray-700"><i class="fa fa-bar-chart mr-2 text-orange-500"></i>学习分析</span>
                                 <input type="checkbox" id="settingPageStatistics" class="toggle-switch settings-page-toggle" data-page="statistics">
                             </label>
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-tags mr-2 text-cyan-500"></i>知识点</span>
+                                <input type="checkbox" id="settingPageKnowledgePoints" class="toggle-switch settings-page-toggle" data-page="knowledgePoints">
+                            </label>
                         </div>
                     </div>
                     
@@ -1099,6 +1190,7 @@
                             <option value="subjects" id="optDefaultSubjects">科目管理</option>
                             <option value="papers" id="optDefaultPapers">试卷</option>
                             <option value="statistics" id="optDefaultStatistics">学习分析</option>
+                            <option value="knowledgePoints" id="optDefaultKnowledgePoints">知识点</option>
                         </select>
                     </div>
                     
@@ -1145,6 +1237,97 @@
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 知识点编辑模态框 -->
+    <div id="knowledgePointModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900" id="kpModalTitle">添加知识点</h3>
+                <button id="closeKnowledgePointModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6">
+                <form id="knowledgePointForm">
+                    <input type="hidden" id="kpId">
+                    <div class="mb-4">
+                        <label for="kpSubject" class="block text-sm font-medium text-gray-700 mb-1">所属科目 <span class="text-danger">*</span></label>
+                        <select id="kpSubject" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white" required>
+                            <option value="">请选择科目</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="kpParent" class="block text-sm font-medium text-gray-700 mb-1">父知识点</label>
+                        <select id="kpParent" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white">
+                            <option value="">无（顶级知识点）</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="kpName" class="block text-sm font-medium text-gray-700 mb-1">知识点名称 <span class="text-danger">*</span></label>
+                        <input type="text" id="kpName" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入知识点名称" maxlength="50" required>
+                    </div>
+                    <div class="mt-6 flex items-center gap-3">
+                        <button type="submit" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            <i class="fa fa-save mr-2"></i> 保存
+                        </button>
+                        <button type="button" id="cancelKnowledgePointBtn" class="inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量导入知识点模态框 -->
+    <div id="importKnowledgePointModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
+                <h3 class="text-lg font-medium text-gray-900">批量导入知识点</h3>
+                <button id="closeImportKpModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4 overflow-y-auto">
+                <div class="mb-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                    <p class="font-medium mb-1"><i class="fa fa-info-circle mr-1"></i> 格式说明：</p>
+                    <ul class="list-disc list-inside space-y-1 text-xs">
+                        <li>用 <code class="bg-blue-100 px-1 rounded">### 科目名</code> 开头表示一个科目</li>
+                        <li>用缩进（空格）表示层级，顶级科目可省略 <code>###</code></li>
+                        <li>每行一个知识点，前面加 <code>-</code> 或不加均可</li>
+                        <li>已存在的科目、知识点会自动跳过</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">示例：</label>
+                    <pre class="text-xs bg-gray-50 p-2 rounded-lg text-gray-600 overflow-x-auto">### 数学
+- 代数
+  - 一元一次方程
+  - 二次函数
+- 几何
+  - 三角形
+  - 圆
+### 物理
+- 力学
+  - 牛顿定律
+  - 功和能</pre>
+                </div>
+                <div class="mb-4">
+                    <label for="importKpText" class="block text-sm font-medium text-gray-700 mb-1">粘贴知识点内容 <span class="text-danger">*</span></label>
+                    <textarea id="importKpText" rows="12" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus font-mono text-sm" placeholder="在此粘贴知识点..."></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex items-center gap-3 shrink-0">
+                <button id="doImportKpBtn" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                    <i class="fa fa-check mr-2"></i> 开始导入
+                </button>
+                <button id="cancelImportKpBtn" class="inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                    取消
+                </button>
+                <div id="importKpStatus" class="text-sm text-gray-500 ml-auto hidden"></div>
             </div>
         </div>
     </div>
@@ -1461,7 +1644,8 @@
             localStorage.setItem('data_' + currentGradeId, JSON.stringify({
                 questions: questions,
                 subjects: subjects,
-                papers: papers
+                papers: papers,
+                knowledgePoints: knowledgePoints
             }));
         }
 
@@ -1473,10 +1657,12 @@
                 questions = data.questions || [];
                 subjects = data.subjects || [];
                 papers = data.papers || [];
+                knowledgePoints = data.knowledgePoints || [];
             } else {
                 questions = [];
                 subjects = [];
                 papers = [];
+                knowledgePoints = [];
             }
         }
 
@@ -1501,7 +1687,8 @@
                     localStorage.setItem('data_' + defaultGrade.id, JSON.stringify({
                         questions: JSON.parse(oldQuestions || '[]'),
                         subjects: JSON.parse(oldSubjects || '[]'),
-                        papers: JSON.parse(oldPapers || '[]')
+                        papers: JSON.parse(oldPapers || '[]'),
+                        knowledgePoints: []
                     }));
                     localStorage.removeItem('questions');
                     localStorage.removeItem('subjects');
@@ -1533,10 +1720,11 @@
             loadGradeData(currentGradeId);
         }
 
-        // questions/subjects/papers 将在 initGradeSystem() 中初始化
+        // questions/subjects/papers/knowledgePoints 将在 initGradeSystem() 中初始化
         let questions = [];
         let subjects = [];
         let papers = [];
+        let knowledgePoints = [];
 
         let currentQuestionId = null;
         let currentSubjectId = null;
@@ -1566,7 +1754,8 @@
                 questions: true,
                 subjects: true,
                 papers: true,
-                statistics: true
+                statistics: true,
+                knowledgePoints: true
             },
             dashboardWidgets: {
                 quickActions: true,
@@ -1577,6 +1766,11 @@
             statCardOrder: ['total', 'mastered', 'pending', 'subjects'],
             defaultPage: 'dashboard'
         };
+        // 迁移：确保旧版设置包含新增的 knowledgePoints 字段
+        if (appSettings.enabledPages.knowledgePoints === undefined) {
+            appSettings.enabledPages.knowledgePoints = true;
+            localStorage.setItem('appSettings', JSON.stringify(appSettings));
+        }
         const itemsPerPage = 10;
         const MAX_QUESTION_PHOTOS = 10;
         const MAX_QUESTION_PHOTO_SIZE = 50 * 1024 * 1024;
@@ -1607,6 +1801,9 @@
             
             // 初始化页面数据和图表
             initCharts();
+            initKnowledgePointsPage();
+            initKnowledgePointQuestionBinding();
+            initImportKnowledgePoints();
             refreshQuestionAndSubjectViews();
             renderPaperList();
             
@@ -1872,6 +2069,7 @@
                 questions = [];
                 subjects = [];
                 papers = [];
+                knowledgePoints = [];
                 saveGradeData();
                 updateCurrentGradeDisplay();
                 refreshQuestionAndSubjectViews();
@@ -1889,6 +2087,548 @@
             renderGradeManageList();
             renderGradeSelector();
             showNotification(`年级"${grade.name}"已删除`, 'success');
+        }
+
+        // ==================== 知识点系统 ====================
+
+        // 获取知识点树（按指定科目，返回嵌套结构）
+        function getKnowledgePointTree(subjectId) {
+            const all = knowledgePoints.filter(kp => kp.subjectId === subjectId);
+            const roots = all.filter(kp => !kp.parentId);
+            const buildChildren = (parentId) => {
+                return all.filter(kp => kp.parentId === parentId).map(kp => ({
+                    ...kp,
+                    children: buildChildren(kp.id)
+                }));
+            };
+            return roots.map(root => ({
+                ...root,
+                children: buildChildren(root.id)
+            }));
+        }
+
+        // 获取知识点路径（如 "力学 > 牛顿定律"）
+        function getKnowledgePointPath(kpId) {
+            const kp = knowledgePoints.find(k => k.id === kpId);
+            if (!kp) return '';
+            const path = [];
+            let current = kp;
+            while (current) {
+                path.unshift(current.name);
+                current = knowledgePoints.find(k => k.id === current.parentId);
+            }
+            return path.join(' > ');
+        }
+
+        // 获取知识点所有后代ID（用于级联选择器）
+        function getKnowledgePointDescendants(parentId) {
+            const result = new Set();
+            const stack = [parentId];
+            while (stack.length > 0) {
+                const pid = stack.pop();
+                const children = knowledgePoints.filter(kp => kp.parentId === pid);
+                children.forEach(child => {
+                    result.add(child.id);
+                    stack.push(child.id);
+                });
+            }
+            return result;
+        }
+
+        // 渲染知识点选择器选项（级联，缩进表示）
+        function populateKnowledgePointOptions(selectEl, subjectId, selectedId) {
+            selectEl.innerHTML = '<option value="">请选择知识点</option>';
+            if (!subjectId) {
+                selectEl.innerHTML = '<option value="">请先选择科目</option>';
+                return;
+            }
+            const tree = getKnowledgePointTree(subjectId);
+            const addOptions = (nodes, depth) => {
+                nodes.forEach(node => {
+                    const prefix = '　'.repeat(depth);
+                    const isDescendant = selectedId && getKnowledgePointDescendants(selectedId).has(node.id);
+                    // 编辑时不能选择自己或自己的后代
+                    selectEl.innerHTML += `<option value="${node.id}" ${node.id === selectedId ? 'disabled style="color:#aaa"' : ''}>${prefix}${node.name}</option>`;
+                    if (node.children && node.children.length > 0) {
+                        addOptions(node.children, depth + 1);
+                    }
+                });
+            };
+            addOptions(tree, 0);
+        }
+
+        // 初始化知识点管理页面
+        function initKnowledgePointsPage() {
+            document.getElementById('addKnowledgePointBtn').addEventListener('click', openKnowledgePointModal);
+
+            document.getElementById('kpFilterSubject').addEventListener('change', function() {
+                renderKnowledgePointTree();
+            });
+
+            // 知识点模态框
+            document.getElementById('closeKnowledgePointModal').addEventListener('click', closeKnowledgePointModal);
+            document.getElementById('cancelKnowledgePointBtn').addEventListener('click', closeKnowledgePointModal);
+            document.getElementById('knowledgePointForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveKnowledgePoint();
+            });
+
+            // 科目改变时更新父知识点选项
+            document.getElementById('kpSubject').addEventListener('change', function() {
+                const subjId = this.value;
+                populateKnowledgePointParentOptions(subjId);
+            });
+        }
+
+        // 渲染知识点树
+        function renderKnowledgePointTree() {
+            const container = document.getElementById('knowledgePointTree');
+            const filterSubject = document.getElementById('kpFilterSubject').value;
+
+            // 更新筛选下拉
+            const filterSelect = document.getElementById('kpFilterSubject');
+            const savedFilter = filterSelect.value;
+            filterSelect.innerHTML = '<option value="">全部科目</option>';
+            subjects.forEach(s => {
+                filterSelect.innerHTML += `<option value="${s.id}" ${s.id === savedFilter ? 'selected' : ''}>${s.name}</option>`;
+            });
+
+            let filteredKps = knowledgePoints;
+            if (filterSubject) {
+                filteredKps = knowledgePoints.filter(kp => kp.subjectId === filterSubject);
+            }
+
+            if (filteredKps.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">暂无知识点，点击"添加知识点"开始创建</p>';
+                return;
+            }
+
+            if (filterSubject) {
+                // 按科目展示树形结构
+                const tree = getKnowledgePointTree(filterSubject);
+                container.innerHTML = renderTreeHTML(tree, 0);
+            } else {
+                // 按科目分组展示
+                const grouped = {};
+                filteredKps.forEach(kp => {
+                    if (!grouped[kp.subjectId]) grouped[kp.subjectId] = [];
+                    grouped[kp.subjectId].push(kp);
+                });
+
+                let html = '';
+                Object.keys(grouped).forEach(subjId => {
+                    const subject = subjects.find(s => s.id === subjId);
+                    const tree = getKnowledgePointTree(subjId);
+                    html += `<div class="mb-6">
+                        <h3 id="kp-subject-header-${subjId}" class="kp-subject-toggle text-lg font-bold mb-3 flex items-center" style="color: ${subject ? subject.color : '#3B82F6'}" onclick="toggleSubjectKp('${subjId}')" title="展开/收起">
+                            <i class="fa fa-chevron-down mr-1"></i>
+                            <span class="w-3 h-3 rounded-full inline-block mr-2" style="background-color: ${subject ? subject.color : '#3B82F6'}"></span>${subject ? subject.name : '未知科目'}
+                        </h3>
+                        <div id="kp-subject-body-${subjId}" class="kp-subject-body">
+                            ${renderTreeHTML(tree, 0)}
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            }
+
+            // 绑定操作按钮事件
+            container.querySelectorAll('.edit-kp-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    openKnowledgePointModal(this.getAttribute('data-id'));
+                });
+            });
+            container.querySelectorAll('.add-child-kp-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    openKnowledgePointModal(null, this.getAttribute('data-id'));
+                });
+            });
+            container.querySelectorAll('.delete-kp-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    currentGradeDeleteId = id;
+                    const kp = knowledgePoints.find(k => k.id === id);
+                    const hasChildren = knowledgePoints.some(k => k.parentId === id);
+                    let msg = `确定要删除知识点"${kp ? kp.name : ''}"吗？`;
+                    if (hasChildren) msg += '其下所有子知识点也会被一并删除。';
+                    msg += '此操作不可撤销。';
+                    document.getElementById('deleteConfirmMessage').textContent = msg;
+                    deleteType = 'knowledgePoint';
+                    document.getElementById('confirmDeleteModal').classList.remove('hidden');
+                    document.getElementById('confirmDeleteModal').classList.add('flex');
+                });
+            });
+        }
+
+        // 渲染树形HTML
+        function renderTreeHTML(nodes, depth) {
+            if (!nodes || nodes.length === 0) return '';
+            let html = '<div class="space-y-1">';
+            nodes.forEach(node => {
+                const hasChildren = knowledgePoints.some(kp => kp.parentId === node.id);
+                const descCount = hasChildren ? countAllDescendants(node.id) : 0;
+                html += `
+                <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5 hover:bg-gray-100 transition-colors" style="margin-left: ${depth * 20}px;">
+                    <div class="flex items-center space-x-2">
+                        ${hasChildren
+                            ? `<span class="kp-toggle" data-kp-id="${node.id}" onclick="toggleKpChildren('${node.id}')" title="展开/收起"><i class="fa fa-chevron-down"></i></span>`
+                            : `<span class="inline-block" style="width:20px;"></span>`}
+                        <span class="text-sm font-medium text-gray-700">${node.name}</span>
+                        ${hasChildren ? `<span class="text-xs text-gray-400">(${descCount}个子知识)</span>` : ''}
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button class="text-xs text-primary hover:text-primary/80 add-child-kp-btn cursor-pointer" data-id="${node.id}" title="添加子知识点">
+                            <i class="fa fa-plus-circle"></i>
+                        </button>
+                        <button class="text-xs text-primary hover:text-primary/80 edit-kp-btn cursor-pointer" data-id="${node.id}" title="编辑">
+                            <i class="fa fa-pencil"></i>
+                        </button>
+                        <button class="text-xs text-danger hover:text-danger/80 delete-kp-btn cursor-pointer" data-id="${node.id}" title="删除">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                </div>`;
+                if (hasChildren) {
+                    html += `<div class="kp-children" id="kp-children-${node.id}">${renderTreeHTML(node.children, depth + 1)}</div>`;
+                }
+            });
+            html += '</div>';
+            return html;
+        }
+
+        // 切换父知识点的折叠/展开
+        function toggleKpChildren(nodeId) {
+            const children = document.getElementById('kp-children-' + nodeId);
+            if (!children) return;
+            const isCollapsed = children.classList.contains('collapsed');
+            children.classList.toggle('collapsed');
+            // 更新父节点上的箭头
+            const toggleBtn = document.querySelector(`.kp-toggle[data-kp-id="${nodeId}"]`);
+            if (toggleBtn) {
+                if (isCollapsed) {
+                    toggleBtn.classList.remove('collapsed');
+                } else {
+                    toggleBtn.classList.add('collapsed');
+                }
+            }
+        }
+
+        // 切换科目整体的折叠/展开
+        function toggleSubjectKp(subjectId) {
+            const body = document.getElementById('kp-subject-body-' + subjectId);
+            if (!body) return;
+            const isCollapsed = body.classList.contains('collapsed');
+            body.classList.toggle('collapsed');
+            const header = document.getElementById('kp-subject-header-' + subjectId);
+            if (header) {
+                if (isCollapsed) {
+                    header.classList.remove('collapsed');
+                } else {
+                    header.classList.add('collapsed');
+                }
+            }
+        }
+
+        // 统计所有后代数量
+        function countAllDescendants(parentId) {
+            let count = 0;
+            const children = knowledgePoints.filter(kp => kp.parentId === parentId);
+            count += children.length;
+            children.forEach(child => {
+                count += countAllDescendants(child.id);
+            });
+            return count;
+        }
+
+        // 打开知识点模态框
+        function openKnowledgePointModal(editId, parentId) {
+            document.getElementById('kpId').value = '';
+            document.getElementById('kpName').value = '';
+            document.getElementById('kpModalTitle').textContent = '添加知识点';
+
+            // 加载科目选项
+            loadSubjectOptions('kpSubject');
+
+            // 如果指定了父知识点，自动选中其所属科目
+            if (parentId && !editId) {
+                const parentKp = knowledgePoints.find(k => k.id === parentId);
+                if (parentKp) {
+                    document.getElementById('kpSubject').value = parentKp.subjectId;
+                }
+            }
+
+            if (editId) {
+                const kp = knowledgePoints.find(k => k.id === editId);
+                if (kp) {
+                    document.getElementById('kpId').value = kp.id;
+                    document.getElementById('kpName').value = kp.name;
+                    document.getElementById('kpSubject').value = kp.subjectId;
+                    document.getElementById('kpModalTitle').textContent = '编辑知识点';
+                    populateKnowledgePointParentOptions(kp.subjectId, kp.parentId);
+                }
+            } else {
+                // 加载父知识点选项（含预选）
+                const currentSubject = document.getElementById('kpSubject').value;
+                populateKnowledgePointParentOptions(currentSubject, parentId);
+            }
+
+            document.getElementById('knowledgePointModal').classList.remove('hidden');
+            document.getElementById('knowledgePointModal').classList.add('flex');
+        }
+
+        // 关闭知识点模态框
+        function closeKnowledgePointModal() {
+            document.getElementById('knowledgePointModal').classList.add('hidden');
+            document.getElementById('knowledgePointModal').classList.remove('flex');
+            document.getElementById('kpId').value = '';
+            document.getElementById('kpName').value = '';
+        }
+
+        // 填充父知识点下拉选项
+        function populateKnowledgePointParentOptions(subjectId, selectedParentId) {
+            const select = document.getElementById('kpParent');
+            select.innerHTML = '<option value="">无（顶级知识点）</option>';
+            if (!subjectId) return;
+
+            const tree = getKnowledgePointTree(subjectId);
+            const addOptions = (nodes, depth) => {
+                nodes.forEach(node => {
+                    const prefix = '　'.repeat(depth);
+                    select.innerHTML += `<option value="${node.id}" ${node.id === selectedParentId ? 'selected' : ''}>${prefix}${node.name}</option>`;
+                    if (node.children && node.children.length > 0) {
+                        addOptions(node.children, depth + 1);
+                    }
+                });
+            };
+            addOptions(tree, 0);
+        }
+
+        // 保存知识点
+        function saveKnowledgePoint() {
+            const id = document.getElementById('kpId').value;
+            const name = document.getElementById('kpName').value.trim();
+            const subjectId = document.getElementById('kpSubject').value;
+            const parentId = document.getElementById('kpParent').value || null;
+
+            if (!name) {
+                showNotification('请输入知识点名称', 'error');
+                return;
+            }
+            if (!subjectId) {
+                showNotification('请选择所属科目', 'error');
+                return;
+            }
+
+            if (id) {
+                // 编辑模式：防止循环引用
+                if (parentId) {
+                    const descendants = getKnowledgePointDescendants(id);
+                    if (id === parentId || descendants.has(parentId)) {
+                        showNotification('不能将自己或自己的后代设为父知识点', 'error');
+                        return;
+                    }
+                }
+                const kp = knowledgePoints.find(k => k.id === id);
+                if (kp) {
+                    kp.name = name;
+                    kp.subjectId = subjectId;
+                    kp.parentId = parentId;
+                }
+                showNotification('知识点已更新', 'success');
+            } else {
+                // 新增模式
+                knowledgePoints.push({
+                    id: generateId(),
+                    name,
+                    subjectId,
+                    parentId,
+                    createDate: new Date().toISOString()
+                });
+                showNotification('知识点已添加', 'success');
+            }
+
+            saveGradeData();
+            closeKnowledgePointModal();
+            renderKnowledgePointTree();
+        }
+
+        // 删除知识点
+        function deleteKnowledgePoint(kpId) {
+            const kp = knowledgePoints.find(k => k.id === kpId);
+            if (!kp) return;
+
+            // 递归删除所有子知识点
+            const descendants = getKnowledgePointDescendants(kpId);
+            const idsToDelete = new Set([kpId, ...descendants]);
+            knowledgePoints = knowledgePoints.filter(k => !idsToDelete.has(k.id));
+            saveGradeData();
+            renderKnowledgePointTree();
+            showNotification(`知识点"${kp.name}"已删除`, 'success');
+        }
+
+        // 更新错题表单中的知识点下拉
+        function updateQuestionKnowledgePointSelect(subjectId, selectedKpId) {
+            const select = document.getElementById('questionKnowledgePoint');
+            if (!select) return;
+            populateKnowledgePointOptions(select, subjectId, selectedKpId);
+        }
+
+        // 监听错题表单科目变化
+        function initKnowledgePointQuestionBinding() {
+            const subjectSelect = document.getElementById('questionSubject');
+            if (!subjectSelect) return;
+            subjectSelect.addEventListener('change', function() {
+                updateQuestionKnowledgePointSelect(this.value, null);
+            });
+        }
+
+        // ==================== 批量导入知识点 ====================
+        function initImportKnowledgePoints() {
+            document.getElementById('importKnowledgePointsBtn').addEventListener('click', openImportKpModal);
+            document.getElementById('closeImportKpModal').addEventListener('click', closeImportKpModal);
+            document.getElementById('cancelImportKpBtn').addEventListener('click', closeImportKpModal);
+            document.getElementById('doImportKpBtn').addEventListener('click', doImportKnowledgePoints);
+            document.getElementById('importKnowledgePointModal').addEventListener('click', function(e) {
+                if (e.target === this) closeImportKpModal();
+            });
+        }
+
+        function openImportKpModal() {
+            document.getElementById('importKpText').value = '';
+            document.getElementById('importKpStatus').classList.add('hidden');
+            document.getElementById('importKpText').style.borderColor = '';
+            document.getElementById('importKnowledgePointModal').classList.remove('hidden');
+            document.getElementById('importKnowledgePointModal').classList.add('flex');
+        }
+
+        function closeImportKpModal() {
+            document.getElementById('importKnowledgePointModal').classList.add('hidden');
+            document.getElementById('importKnowledgePointModal').classList.remove('flex');
+        }
+
+        function doImportKnowledgePoints() {
+            const text = document.getElementById('importKpText').value.trim();
+            if (!text) {
+                document.getElementById('importKpText').style.borderColor = '#EF4444';
+                return;
+            }
+            document.getElementById('importKpText').style.borderColor = '';
+
+            const statusEl = document.getElementById('importKpStatus');
+            statusEl.classList.remove('hidden');
+            statusEl.className = 'text-sm text-blue-600 ml-auto';
+            statusEl.textContent = '解析中...';
+
+            // 解析文本
+            const lines = text.split(/\r?\n/);
+            let currentSubjectId = null;
+            let parentStack = [{ id: null, depth: -1, subjectId: null }]; // 层级栈
+            let createdCount = 0;
+            let skippedCount = 0;
+            const errors = [];
+            const addKp = (name, subjectId, parentId) => {
+                // 检查是否已存在同名同父级知识点
+                const exists = knowledgePoints.some(kp =>
+                    kp.name === name && kp.subjectId === subjectId && kp.parentId === parentId
+                );
+                if (exists) {
+                    skippedCount++;
+                    return null;
+                }
+                const newKp = {
+                    id: generateId(),
+                    name: name,
+                    subjectId: subjectId,
+                    parentId: parentId,
+                    createDate: new Date().toISOString()
+                };
+                knowledgePoints.push(newKp);
+                createdCount++;
+                return newKp.id;
+            };
+
+            for (let i = 0; i < lines.length; i++) {
+                const rawLine = lines[i];
+                const trimmed = rawLine.trim();
+                if (!trimmed) continue; // 跳过空行
+
+                // 检测科目声明：### 科目名
+                const subjectMatch = trimmed.match(/^###\s+(.+)$/);
+                if (subjectMatch) {
+                    const subjectName = subjectMatch[1].trim();
+                    let subj = subjects.find(s => s.name === subjectName);
+                    if (subj) {
+                        currentSubjectId = subj.id;
+                    } else {
+                        // 科目不存在，自动创建
+                        subj = {
+                            id: generateId(),
+                            name: subjectName,
+                            color: getRandomColor(),
+                            createDate: new Date().toISOString()
+                        };
+                        subjects.push(subj);
+                        currentSubjectId = subj.id;
+                        errors.push(`[第${i + 1}行] 科目"${subjectName}"不存在，已自动创建`);
+                    }
+                    // 重置层级栈
+                    parentStack = [{ id: null, depth: -1, subjectId: currentSubjectId }];
+                    continue;
+                }
+
+                // 计算缩进深度（前导空格数）
+                const leadingSpaces = rawLine.match(/^(\s*)/)[1].length;
+                // 去除前导的 - 符号
+                let name = trimmed.replace(/^-\s*/, '');
+                if (!name) continue;
+
+                if (!currentSubjectId && parentStack[0].subjectId) {
+                    currentSubjectId = parentStack[0].subjectId;
+                }
+
+                if (!currentSubjectId) {
+                    errors.push(`[第${i + 1}行] "${name}" 缺少科目声明，请先用 "### 科目名" 声明所属科目`);
+                    continue;
+                }
+
+                // 根据缩进找到父级
+                // 弹出栈中深度 >= 当前深度的元素
+                while (parentStack.length > 1 && parentStack[parentStack.length - 1].depth >= leadingSpaces) {
+                    parentStack.pop();
+                }
+                const parent = parentStack[parentStack.length - 1];
+                const parentId = parent.depth < leadingSpaces ? parent.id : null;
+
+                const newId = addKp(name, currentSubjectId, parentId);
+                if (newId) {
+                    parentStack.push({ id: newId, depth: leadingSpaces, subjectId: currentSubjectId });
+                }
+            }
+
+            // 保存数据
+            saveGradeData();
+            renderKnowledgePointTree();
+
+            // 显示结果
+            let resultHtml = `导入完成：新增 ${createdCount} 个`;
+            if (skippedCount > 0) resultHtml += `，跳过 ${skippedCount} 个`;
+            if (errors.length > 0) {
+                statusEl.className = 'text-sm text-amber-600 ml-auto';
+                resultHtml += `<br><span class="text-xs">${errors.slice(0, 3).join('<br>')}${errors.length > 3 ? '<br>...还有 ' + (errors.length - 3) + ' 条提示' : ''}</span>`;
+            } else {
+                statusEl.className = 'text-sm text-green-600 ml-auto';
+            }
+            statusEl.innerHTML = resultHtml;
+
+            // 刷新关联的下拉框
+            if (createdCount > 0) {
+                showNotification(`成功导入 ${createdCount} 个知识点`, 'success');
+            }
+        }
+
+        function getRandomColor() {
+            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316', '#6366F1', '#14B8A6'];
+            return colors[Math.floor(Math.random() * colors.length)];
         }
 
         // 初始化导航
@@ -1941,6 +2681,8 @@
             // 特定页面初始化
             if (page === 'statistics') {
                 updateCharts();
+            } else if (page === 'knowledgePoints') {
+                renderKnowledgePointTree();
             }
         }
 
@@ -2136,6 +2878,7 @@
             document.getElementById('settingPageSubjects').checked = appSettings.enabledPages.subjects;
             document.getElementById('settingPagePapers').checked = appSettings.enabledPages.papers;
             document.getElementById('settingPageStatistics').checked = appSettings.enabledPages.statistics;
+            document.getElementById('settingPageKnowledgePoints').checked = appSettings.enabledPages.knowledgePoints;
             
             // 填充仪表盘部件开关
             document.getElementById('settingWidgetQuickActions').checked = appSettings.dashboardWidgets.quickActions;
@@ -2174,6 +2917,7 @@
             optSubjects.style.display = appSettings.enabledPages.subjects ? '' : 'none';
             optPapers.style.display = appSettings.enabledPages.papers ? '' : 'none';
             optStatistics.style.display = appSettings.enabledPages.statistics ? '' : 'none';
+            document.getElementById('optDefaultKnowledgePoints').style.display = appSettings.enabledPages.knowledgePoints ? '' : 'none';
             
             // 如果当前默认页被禁用，自动切到 dashboard
             const sel = document.getElementById('settingDefaultPage');
@@ -2267,6 +3011,7 @@
             appSettings.enabledPages.subjects = document.getElementById('settingPageSubjects').checked;
             appSettings.enabledPages.papers = document.getElementById('settingPagePapers').checked;
             appSettings.enabledPages.statistics = document.getElementById('settingPageStatistics').checked;
+            appSettings.enabledPages.knowledgePoints = document.getElementById('settingPageKnowledgePoints').checked;
             
             // 读取仪表盘部件开关
             appSettings.dashboardWidgets.quickActions = document.getElementById('settingWidgetQuickActions').checked;
@@ -2303,7 +3048,8 @@
                     questions: true,
                     subjects: true,
                     papers: true,
-                    statistics: true
+                    statistics: true,
+                    knowledgePoints: true
                 },
                 dashboardWidgets: {
                     quickActions: true,
@@ -2345,7 +3091,8 @@
                 questions: { desktop: 'a[href="#questions"]', mobile: 'a[href="#questions"]' },
                 subjects: { desktop: 'a[href="#subjects"]', mobile: 'a[href="#subjects"]' },
                 papers: { desktop: 'a[href="#papers"]', mobile: 'a[href="#papers"]' },
-                statistics: { desktop: 'a[href="#statistics"]', mobile: 'a[href="#statistics"]' }
+                statistics: { desktop: 'a[href="#statistics"]', mobile: 'a[href="#statistics"]' },
+                knowledgePoints: { desktop: 'a[href="#knowledgePoints"]', mobile: 'a[href="#knowledgePoints"]' }
             };
             
             Object.keys(pageNavMap).forEach(page => {
@@ -2808,6 +3555,8 @@
                     document.getElementById('questionExplanation').value = question.explanation;
                     document.getElementById('questionSubject').value = question.subjectId;
                     document.getElementById('questionDifficulty').value = question.difficulty;
+                    // 先填充知识点选项，再设置选中值
+                    updateQuestionKnowledgePointSelect(question.subjectId, question.knowledgePoint);
                     document.getElementById('questionKnowledgePoint').value = question.knowledgePoint || '';
                     document.getElementById('questionSource').value = question.source || question.status || '';
                     document.getElementById('questionType').value = question.type || 'choice';
@@ -2820,6 +3569,8 @@
             } else {
                 // 新增模式
                 title.textContent = '添加新错题';
+                // 重置知识点选择器
+                document.getElementById('questionKnowledgePoint').innerHTML = '<option value="">请先选择科目</option>';
             }
             
             modal.classList.remove('hidden');
@@ -2973,7 +3724,7 @@
             }
             
             // 保存到本地存储
-            localStorage.setItem('subjects', JSON.stringify(subjects));
+            saveGradeData();
             
             // 立即关闭模态框
             closeSubjectModal();
@@ -3036,19 +3787,19 @@
             if (type === 'question' && questionId) {
                 // 删除错题
                 questions = questions.filter(q => q.id !== questionId);
-                localStorage.setItem('questions', JSON.stringify(questions));
+                saveGradeData();
                 showNotification('错题已删除', 'success');
             } else if (type === 'subject' && subjectId) {
-                // 删除科目及关联的错题
+                // 删除科目及关联的错题和知识点
                 questions = questions.filter(q => q.subjectId !== subjectId);
                 subjects = subjects.filter(s => s.id !== subjectId);
-                localStorage.setItem('questions', JSON.stringify(questions));
-                localStorage.setItem('subjects', JSON.stringify(subjects));
+                knowledgePoints = knowledgePoints.filter(kp => kp.subjectId !== subjectId);
+                saveGradeData();
                 showNotification('科目已删除', 'success');
             } else if (type === 'paper' && paperId) {
                 // 删除试卷
                 papers = papers.filter(p => p.id !== paperId);
-                localStorage.setItem('papers', JSON.stringify(papers));
+                saveGradeData();
                 showNotification('试卷已删除', 'success');
             } else if (type === 'logout') {
                 // 退出登录 - 跳转到首页
@@ -3059,6 +3810,11 @@
                 closeConfirmDeleteModal();
                 deleteGrade(gradeDeleteId);
                 return; // deleteGrade 内部会处理后续 UI 刷新
+            } else if (type === 'knowledgePoint' && gradeDeleteId) {
+                // 删除知识点
+                closeConfirmDeleteModal();
+                deleteKnowledgePoint(gradeDeleteId);
+                return;
             }
             
             closeConfirmDeleteModal();
@@ -3163,7 +3919,7 @@
                     ${question.knowledgePoint ? `
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">知识点</h4>
-                        <div class="p-2 bg-gray-50 rounded-lg">${question.knowledgePoint}</div>
+                        <div class="p-2 bg-gray-50 rounded-lg">${getKnowledgePointPath(question.knowledgePoint)}</div>
                     </div>
                     ` : ''}
                 </div>
@@ -3249,7 +4005,7 @@
             if (!question) return;
 
             question.status = mastered ? 'mastered' : 'pending';
-            localStorage.setItem('questions', JSON.stringify(questions));
+            saveGradeData();
             renderQuestions();
             renderDashboard();
             updateCharts();
@@ -3282,7 +4038,7 @@
                 const question = questions.find(q => q.id === id);
                 if (question) question.status = 'mastered';
             });
-            localStorage.setItem('questions', JSON.stringify(questions));
+            saveGradeData();
             renderQuestions();
             renderDashboard();
             updateCharts();
@@ -3300,7 +4056,7 @@
                 const question = questions.find(q => q.id === id);
                 if (question) question.status = 'pending';
             });
-            localStorage.setItem('questions', JSON.stringify(questions));
+            saveGradeData();
             renderQuestions();
             renderDashboard();
             updateCharts();
@@ -3318,12 +4074,11 @@
                 return;
             }
             questions = questions.filter(q => !selectedIds.includes(q.id));
-            localStorage.setItem('questions', JSON.stringify(questions));
             // 同时从试卷中移除
             papers.forEach(paper => {
                 paper.questionIds = paper.questionIds.filter(qid => !selectedIds.includes(qid));
             });
-            localStorage.setItem('papers', JSON.stringify(papers));
+            saveGradeData();
             renderQuestions();
             renderDashboard();
             updateCharts();
@@ -3379,7 +4134,7 @@
                     q.content.toLowerCase().includes(searchTerm) || 
                     q.answer.toLowerCase().includes(searchTerm) ||
                     q.explanation.toLowerCase().includes(searchTerm) ||
-                    (q.knowledgePoint && q.knowledgePoint.toLowerCase().includes(searchTerm))
+                    (q.knowledgePoint && getKnowledgePointPath(q.knowledgePoint).toLowerCase().includes(searchTerm))
                 );
             }
             
@@ -3395,7 +4150,7 @@
             if (filteredQuestions.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
                             暂无符合条件的错题记录
                         </td>
                     </tr>
@@ -3432,6 +4187,9 @@
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${difficultyClass}">
                             ${difficultyText}
                         </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-600 max-w-[150px] truncate" title="${question.knowledgePoint ? getKnowledgePointPath(question.knowledgePoint) : ''}">${question.knowledgePoint ? getKnowledgePointPath(question.knowledgePoint) : '-'}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm text-gray-500">${formatDate(question.date)}</div>
@@ -3971,25 +4729,25 @@
             }
             
             // 统计知识点出现频率
-            const knowledgePoints = {};
+            const kpFrequency = {};
             questions.forEach(question => {
                 if (question.knowledgePoint) {
-                    const kp = question.knowledgePoint.trim();
-                    if (kp) {
-                        if (!knowledgePoints[kp]) {
-                            knowledgePoints[kp] = {
+                    const kpName = getKnowledgePointPath(question.knowledgePoint) || question.knowledgePoint;
+                    if (kpName) {
+                        if (!kpFrequency[kpName]) {
+                            kpFrequency[kpName] = {
                                 count: 0,
                                 subjectIds: new Set()
                             };
                         }
-                        knowledgePoints[kp].count++;
-                        knowledgePoints[kp].subjectIds.add(question.subjectId);
+                        kpFrequency[kpName].count++;
+                        kpFrequency[kpName].subjectIds.add(question.subjectId);
                     }
                 }
             });
             
             // 转换为数组并排序
-            const kpArray = Object.entries(knowledgePoints).map(([name, data]) => ({
+            const kpArray = Object.entries(kpFrequency).map(([name, data]) => ({
                 name,
                 count: data.count,
                 subjectIds: Array.from(data.subjectIds)
@@ -4174,7 +4932,7 @@
                     (q.content || '').toLowerCase().includes(searchTerm) ||
                     (q.answer || '').toLowerCase().includes(searchTerm) ||
                     (q.explanation || '').toLowerCase().includes(searchTerm) ||
-                    (q.knowledgePoint || '').toLowerCase().includes(searchTerm)
+                    (q.knowledgePoint && getKnowledgePointPath(q.knowledgePoint).toLowerCase().includes(searchTerm))
                 );
             }
 
@@ -4471,7 +5229,7 @@
                     papers[idx].name = name;
                     papers[idx].description = description;
                     papers[idx].questionIds = currentPaperOrder.slice();
-                    localStorage.setItem('papers', JSON.stringify(papers));
+                    saveGradeData();
                     showNotification('试卷已更新', 'success');
                     // 如果正在查看该试卷，刷新详情
                     if (currentPaperDetailId === currentEditingPaperId) {
@@ -4488,7 +5246,7 @@
                     createDate: new Date().toISOString()
                 };
                 papers.unshift(paper);
-                localStorage.setItem('papers', JSON.stringify(papers));
+                saveGradeData();
                 showNotification('试卷已创建', 'success');
             }
 
@@ -4670,7 +5428,7 @@
                 const paper = papers.find(p => p.id === currentPaperDetailId);
                 if (paper) {
                     paper.questionIds = currentPaperOrder.slice();
-                    localStorage.setItem('papers', JSON.stringify(papers));
+                    saveGradeData();
                     renderPaperDetailPage(paper);
                 }
 
@@ -4755,9 +5513,30 @@
                     createDate: new Date().toISOString()
                 };
                 subjects.push(subject);
-                localStorage.setItem('subjects', JSON.stringify(subjects));
+                saveGradeData();
             }
             return subject;
+        }
+
+        // 辅助函数：根据名称和科目ID查找或创建知识点，返回 { id, isNew }
+        function findOrCreateKnowledgePointByName(name, subjectId, parentId) {
+            const trimmedName = String(name || '').trim();
+            if (!trimmedName || !subjectId) return { id: '', isNew: false };
+            // 按名称匹配：同科目下同父级查找
+            const existing = knowledgePoints.find(kp =>
+                kp.name === trimmedName && kp.subjectId === subjectId && kp.parentId === (parentId || null)
+            );
+            if (existing) return { id: existing.id, isNew: false };
+            // 未找到则自动创建
+            const newKp = {
+                id: generateId(),
+                name: trimmedName,
+                subjectId: subjectId,
+                parentId: parentId || null,
+                createDate: new Date().toISOString()
+            };
+            knowledgePoints.push(newKp);
+            return { id: newKp.id, isNew: true };
         }
 
         function handleImportPaperFileSelection(event) {
@@ -4818,10 +5597,13 @@
                     return;
                 }
                 const addedQuestionIds = [];
+                let newKpCount = 0;
                 for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
                     const row = rows[rowIndex];
                     if (!row || row.length < expectedHeader.length) continue;
                     const questionType = String(row[1] || '').trim();
+                    const kpResult = findOrCreateKnowledgePointByName(String(row[10] || '').trim(), subject.id, null);
+                    if (kpResult.isNew) newKpCount++;
                     const question = {
                         id: generateId(),
                         type: /选择/.test(questionType) || /choice/i.test(questionType) ? 'choice'
@@ -4831,7 +5613,7 @@
                         answer: String(row[7] || '').trim(),
                         explanation: String(row[8] || '').trim(),
                         difficulty: String(row[9] || '').trim(),
-                        knowledgePoint: String(row[10] || '').trim(),
+                        knowledgePoint: kpResult.id,
                         source: String(row[11] || '').trim(),
                         subjectId: subject.id,
                         status: 'pending',
@@ -4866,16 +5648,16 @@
                     createDate: new Date().toISOString()
                 };
                 papers.unshift(newPaper);
-                localStorage.setItem('questions', JSON.stringify(questions));
-                localStorage.setItem('subjects', JSON.stringify(subjects));
-                localStorage.setItem('papers', JSON.stringify(papers));
+                saveGradeData();
                 renderSubjects();
                 renderQuestions();
                 renderDashboard();
                 updateCharts();
                 renderPaperList();
                 closeImportPaperModal();
-                showNotification(`已导入 ${addedQuestionIds.length} 道题并创建试卷"${paperName}"`, 'success');
+                let paperMsg = `已导入 ${addedQuestionIds.length} 道题并创建试卷"${paperName}"`;
+                if (newKpCount > 0) paperMsg += `，自动创建 ${newKpCount} 个新知识点`;
+                showNotification(paperMsg, 'success');
             }, function() {
                 showNotification('读取 XLSX 文件失败，请重试', 'error');
             });
@@ -4932,6 +5714,7 @@
                 }
                 let addedCount = 0;
                 let skippedCount = 0;
+                let newKpCount = 0;
                 for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
                     const row = rows[rowIndex];
                     if (!row || row.length < expectedHeader.length) { skippedCount++; continue; }
@@ -4946,6 +5729,8 @@
                     if (!content && !optionA && !optionB && !optionC && !optionD) { skippedCount++; continue; }
                     const subject = findOrCreateSubjectByName(subjectName);
                     if (!subject) { skippedCount++; continue; }
+                    const kpResult = findOrCreateKnowledgePointByName(String(row[11] || '').trim(), subject.id, null);
+                    if (kpResult.isNew) newKpCount++;
                     const question = {
                         id: generateId(),
                         type: /选择/.test(questionType) || /choice/i.test(questionType) ? 'choice'
@@ -4955,7 +5740,7 @@
                         answer: answer,
                         explanation: String(row[9] || '').trim(),
                         difficulty: String(row[10] || '').trim(),
-                        knowledgePoint: String(row[11] || '').trim(),
+                        knowledgePoint: kpResult.id,
                         source: String(row[12] || '').trim(),
                         subjectId: subject.id,
                         status: 'pending',
@@ -4979,8 +5764,7 @@
                     showNotification('未从 XLSX 中解析出有效题目', 'error');
                     return;
                 }
-                localStorage.setItem('questions', JSON.stringify(questions));
-                localStorage.setItem('subjects', JSON.stringify(subjects));
+                saveGradeData();
                 renderSubjects();
                 renderQuestions();
                 renderDashboard();
@@ -4988,6 +5772,7 @@
                 closeBatchImportModal();
                 let msg = `已导入 ${addedCount} 道错题`;
                 if (skippedCount > 0) msg += `，跳过 ${skippedCount} 条空行`;
+                if (newKpCount > 0) msg += `，自动创建 ${newKpCount} 个新知识点`;
                 showNotification(msg, 'success');
             }, function() {
                 showNotification('读取 XLSX 文件失败，请重试', 'error');
