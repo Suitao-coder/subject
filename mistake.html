@@ -448,12 +448,39 @@
                 </div>
             </div>
             
+            <!-- 批量操作工具栏 -->
+            <div id="batchToolbar" class="bg-white rounded-xl p-3 shadow-sm mb-3 hidden">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <input type="checkbox" id="selectAllQuestions" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
+                            全选当前页
+                        </label>
+                        <span class="text-sm text-gray-400" id="selectedCount">已选 0 项</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="batchMarkMasteredBtn" class="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors cursor-pointer">
+                            <i class="fa fa-check-circle mr-1"></i> 标记为已掌握
+                        </button>
+                        <button id="batchMarkPendingBtn" class="px-3 py-1.5 text-sm bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors cursor-pointer">
+                            <i class="fa fa-clock-o mr-1"></i> 标记为未掌握
+                        </button>
+                        <button id="batchDeleteBtn" class="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors cursor-pointer">
+                            <i class="fa fa-trash mr-1"></i> 批量删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- 错题列表 -->
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
+                                    <input type="checkbox" id="headerSelectAll" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
+                                </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     掌握
                                 </th>
@@ -480,7 +507,7 @@
                         <tbody id="questionsTableBody" class="bg-white divide-y divide-gray-200">
                             <!-- 错题数据将通过JS动态生成 -->
                             <tr>
-                                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                                     暂无错题记录，请添加错题
                                 </td>
                             </tr>
@@ -967,7 +994,12 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">科目 <span class="text-danger">*</span></label>
-                        <input type="text" id="importPaperSubjectInput" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入科目名称，若科目不存在则自动创建">
+                        <select id="importPaperSubjectSelect" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white">
+                            <option value="">请选择科目</option>
+                            <!-- 科目选项将通过JS动态生成 -->
+                            <option value="__other__">其他（自定义）</option>
+                        </select>
+                        <input type="text" id="importPaperSubjectCustomInput" class="hidden mt-2 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入科目名称">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">试卷描述</label>
@@ -1087,7 +1119,8 @@
         let papers = JSON.parse(localStorage.getItem('papers')) || [];
         let currentQuestionId = null;
         let currentSubjectId = null;
-        let deleteType = ''; // 'question' 或 'subject'
+        let deleteType = ''; // 'question' 或 'subject' 或 'paper'
+        let currentPaperId = null;
         let currentPageNum = 1;
         let currentQuestionImages = [];
         let currentExplanationImages = [];
@@ -1304,6 +1337,16 @@
             // 确认删除模态框
             document.getElementById('cancelDeleteBtn').addEventListener('click', closeConfirmDeleteModal);
             document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+            
+            // 批量操作工具栏
+            document.getElementById('selectAllQuestions').addEventListener('change', function() {
+                const checked = this.checked;
+                document.querySelectorAll('.batch-select').forEach(cb => cb.checked = checked);
+                updateBatchSelectionCount();
+            });
+            document.getElementById('batchMarkMasteredBtn').addEventListener('click', batchMarkMastered);
+            document.getElementById('batchMarkPendingBtn').addEventListener('click', batchMarkPending);
+            document.getElementById('batchDeleteBtn').addEventListener('click', batchDeleteQuestions);
             
             // 题目详情弹窗关闭按钮
             document.getElementById('closeQuestionDetailModal').addEventListener('click', function() {
@@ -1745,6 +1788,9 @@
                 } else {
                     document.getElementById('deleteConfirmMessage').textContent = '您确定要删除这个科目吗？此操作不可撤销。';
                 }
+            } else if (type === 'paper') {
+                currentPaperId = id;
+                document.getElementById('deleteConfirmMessage').textContent = '您确定要删除该试卷吗？删除试卷不会删除其中的错题。此操作不可撤销。';
             }
             
             document.getElementById('confirmDeleteModal').classList.remove('hidden');
@@ -1758,6 +1804,7 @@
             deleteType = '';
             currentQuestionId = null;
             currentSubjectId = null;
+            currentPaperId = null;
         }
 
         // 确认删除
@@ -1765,6 +1812,7 @@
             const type = deleteType;
             const questionId = currentQuestionId;
             const subjectId = currentSubjectId;
+            const paperId = currentPaperId;
 
             if (type === 'question' && questionId) {
                 // 删除错题
@@ -1778,6 +1826,11 @@
                 localStorage.setItem('questions', JSON.stringify(questions));
                 localStorage.setItem('subjects', JSON.stringify(subjects));
                 showNotification('科目已删除', 'success');
+            } else if (type === 'paper' && paperId) {
+                // 删除试卷
+                papers = papers.filter(p => p.id !== paperId);
+                localStorage.setItem('papers', JSON.stringify(papers));
+                showNotification('试卷已删除', 'success');
             }
             
             closeConfirmDeleteModal();
@@ -1790,6 +1843,8 @@
                 renderQuestions();
                 renderDashboard();
                 updateCharts();
+            } else if (type === 'paper' && paperId) {
+                renderPaperList();
             }
         }
 
@@ -1972,6 +2027,81 @@
             updateCharts();
         }
 
+        // 获取当前页面选中的错题ID列表
+        function getSelectedQuestionIds() {
+            const checkboxes = document.querySelectorAll('.batch-select:checked');
+            return Array.from(checkboxes).map(cb => cb.getAttribute('data-id'));
+        }
+
+        // 更新批量选中计数
+        function updateBatchSelectionCount() {
+            const count = getSelectedQuestionIds().length;
+            document.getElementById('selectedCount').textContent = `已选 ${count} 项`;
+            const selectAllQuestions = document.getElementById('selectAllQuestions');
+            if (selectAllQuestions) {
+                selectAllQuestions.checked = count > 0 && count === document.querySelectorAll('.batch-select').length;
+            }
+        }
+
+        // 批量标记为已掌握
+        function batchMarkMastered() {
+            const selectedIds = getSelectedQuestionIds();
+            if (selectedIds.length === 0) {
+                showNotification('请先选择要操作的错题', 'warning');
+                return;
+            }
+            selectedIds.forEach(id => {
+                const question = questions.find(q => q.id === id);
+                if (question) question.status = 'mastered';
+            });
+            localStorage.setItem('questions', JSON.stringify(questions));
+            renderQuestions();
+            renderDashboard();
+            updateCharts();
+            showNotification(`已将 ${selectedIds.length} 道错题标记为已掌握`, 'success');
+        }
+
+        // 批量标记为未掌握
+        function batchMarkPending() {
+            const selectedIds = getSelectedQuestionIds();
+            if (selectedIds.length === 0) {
+                showNotification('请先选择要操作的错题', 'warning');
+                return;
+            }
+            selectedIds.forEach(id => {
+                const question = questions.find(q => q.id === id);
+                if (question) question.status = 'pending';
+            });
+            localStorage.setItem('questions', JSON.stringify(questions));
+            renderQuestions();
+            renderDashboard();
+            updateCharts();
+            showNotification(`已将 ${selectedIds.length} 道错题标记为未掌握`, 'success');
+        }
+
+        // 批量删除错题
+        function batchDeleteQuestions() {
+            const selectedIds = getSelectedQuestionIds();
+            if (selectedIds.length === 0) {
+                showNotification('请先选择要删除的错题', 'warning');
+                return;
+            }
+            if (!confirm(`确定要删除选中的 ${selectedIds.length} 道错题吗？删除后不可恢复。`)) {
+                return;
+            }
+            questions = questions.filter(q => !selectedIds.includes(q.id));
+            localStorage.setItem('questions', JSON.stringify(questions));
+            // 同时从试卷中移除
+            papers.forEach(paper => {
+                paper.questionIds = paper.questionIds.filter(qid => !selectedIds.includes(qid));
+            });
+            localStorage.setItem('papers', JSON.stringify(papers));
+            renderQuestions();
+            renderDashboard();
+            updateCharts();
+            showNotification(`已删除 ${selectedIds.length} 道错题`, 'success');
+        }
+
         function getQuestionDifficultyText(question) {
             if (!question.difficulty) return '未填写';
             const difficulty = String(question.difficulty).trim();
@@ -2037,7 +2167,7 @@
             if (filteredQuestions.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                             暂无符合条件的错题记录
                         </td>
                     </tr>
@@ -2058,6 +2188,9 @@
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors';
                 row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox" class="batch-select h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" data-id="${question.id}">
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <input type="checkbox" class="mastery-toggle h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" data-id="${question.id}" ${question.status === 'mastered' ? 'checked' : ''}>
                     </td>
@@ -2125,6 +2258,32 @@
                     openConfirmDeleteModal('question', id);
                 });
             });
+
+            // 批量选择相关
+            const batchToolbar = document.getElementById('batchToolbar');
+            const headerSelectAll = document.getElementById('headerSelectAll');
+            if (paginatedQuestions.length > 0) {
+                batchToolbar.classList.remove('hidden');
+            } else {
+                batchToolbar.classList.add('hidden');
+            }
+            headerSelectAll.checked = false;
+            updateBatchSelectionCount();
+
+            document.querySelectorAll('.batch-select').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateBatchSelectionCount();
+                    // 同步header全选状态
+                    const allChecked = document.querySelectorAll('.batch-select:checked').length === document.querySelectorAll('.batch-select').length;
+                    headerSelectAll.checked = allChecked;
+                });
+            });
+
+            headerSelectAll.onclick = function() {
+                const checked = this.checked;
+                document.querySelectorAll('.batch-select').forEach(cb => cb.checked = checked);
+                updateBatchSelectionCount();
+            };
         }
 
         // 渲染科目列表
@@ -3150,10 +3309,7 @@
             document.querySelectorAll('.delete-paper').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
-                    papers = papers.filter(p => p.id !== id);
-                    localStorage.setItem('papers', JSON.stringify(papers));
-                    renderPaperList();
-                    showNotification('试卷已删除', 'success');
+                    openConfirmDeleteModal('paper', id);
                 });
             });
             document.querySelectorAll('.view-paper').forEach(btn => {
@@ -3313,10 +3469,20 @@
 
         function openImportPaperModal() {
             document.getElementById('importPaperNameInput').value = '';
-            document.getElementById('importPaperSubjectInput').value = '';
             document.getElementById('importPaperDescriptionInput').value = '';
             document.getElementById('importPaperFileInput').value = '';
             document.getElementById('importPaperFileName').textContent = '未选择文件';
+            // 填充科目下拉选项
+            const subjectSelect = document.getElementById('importPaperSubjectSelect');
+            subjectSelect.innerHTML = '<option value="">请选择科目</option>';
+            subjects.forEach(s => {
+                subjectSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+            });
+            subjectSelect.innerHTML += '<option value="__other__">其他（自定义）</option>';
+            subjectSelect.value = '';
+            const customInput = document.getElementById('importPaperSubjectCustomInput');
+            customInput.value = '';
+            customInput.classList.add('hidden');
             const modal = document.getElementById('importPaperModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -3378,8 +3544,15 @@
 
         function confirmImportPaper() {
             const paperName = document.getElementById('importPaperNameInput').value.trim();
-            const paperSubject = document.getElementById('importPaperSubjectInput').value.trim();
             const paperDescription = document.getElementById('importPaperDescriptionInput').value.trim();
+            const subjectSelect = document.getElementById('importPaperSubjectSelect');
+            const selectedValue = subjectSelect.value;
+            let paperSubject = '';
+            if (selectedValue === '__other__') {
+                paperSubject = document.getElementById('importPaperSubjectCustomInput').value.trim();
+            } else {
+                paperSubject = subjectSelect.options[subjectSelect.selectedIndex].text.trim();
+            }
             const fileInput = document.getElementById('importPaperFileInput');
             const file = fileInput.files && fileInput.files[0];
             if (!paperName) {
@@ -3387,7 +3560,7 @@
                 return;
             }
             if (!paperSubject) {
-                showNotification('请输入试卷科目', 'error');
+                showNotification('请选择或输入试卷科目', 'error');
                 return;
             }
             if (!file) {
@@ -3912,6 +4085,16 @@
         document.getElementById('closeImportPaperModal').addEventListener('click', closeImportPaperModal);
         document.getElementById('cancelImportPaperBtn').addEventListener('click', closeImportPaperModal);
         document.getElementById('confirmImportPaperBtn').addEventListener('click', confirmImportPaper);
+        document.getElementById('importPaperSubjectSelect').addEventListener('change', function() {
+            const customInput = document.getElementById('importPaperSubjectCustomInput');
+            if (this.value === '__other__') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.value = '';
+            }
+        });
         document.getElementById('exportPaperBtn').addEventListener('click', openExportPapersModal);
         document.getElementById('closeCreatePaperModal').addEventListener('click', closeCreatePaperModal);
         document.getElementById('cancelCreatePaperBtn').addEventListener('click', closeCreatePaperModal);
