@@ -176,6 +176,47 @@
                 50% { transform: scale(1.05); }
                 100% { transform: scale(1); }
             }
+            /* 设置页面开关样式 */
+            .toggle-switch {
+                position: relative;
+                width: 44px;
+                height: 22px;
+                appearance: none;
+                background: #d1d5db;
+                border-radius: 9999px;
+                cursor: pointer;
+                transition: background 0.3s;
+                flex-shrink: 0;
+            }
+            .toggle-switch::after {
+                content: '';
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                width: 18px;
+                height: 18px;
+                background: white;
+                border-radius: 50%;
+                transition: transform 0.3s;
+            }
+            .toggle-switch:checked {
+                background: #3B82F6;
+            }
+            .toggle-switch:checked::after {
+                transform: translateX(22px);
+            }
+            .toggle-switch:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            /* 拖拽排序光标 */
+            #statCardOrderList .cursor-grab:active {
+                cursor: grabbing;
+            }
+            #statCardOrderList .cursor-grab.drag-over {
+                border: 2px dashed #3B82F6;
+                background: #eff6ff;
+            }
         }
     </style>
 </head>
@@ -193,13 +234,31 @@
     <nav id="navbar" class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-sm z-40 transition-all duration-300">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex items-center">
+                <div class="flex items-center space-x-3">
                     <a href="#" class="flex items-center space-x-2">
                         <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                             <i class="fa fa-book text-white"></i>
                         </div>
                         <span class="text-xl font-bold text-primary">错题宝</span>
                     </a>
+                    <!-- 年级选择器 -->
+                    <div class="relative" id="gradeSelectorContainer">
+                        <button id="gradeSelectorBtn" class="flex items-center space-x-1 px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 transition-colors cursor-pointer">
+                            <i class="fa fa-graduation-cap mr-1 text-primary"></i>
+                            <span id="currentGradeName">默认年级</span>
+                            <i class="fa fa-chevron-down text-xs text-gray-400 ml-1"></i>
+                        </button>
+                        <div id="gradeDropdown" class="origin-top-left absolute left-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 hidden z-50">
+                            <div id="gradeDropdownList" class="max-h-48 overflow-y-auto">
+                                <!-- 年级列表动态生成 -->
+                            </div>
+                            <div class="border-t border-gray-100 mt-1 pt-1 px-2">
+                                <button id="manageGradeBtn" class="flex items-center w-full px-2 py-1.5 text-xs text-primary hover:bg-blue-50 rounded cursor-pointer">
+                                    <i class="fa fa-cog mr-1"></i> 管理年级
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- 桌面导航 -->
@@ -226,17 +285,20 @@
                     <div class="relative ml-3" id="userMenuContainer">
                         <div>
                             <button type="button" id="userMenuButton" class="flex items-center max-w-xs rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
-                                <img class="h-8 w-8 rounded-full object-cover" src="https://picsum.photos/200/200?random=user" alt="用户头像">
+                                <div id="headerAvatarContainer" class="h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-bold bg-primary overflow-hidden flex-shrink-0">
+                                    <span id="headerAvatarText">学</span>
+                                    <img id="headerAvatarImg" class="hidden h-full w-full object-cover" src="" alt="用户头像">
+                                </div>
                                 <span class="ml-2 hidden md:block text-sm font-medium" id="userName">学习达人</span>
                                 <i class="fa fa-chevron-down ml-1 text-xs text-gray-500"></i>
                             </button>
                         </div>
                         <!-- 用户菜单下拉 -->
                         <div id="userMenu" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 hidden z-50">
-                            <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                            <a id="openProfileBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
                                 <i class="fa fa-user mr-2"></i>个人资料
                             </a>
-                            <a href="#settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                            <a id="openSettingsBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
                                 <i class="fa fa-cog mr-2"></i>设置
                             </a>
                             <div class="border-t border-gray-100 my-1"></div>
@@ -286,7 +348,7 @@
             </div>
             
             <!-- 快捷操作 -->
-            <div class="flex flex-wrap gap-4 mb-8">
+            <div class="flex flex-wrap gap-4 mb-8" id="dashboardQuickActions">
                 <button id="addQuestionBtn" class="flex items-center bg-primary text-white px-6 py-3 rounded-lg shadow-sm btn-effect cursor-pointer">
                     <i class="fa fa-plus-circle mr-2"></i> 添加新错题
                 </button>
@@ -302,8 +364,8 @@
             </div>
             
             <!-- 统计卡片 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="dashboardStatCards">
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md" data-stat-card="total">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm font-medium">总错题数</p>
@@ -321,7 +383,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md">
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md" data-stat-card="mastered">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm font-medium">已掌握</p>
@@ -339,7 +401,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md">
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md" data-stat-card="pending">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm font-medium">待复习</p>
@@ -357,7 +419,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md">
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow transform transition-all duration-300 hover:shadow-md" data-stat-card="subjects">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm font-medium">科目数量</p>
@@ -377,8 +439,8 @@
             </div>
             
             <!-- 图表和最近错题 -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm card-shadow">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="dashboardChartAndRecent">
+                <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm card-shadow" id="dashboardChartSection">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-xl font-bold">错题分布</h2>
                         <div class="flex space-x-2">
@@ -391,7 +453,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow">
+                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow" id="dashboardRecentSection">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-xl font-bold">最近添加</h2>
                         <a href="#questions" class="text-primary text-sm hover:underline cursor-pointer">查看全部</a>
@@ -857,6 +919,236 @@
         </div>
     </div>
 
+    <!-- 个人资料/设置模态框 -->
+    <div id="profileSettingsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">个人资料与设置</h3>
+                <button id="closeProfileSettingsModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6">
+                <form id="profileSettingsForm">
+                    <!-- 头像设置 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">头像</label>
+                        <div class="flex items-center gap-4">
+                            <div id="profileAvatarPreview" class="h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-primary flex-shrink-0 overflow-hidden">
+                                <span id="profileAvatarText">学</span>
+                                <img id="profileAvatarImg" src="" alt="" class="hidden h-full w-full object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    <button type="button" class="avatar-color-btn w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition-transform" style="background:#3B82F6;" data-color="#3B82F6" title="蓝色"></button>
+                                    <button type="button" class="avatar-color-btn w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition-transform" style="background:#10B981;" data-color="#10B981" title="绿色"></button>
+                                    <button type="button" class="avatar-color-btn w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition-transform" style="background:#F59E0B;" data-color="#F59E0B" title="橙色"></button>
+                                    <button type="button" class="avatar-color-btn w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition-transform" style="background:#EF4444;" data-color="#EF4444" title="红色"></button>
+                                    <button type="button" class="avatar-color-btn w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition-transform" style="background:#8B5CF6;" data-color="#8B5CF6" title="紫色"></button>
+                                    <button type="button" class="avatar-color-btn w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition-transform" style="background:#EC4899;" data-color="#EC4899" title="粉色"></button>
+                                    <button type="button" class="avatar-color-btn w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition-transform" style="background:#06B6D4;" data-color="#06B6D4" title="青色"></button>
+                                    <button type="button" class="avatar-color-btn w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition-transform" style="background:#78716C;" data-color="#78716C" title="灰色"></button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-500">或使用图片链接：</span>
+                                    <input type="text" id="profileAvatarUrl" class="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none input-focus" placeholder="输入图片URL地址">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 昵称 -->
+                    <div class="mb-4">
+                        <label for="profileDisplayName" class="block text-sm font-medium text-gray-700 mb-1">昵称 <span class="text-danger">*</span></label>
+                        <input type="text" id="profileDisplayName" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入您的昵称" required maxlength="20">
+                    </div>
+                    
+                    <!-- 账户统计（只读） -->
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">账户概况</h4>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-2xl font-bold text-primary" id="profileStatQuestions">0</div>
+                                <div class="text-xs text-gray-500">错题总数</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-secondary" id="profileStatSubjects">0</div>
+                                <div class="text-xs text-gray-500">科目数</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-accent" id="profileStatPapers">0</div>
+                                <div class="text-xs text-gray-500">试卷数</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex items-center gap-3">
+                        <button type="submit" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            <i class="fa fa-save mr-2"></i> 保存设置
+                        </button>
+                        <button type="button" id="cancelProfileSettingsBtn" class="inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div id="appSettingsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+                <h3 class="text-lg font-medium text-gray-900"><i class="fa fa-cog mr-2 text-gray-400"></i>设置</h3>
+                <button id="closeAppSettingsModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6">
+                <form id="appSettingsForm">
+                    <!-- 页面开关 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                            <i class="fa fa-th-large mr-2 text-primary"></i>页面显示开关
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">控制导航栏和页面中哪些模块可见。仪表盘始终开启。</p>
+                        <div class="space-y-3 bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center justify-between cursor-not-allowed opacity-60">
+                                <span class="text-sm text-gray-700"><i class="fa fa-tachometer mr-2 text-primary"></i>仪表盘</span>
+                                <input type="checkbox" checked disabled class="toggle-switch">
+                            </label>
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-list-alt mr-2 text-blue-500"></i>错题库</span>
+                                <input type="checkbox" id="settingPageQuestions" class="toggle-switch settings-page-toggle" data-page="questions">
+                            </label>
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-folder-open mr-2 text-purple-500"></i>科目管理</span>
+                                <input type="checkbox" id="settingPageSubjects" class="toggle-switch settings-page-toggle" data-page="subjects">
+                            </label>
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-file-text-o mr-2 text-teal-500"></i>试卷</span>
+                                <input type="checkbox" id="settingPagePapers" class="toggle-switch settings-page-toggle" data-page="papers">
+                            </label>
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-bar-chart mr-2 text-orange-500"></i>学习分析</span>
+                                <input type="checkbox" id="settingPageStatistics" class="toggle-switch settings-page-toggle" data-page="statistics">
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 仪表盘布局 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                            <i class="fa fa-dashboard mr-2 text-primary"></i>仪表盘布局
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">选择在仪表盘上显示哪些板块。</p>
+                        <div class="space-y-3 bg-gray-50 rounded-lg p-4">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-bolt mr-2 text-amber-500"></i>快捷操作栏</span>
+                                <input type="checkbox" id="settingWidgetQuickActions" class="toggle-switch settings-widget-toggle" data-widget="quickActions">
+                            </label>
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-pie-chart mr-2 text-blue-500"></i>统计卡片</span>
+                                <input type="checkbox" id="settingWidgetStatCards" class="toggle-switch settings-widget-toggle" data-widget="statCards">
+                            </label>
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-bar-chart mr-2 text-green-500"></i>错题分布图表</span>
+                                <input type="checkbox" id="settingWidgetChartSection" class="toggle-switch settings-widget-toggle" data-widget="chartSection">
+                            </label>
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-clock-o mr-2 text-purple-500"></i>最近添加的错题</span>
+                                <input type="checkbox" id="settingWidgetRecentQuestions" class="toggle-switch settings-widget-toggle" data-widget="recentQuestions">
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 统计卡片排序 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                            <i class="fa fa-sort mr-2 text-primary"></i>统计卡片排序
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">拖拽调整统计卡片的显示顺序。</p>
+                        <div id="statCardOrderList" class="space-y-2 bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm cursor-grab" draggable="true" data-card="total">
+                                <span class="text-sm font-medium"><i class="fa fa-list-alt mr-2 text-blue-500"></i>总错题数</span>
+                                <i class="fa fa-bars text-gray-400"></i>
+                            </div>
+                            <div class="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm cursor-grab" draggable="true" data-card="mastered">
+                                <span class="text-sm font-medium"><i class="fa fa-check-circle mr-2 text-green-500"></i>已掌握</span>
+                                <i class="fa fa-bars text-gray-400"></i>
+                            </div>
+                            <div class="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm cursor-grab" draggable="true" data-card="pending">
+                                <span class="text-sm font-medium"><i class="fa fa-clock-o mr-2 text-amber-500"></i>待复习</span>
+                                <i class="fa fa-bars text-gray-400"></i>
+                            </div>
+                            <div class="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm cursor-grab" draggable="true" data-card="subjects">
+                                <span class="text-sm font-medium"><i class="fa fa-folder-open mr-2 text-purple-500"></i>科目数量</span>
+                                <i class="fa fa-bars text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 默认首页 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                            <i class="fa fa-home mr-2 text-primary"></i>默认首页
+                        </h4>
+                        <select id="settingDefaultPage" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white">
+                            <option value="dashboard">仪表盘</option>
+                            <option value="questions" id="optDefaultQuestions">错题库</option>
+                            <option value="subjects" id="optDefaultSubjects">科目管理</option>
+                            <option value="papers" id="optDefaultPapers">试卷</option>
+                            <option value="statistics" id="optDefaultStatistics">学习分析</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mt-6 flex items-center gap-3">
+                        <button type="submit" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            <i class="fa fa-check mr-2"></i> 保存设置
+                        </button>
+                        <button type="button" id="cancelAppSettingsBtn" class="inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                            取消
+                        </button>
+                        <button type="button" id="resetAppSettingsBtn" class="ml-auto inline-flex items-center text-gray-500 hover:text-danger px-3 py-2 text-sm cursor-pointer">
+                            <i class="fa fa-refresh mr-1"></i> 恢复默认
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 年级管理模态框 -->
+    <div id="gradeManageModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[85vh] overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+                <h3 class="text-lg font-medium text-gray-900"><i class="fa fa-graduation-cap mr-2 text-primary"></i>管理年级</h3>
+                <button id="closeGradeManageModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6">
+                <div class="mb-5">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">当前年级列表</h4>
+                    <div id="gradeListContainer" class="space-y-2">
+                        <!-- 年级列表动态生成 -->
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 pt-5">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">添加新年级</h4>
+                    <form id="addGradeForm">
+                        <div class="flex gap-2">
+                            <input type="text" id="newGradeName" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="年级名称，如：八年级" maxlength="20" required>
+                            <button type="submit" id="addGradeSubmitBtn" class="px-4 py-2 bg-primary text-white rounded-lg shadow-sm btn-effect cursor-pointer flex items-center whitespace-nowrap">
+                                <i class="fa fa-plus mr-1"></i> 添加
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 确认删除模态框 -->
     <div id="confirmDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
@@ -1158,12 +1450,97 @@
     <script>
         // 全局变量
         let currentPage = 'dashboard';
-        let questions = JSON.parse(localStorage.getItem('questions')) || [];
-        let subjects = JSON.parse(localStorage.getItem('subjects')) || [];
-        let papers = JSON.parse(localStorage.getItem('papers')) || [];
+
+        // ==================== 年级系统 ====================
+        let grades = JSON.parse(localStorage.getItem('grades')) || [];
+        let currentGradeId = localStorage.getItem('currentGradeId') || null;
+
+        // 保存当前年级数据到 localStorage
+        function saveGradeData() {
+            if (!currentGradeId) return;
+            localStorage.setItem('data_' + currentGradeId, JSON.stringify({
+                questions: questions,
+                subjects: subjects,
+                papers: papers
+            }));
+        }
+
+        // 加载指定年级数据到全局变量
+        function loadGradeData(gradeId) {
+            const raw = localStorage.getItem('data_' + gradeId);
+            if (raw) {
+                const data = JSON.parse(raw);
+                questions = data.questions || [];
+                subjects = data.subjects || [];
+                papers = data.papers || [];
+            } else {
+                questions = [];
+                subjects = [];
+                papers = [];
+            }
+        }
+
+        // 初始化年级系统（在 generateId 可用后调用）
+        function initGradeSystem() {
+            // 数据迁移：如果存在旧格式数据但没有年级，自动创建默认年级
+            if (grades.length === 0) {
+                const oldQuestions = localStorage.getItem('questions');
+                const oldSubjects = localStorage.getItem('subjects');
+                const oldPapers = localStorage.getItem('papers');
+                if (oldQuestions || oldSubjects || oldPapers) {
+                    const defaultGrade = {
+                        id: generateId(),
+                        name: '默认年级',
+                        color: '#3B82F6',
+                        createDate: new Date().toISOString()
+                    };
+                    grades.push(defaultGrade);
+                    currentGradeId = defaultGrade.id;
+                    localStorage.setItem('grades', JSON.stringify(grades));
+                    localStorage.setItem('currentGradeId', currentGradeId);
+                    localStorage.setItem('data_' + defaultGrade.id, JSON.stringify({
+                        questions: JSON.parse(oldQuestions || '[]'),
+                        subjects: JSON.parse(oldSubjects || '[]'),
+                        papers: JSON.parse(oldPapers || '[]')
+                    }));
+                    localStorage.removeItem('questions');
+                    localStorage.removeItem('subjects');
+                    localStorage.removeItem('papers');
+                }
+            }
+
+            // 如果没有年级，创建一个默认年级
+            if (grades.length === 0) {
+                const defaultGrade = {
+                    id: generateId(),
+                    name: '默认年级',
+                    color: '#3B82F6',
+                    createDate: new Date().toISOString()
+                };
+                grades.push(defaultGrade);
+                currentGradeId = defaultGrade.id;
+                localStorage.setItem('grades', JSON.stringify(grades));
+                localStorage.setItem('currentGradeId', currentGradeId);
+            }
+
+            // 确保 currentGradeId 有效
+            if (!currentGradeId || !grades.find(g => g.id === currentGradeId)) {
+                currentGradeId = grades[0].id;
+                localStorage.setItem('currentGradeId', currentGradeId);
+            }
+
+            // 加载当前年级数据
+            loadGradeData(currentGradeId);
+        }
+
+        // questions/subjects/papers 将在 initGradeSystem() 中初始化
+        let questions = [];
+        let subjects = [];
+        let papers = [];
+
         let currentQuestionId = null;
         let currentSubjectId = null;
-        let deleteType = ''; // 'question' 或 'subject' 或 'paper'
+        let deleteType = ''; // 'question' 或 'subject' 或 'paper' 或 'grade'
         let currentPaperId = null;
         let currentPageNum = 1;
         let currentQuestionImages = [];
@@ -1175,6 +1552,31 @@
         let currentEditingPaperId = null;
         let exportPaperSelection = [];
         let exportPaperOrder = [];
+        let currentGradeManageId = null; // 当前编辑的年级ID
+        let currentGradeDeleteId = null; // 当前要删除的年级ID
+        let userProfile = JSON.parse(localStorage.getItem('userProfile')) || {
+            displayName: '学习达人',
+            avatarColor: '#3B82F6',
+            avatarType: 'text', // 'text' 或 'image'
+            avatarUrl: ''
+        };
+        let appSettings = JSON.parse(localStorage.getItem('appSettings')) || {
+            enabledPages: {
+                dashboard: true,
+                questions: true,
+                subjects: true,
+                papers: true,
+                statistics: true
+            },
+            dashboardWidgets: {
+                quickActions: true,
+                statCards: true,
+                chartSection: true,
+                recentQuestions: true
+            },
+            statCardOrder: ['total', 'mastered', 'pending', 'subjects'],
+            defaultPage: 'dashboard'
+        };
         const itemsPerPage = 10;
         const MAX_QUESTION_PHOTOS = 10;
         const MAX_QUESTION_PHOTO_SIZE = 50 * 1024 * 1024;
@@ -1188,6 +1590,10 @@
                     document.getElementById('loader').style.display = 'none';
                 }, 300);
             }, 800);
+
+            // 初始化年级系统（必须在其他初始化之前）
+            initGradeSystem();
+            initGradeUI();
 
             // 初始化导航
             initNavigation();
@@ -1203,6 +1609,18 @@
             initCharts();
             refreshQuestionAndSubjectViews();
             renderPaperList();
+            
+            // 应用用户设置
+            applySettings();
+            
+            // 如果有设置默认首页且不是 dashboard，切换到默认首页
+            if (appSettings.defaultPage !== 'dashboard' && appSettings.enabledPages[appSettings.defaultPage]) {
+                // 隐藏 dashboard（它默认是显示的）
+                document.getElementById('dashboardPage').classList.add('hidden');
+                document.getElementById(`${appSettings.defaultPage}Page`).classList.remove('hidden');
+                currentPage = appSettings.defaultPage;
+                updateNavStyles();
+            }
 
             // 监听滚动事件，改变导航栏样式
             window.addEventListener('scroll', function() {
@@ -1222,6 +1640,255 @@
             renderSubjects();
             renderDashboard();
             updateCharts();
+        }
+
+        // ==================== 年级 UI 函数 ====================
+
+        // 初始化年级选择器UI
+        function initGradeUI() {
+            renderGradeSelector();
+            updateCurrentGradeDisplay();
+
+            // 年级选择器按钮
+            document.getElementById('gradeSelectorBtn').addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('gradeDropdown').classList.toggle('hidden');
+            });
+
+            // 点击外部关闭下拉
+            document.addEventListener('click', function(e) {
+                const container = document.getElementById('gradeSelectorContainer');
+                if (!container.contains(e.target)) {
+                    document.getElementById('gradeDropdown').classList.add('hidden');
+                }
+            });
+
+            // 管理年级按钮
+            document.getElementById('manageGradeBtn').addEventListener('click', function() {
+                document.getElementById('gradeDropdown').classList.add('hidden');
+                openGradeManageModal();
+            });
+
+            // 年级管理模态框事件
+            document.getElementById('closeGradeManageModal').addEventListener('click', closeGradeManageModal);
+            document.getElementById('addGradeForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addGrade();
+            });
+        }
+
+        // 渲染年级选择器下拉菜单
+        function renderGradeSelector() {
+            const listEl = document.getElementById('gradeDropdownList');
+            listEl.innerHTML = '';
+            grades.forEach(grade => {
+                const isActive = grade.id === currentGradeId;
+                const el = document.createElement('div');
+                el.className = `flex items-center justify-between px-4 py-2 text-sm cursor-pointer hover:bg-gray-50 ${isActive ? 'bg-blue-50 text-primary font-medium' : 'text-gray-700'}`;
+                el.innerHTML = `
+                    <span class="flex items-center">
+                        <span class="w-2.5 h-2.5 rounded-full mr-2" style="background-color: ${grade.color}"></span>
+                        ${grade.name}
+                    </span>
+                    ${isActive ? '<i class="fa fa-check text-primary text-xs"></i>' : ''}
+                `;
+                el.addEventListener('click', function() {
+                    switchGrade(grade.id);
+                    document.getElementById('gradeDropdown').classList.add('hidden');
+                });
+                listEl.appendChild(el);
+            });
+
+            // 更新当前显示
+            updateCurrentGradeDisplay();
+        }
+
+        // 更新当前年级名称显示
+        function updateCurrentGradeDisplay() {
+            const grade = grades.find(g => g.id === currentGradeId);
+            document.getElementById('currentGradeName').textContent = grade ? grade.name : '未知年级';
+        }
+
+        // 切换年级
+        function switchGrade(gradeId) {
+            if (gradeId === currentGradeId) return;
+
+            // 保存当前数据
+            saveGradeData();
+
+            // 切换到新年级
+            currentGradeId = gradeId;
+            localStorage.setItem('currentGradeId', currentGradeId);
+
+            // 加载新数据
+            loadGradeData(gradeId);
+
+            // 更新UI
+            updateCurrentGradeDisplay();
+            renderGradeSelector();
+            refreshQuestionAndSubjectViews();
+            renderPaperList();
+
+            // 如果当前页面是试卷详情，回到试卷列表
+            const paperDetailPage = document.getElementById('paperDetailPage');
+            if (!paperDetailPage.classList.contains('hidden')) {
+                paperDetailPage.classList.add('hidden');
+                document.getElementById('papersPage').classList.remove('hidden');
+                currentPage = 'papers';
+                updateNavStyles();
+            }
+
+            // 重置分页
+            currentPageNum = 1;
+            currentPaperDetailId = null;
+            currentEditingPaperId = null;
+
+            showNotification(`已切换到"${grades.find(g => g.id === gradeId)?.name || '未知年级'}"`, 'success');
+        }
+
+        // 打开年级管理模态框
+        function openGradeManageModal() {
+            renderGradeManageList();
+            document.getElementById('newGradeName').value = '';
+            document.getElementById('gradeManageModal').classList.remove('hidden');
+            document.getElementById('gradeManageModal').classList.add('flex');
+        }
+
+        // 关闭年级管理模态框
+        function closeGradeManageModal() {
+            document.getElementById('gradeManageModal').classList.add('hidden');
+            document.getElementById('gradeManageModal').classList.remove('flex');
+        }
+
+        // 渲染年级管理列表
+        function renderGradeManageList() {
+            const container = document.getElementById('gradeListContainer');
+            if (grades.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">暂无年级</p>';
+                return;
+            }
+            container.innerHTML = '';
+            grades.forEach(grade => {
+                const isCurrent = grade.id === currentGradeId;
+                const el = document.createElement('div');
+                el.className = 'flex items-center justify-between bg-gray-50 rounded-lg p-3';
+                el.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full" style="background-color: ${grade.color}"></span>
+                        <span class="text-sm font-medium text-gray-700">${grade.name}</span>
+                        ${isCurrent ? '<span class="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">当前</span>' : ''}
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="text-xs text-primary hover:text-primary/80 cursor-pointer" onclick="editGradeInline('${grade.id}')"><i class="fa fa-pencil"></i> 编辑</button>
+                        <button class="text-xs text-danger hover:text-danger/80 cursor-pointer" onclick="confirmDeleteGrade('${grade.id}')">
+                            <i class="fa fa-trash"></i> 删除
+                        </button>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        // 内联编辑年级（供onclick调用）
+        function editGradeInline(id) {
+            const grade = grades.find(g => g.id === id);
+            if (grade) {
+                document.getElementById('newGradeName').value = grade.name;
+                document.getElementById('addGradeSubmitBtn').innerHTML = '<i class="fa fa-check mr-1"></i> 保存';
+                document.getElementById('addGradeSubmitBtn').classList.add('editing');
+                currentGradeManageId = id;
+            }
+        }
+
+        // 确认删除年级（供onclick调用）
+        function confirmDeleteGrade(id) {
+            currentGradeDeleteId = id;
+            openConfirmDeleteModal('grade', id);
+        }
+
+        // 添加/编辑年级
+        function addGrade() {
+            const nameInput = document.getElementById('newGradeName');
+            const name = nameInput.value.trim();
+            if (!name) {
+                showNotification('请输入年级名称', 'error');
+                return;
+            }
+
+            if (currentGradeManageId) {
+                // 编辑模式
+                const grade = grades.find(g => g.id === currentGradeManageId);
+                if (grade) {
+                    grade.name = name;
+                    showNotification('年级已更新', 'success');
+                }
+                currentGradeManageId = null;
+                document.getElementById('addGradeSubmitBtn').innerHTML = '<i class="fa fa-plus mr-1"></i> 添加';
+                document.getElementById('addGradeSubmitBtn').classList.remove('editing');
+            } else {
+                // 新增模式
+                const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+                const newGrade = {
+                    id: generateId(),
+                    name: name,
+                    color: colors[grades.length % colors.length],
+                    createDate: new Date().toISOString()
+                };
+                grades.push(newGrade);
+                showNotification('新年级已添加', 'success');
+            }
+
+            localStorage.setItem('grades', JSON.stringify(grades));
+            nameInput.value = '';
+            renderGradeManageList();
+            renderGradeSelector();
+        }
+
+        // 删除年级（确认已由 confirmDelete 模态框完成）
+        function deleteGrade(gradeId) {
+            const grade = grades.find(g => g.id === gradeId);
+            if (!grade) return;
+
+            // 删除该年级的数据
+            localStorage.removeItem('data_' + gradeId);
+
+            // 从列表中移除
+            grades = grades.filter(g => g.id !== gradeId);
+            localStorage.setItem('grades', JSON.stringify(grades));
+
+            // 如果所有年级都被删除了，自动创建一个默认年级
+            if (grades.length === 0) {
+                const defaultGrade = {
+                    id: generateId(),
+                    name: '默认年级',
+                    color: '#3B82F6',
+                    createDate: new Date().toISOString()
+                };
+                grades.push(defaultGrade);
+                localStorage.setItem('grades', JSON.stringify(grades));
+                currentGradeId = defaultGrade.id;
+                localStorage.setItem('currentGradeId', currentGradeId);
+                // 初始化空数据
+                questions = [];
+                subjects = [];
+                papers = [];
+                saveGradeData();
+                updateCurrentGradeDisplay();
+                refreshQuestionAndSubjectViews();
+                renderPaperList();
+            } else if (currentGradeId === gradeId) {
+                // 如果删除的是当前年级，切换到第一个
+                currentGradeId = grades[0].id;
+                localStorage.setItem('currentGradeId', currentGradeId);
+                loadGradeData(currentGradeId);
+                updateCurrentGradeDisplay();
+                refreshQuestionAndSubjectViews();
+                renderPaperList();
+            }
+
+            renderGradeManageList();
+            renderGradeSelector();
+            showNotification(`年级"${grade.name}"已删除`, 'success');
         }
 
         // 初始化导航
@@ -1253,6 +1920,12 @@
 
         // 切换页面
         function switchPage(page) {
+            // 检查页面是否已启用（dashboard 始终可用）
+            if (page !== 'dashboard' && !appSettings.enabledPages[page]) {
+                showNotification('该页面已在设置中关闭，请先开启后再访问', 'error');
+                return;
+            }
+            
             if (currentPage === page) return;
             
             // 隐藏当前页面
@@ -1314,15 +1987,429 @@
                 }
             });
             
+            // 个人资料
+            document.getElementById('openProfileBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                openProfileSettingsModal();
+                userMenu.classList.add('hidden');
+            });
+            
+            // 设置（打开独立的设置模态框）
+            document.getElementById('openSettingsBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                openAppSettingsModal();
+                userMenu.classList.add('hidden');
+            });
+            
             // 退出登录
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
                 e.preventDefault();
-                if (confirm('确定要退出登录吗？')) {
-                    showNotification('已退出登录', 'success');
-                    userMenu.classList.add('hidden');
+                openConfirmDeleteModal('logout');
+                userMenu.classList.add('hidden');
+            });
+            
+            // 初始加载用户头像和名称
+            updateUserUI();
+        }
+
+        // 更新用户界面显示
+        function updateUserUI() {
+            document.getElementById('userName').textContent = userProfile.displayName;
+            document.getElementById('welcomeUserName').textContent = userProfile.displayName;
+            
+            // 更新右上角头像
+            const headerAvatarContainer = document.getElementById('headerAvatarContainer');
+            const headerAvatarText = document.getElementById('headerAvatarText');
+            const headerAvatarImg = document.getElementById('headerAvatarImg');
+            
+            if (userProfile.avatarType === 'image' && userProfile.avatarUrl) {
+                headerAvatarImg.src = userProfile.avatarUrl;
+                headerAvatarImg.classList.remove('hidden');
+                headerAvatarText.classList.add('hidden');
+                headerAvatarContainer.style.backgroundColor = 'transparent';
+            } else {
+                headerAvatarImg.classList.add('hidden');
+                headerAvatarText.classList.remove('hidden');
+                headerAvatarText.textContent = userProfile.displayName.charAt(0) || '学';
+                headerAvatarContainer.style.backgroundColor = userProfile.avatarColor || '#3B82F6';
+            }
+        }
+
+        // 打开个人资料/设置模态框
+        function openProfileSettingsModal() {
+            const modal = document.getElementById('profileSettingsModal');
+            
+            // 填充当前值
+            document.getElementById('profileDisplayName').value = userProfile.displayName;
+            document.getElementById('profileAvatarUrl').value = userProfile.avatarType === 'image' ? userProfile.avatarUrl : '';
+            
+            // 更新头像预览
+            updateProfileAvatarPreview();
+            
+            // 高亮当前颜色按钮
+            document.querySelectorAll('.avatar-color-btn').forEach(btn => {
+                if (btn.getAttribute('data-color') === userProfile.avatarColor) {
+                    btn.classList.add('border-white', 'ring-2', 'ring-offset-2', 'ring-primary');
+                } else {
+                    btn.classList.remove('border-white', 'ring-2', 'ring-offset-2', 'ring-primary');
+                }
+            });
+            
+            // 更新统计数据
+            document.getElementById('profileStatQuestions').textContent = questions.length;
+            document.getElementById('profileStatSubjects').textContent = subjects.length;
+            document.getElementById('profileStatPapers').textContent = papers.length;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // 关闭个人资料/设置模态框
+        function closeProfileSettingsModal() {
+            const modal = document.getElementById('profileSettingsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // 更新头像预览
+        function updateProfileAvatarPreview() {
+            const avatarText = document.getElementById('profileAvatarText');
+            const avatarImg = document.getElementById('profileAvatarImg');
+            const avatarPreview = document.getElementById('profileAvatarPreview');
+            
+            if (userProfile.avatarType === 'image' && userProfile.avatarUrl) {
+                avatarImg.src = userProfile.avatarUrl;
+                avatarImg.classList.remove('hidden');
+                avatarText.classList.add('hidden');
+                avatarPreview.style.backgroundColor = 'transparent';
+            } else {
+                avatarImg.classList.add('hidden');
+                avatarText.classList.remove('hidden');
+                avatarText.textContent = userProfile.displayName.charAt(0) || '学';
+                avatarPreview.style.backgroundColor = userProfile.avatarColor || '#3B82F6';
+            }
+        }
+
+        // 保存个人资料
+        function saveProfile() {
+            const displayName = document.getElementById('profileDisplayName').value.trim();
+            
+            if (!displayName) {
+                showNotification('请输入昵称', 'error');
+                return;
+            }
+            
+            const avatarUrl = document.getElementById('profileAvatarUrl').value.trim();
+            
+            userProfile.displayName = displayName;
+            
+            if (avatarUrl) {
+                userProfile.avatarType = 'image';
+                userProfile.avatarUrl = avatarUrl;
+            } else {
+                // 如果之前是图片模式，现在清空了URL，则回到首字母模式
+                if (userProfile.avatarType === 'image') {
+                    userProfile.avatarType = 'text';
+                    userProfile.avatarUrl = '';
+                }
+            }
+            
+            // 保存到 localStorage
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            
+            // 更新UI
+            updateUserUI();
+            updateProfileAvatarPreview();
+            
+            closeProfileSettingsModal();
+            showNotification('个人资料已保存', 'success');
+        }
+
+        // ==================== 应用设置相关函数 ====================
+
+        // 打开设置模态框
+        function openAppSettingsModal() {
+            const modal = document.getElementById('appSettingsModal');
+            
+            // 填充页面开关
+            document.getElementById('settingPageQuestions').checked = appSettings.enabledPages.questions;
+            document.getElementById('settingPageSubjects').checked = appSettings.enabledPages.subjects;
+            document.getElementById('settingPagePapers').checked = appSettings.enabledPages.papers;
+            document.getElementById('settingPageStatistics').checked = appSettings.enabledPages.statistics;
+            
+            // 填充仪表盘部件开关
+            document.getElementById('settingWidgetQuickActions').checked = appSettings.dashboardWidgets.quickActions;
+            document.getElementById('settingWidgetStatCards').checked = appSettings.dashboardWidgets.statCards;
+            document.getElementById('settingWidgetChartSection').checked = appSettings.dashboardWidgets.chartSection;
+            document.getElementById('settingWidgetRecentQuestions').checked = appSettings.dashboardWidgets.recentQuestions;
+            
+            // 填充默认首页
+            document.getElementById('settingDefaultPage').value = appSettings.defaultPage;
+            // 更新默认首页下拉选项的可见性
+            updateDefaultPageOptions();
+            
+            // 重建排序列表（按当前顺序）
+            rebuildStatCardOrderList();
+            initStatCardDragSort();
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // 关闭设置模态框
+        function closeAppSettingsModal() {
+            const modal = document.getElementById('appSettingsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // 根据已启用的页面更新默认首页下拉选项
+        function updateDefaultPageOptions() {
+            const optQuestions = document.getElementById('optDefaultQuestions');
+            const optSubjects = document.getElementById('optDefaultSubjects');
+            const optPapers = document.getElementById('optDefaultPapers');
+            const optStatistics = document.getElementById('optDefaultStatistics');
+            
+            optQuestions.style.display = appSettings.enabledPages.questions ? '' : 'none';
+            optSubjects.style.display = appSettings.enabledPages.subjects ? '' : 'none';
+            optPapers.style.display = appSettings.enabledPages.papers ? '' : 'none';
+            optStatistics.style.display = appSettings.enabledPages.statistics ? '' : 'none';
+            
+            // 如果当前默认页被禁用，自动切到 dashboard
+            const sel = document.getElementById('settingDefaultPage');
+            if (sel.value !== 'dashboard' && !appSettings.enabledPages[sel.value]) {
+                sel.value = 'dashboard';
+            }
+        }
+
+        // 重建统计卡片排序列表
+        function rebuildStatCardOrderList() {
+            const container = document.getElementById('statCardOrderList');
+            const cardLabels = {
+                total: { icon: 'fa-list-alt', color: 'text-blue-500', label: '总错题数' },
+                mastered: { icon: 'fa-check-circle', color: 'text-green-500', label: '已掌握' },
+                pending: { icon: 'fa-clock-o', color: 'text-amber-500', label: '待复习' },
+                subjects: { icon: 'fa-folder-open', color: 'text-purple-500', label: '科目数量' }
+            };
+            
+            container.innerHTML = '';
+            appSettings.statCardOrder.forEach(cardKey => {
+                const info = cardLabels[cardKey] || cardLabels.total;
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-white rounded-lg p-3 shadow-sm cursor-grab';
+                div.setAttribute('draggable', 'true');
+                div.setAttribute('data-card', cardKey);
+                div.innerHTML = `<span class="text-sm font-medium"><i class="fa ${info.icon} mr-2 ${info.color}"></i>${info.label}</span><i class="fa fa-bars text-gray-400"></i>`;
+                container.appendChild(div);
+            });
+        }
+
+        // 初始化统计卡片拖拽排序
+        function initStatCardDragSort() {
+            const container = document.getElementById('statCardOrderList');
+            let draggedItem = null;
+            
+            container.querySelectorAll('[draggable="true"]').forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    draggedItem = this;
+                    this.classList.add('opacity-50');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                item.addEventListener('dragend', function() {
+                    this.classList.remove('opacity-50');
+                    container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                    draggedItem = null;
+                });
+                
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (this !== draggedItem) {
+                        this.classList.add('drag-over');
+                    }
+                });
+                
+                item.addEventListener('dragleave', function() {
+                    this.classList.remove('drag-over');
+                });
+                
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('drag-over');
+                    if (this !== draggedItem && draggedItem) {
+                        const items = [...container.querySelectorAll('[data-card]')];
+                        const fromIndex = items.indexOf(draggedItem);
+                        const toIndex = items.indexOf(this);
+                        if (fromIndex < toIndex) {
+                            container.insertBefore(draggedItem, this.nextSibling);
+                        } else {
+                            container.insertBefore(draggedItem, this);
+                        }
+                        // 同步更新 statCardOrder
+                        syncStatCardOrder();
+                    }
+                });
+            });
+        }
+
+        // 从 DOM 同步统计卡片排序到 appSettings
+        function syncStatCardOrder() {
+            const container = document.getElementById('statCardOrderList');
+            const items = container.querySelectorAll('[data-card]');
+            appSettings.statCardOrder = [...items].map(item => item.getAttribute('data-card'));
+        }
+
+        // 保存设置
+        function saveAppSettings() {
+            // 读取页面开关
+            appSettings.enabledPages.questions = document.getElementById('settingPageQuestions').checked;
+            appSettings.enabledPages.subjects = document.getElementById('settingPageSubjects').checked;
+            appSettings.enabledPages.papers = document.getElementById('settingPagePapers').checked;
+            appSettings.enabledPages.statistics = document.getElementById('settingPageStatistics').checked;
+            
+            // 读取仪表盘部件开关
+            appSettings.dashboardWidgets.quickActions = document.getElementById('settingWidgetQuickActions').checked;
+            appSettings.dashboardWidgets.statCards = document.getElementById('settingWidgetStatCards').checked;
+            appSettings.dashboardWidgets.chartSection = document.getElementById('settingWidgetChartSection').checked;
+            appSettings.dashboardWidgets.recentQuestions = document.getElementById('settingWidgetRecentQuestions').checked;
+            
+            // 读取统计卡片排序
+            syncStatCardOrder();
+            
+            // 读取默认首页
+            const defaultPage = document.getElementById('settingDefaultPage').value;
+            if (defaultPage !== 'dashboard' && !appSettings.enabledPages[defaultPage]) {
+                appSettings.defaultPage = 'dashboard';
+            } else {
+                appSettings.defaultPage = defaultPage;
+            }
+            
+            // 保存到 localStorage
+            localStorage.setItem('appSettings', JSON.stringify(appSettings));
+            
+            // 应用设置
+            applySettings();
+            
+            closeAppSettingsModal();
+            showNotification('设置已保存', 'success');
+        }
+
+        // 恢复默认设置
+        function resetAppSettings() {
+            appSettings = {
+                enabledPages: {
+                    dashboard: true,
+                    questions: true,
+                    subjects: true,
+                    papers: true,
+                    statistics: true
+                },
+                dashboardWidgets: {
+                    quickActions: true,
+                    statCards: true,
+                    chartSection: true,
+                    recentQuestions: true
+                },
+                statCardOrder: ['total', 'mastered', 'pending', 'subjects'],
+                defaultPage: 'dashboard'
+            };
+            localStorage.setItem('appSettings', JSON.stringify(appSettings));
+            applySettings();
+            closeAppSettingsModal();
+            showNotification('已恢复默认设置', 'success');
+            switchPage('dashboard');
+        }
+
+        // 应用设置到界面
+        function applySettings() {
+            // 1. 更新导航栏和移动端菜单的页面链接可见性
+            applyNavVisibility();
+            
+            // 2. 更新仪表盘部件可见性
+            applyDashboardWidgets();
+            
+            // 3. 重新排列统计卡片
+            applyStatCardOrder();
+            
+            // 4. 如果当前页面被禁用，切换到 dashboard
+            const currentPageKey = currentPage;
+            if (currentPageKey !== 'dashboard' && !appSettings.enabledPages[currentPageKey]) {
+                switchPage('dashboard');
+            }
+        }
+
+        // 应用导航可见性
+        function applyNavVisibility() {
+            const pageNavMap = {
+                questions: { desktop: 'a[href="#questions"]', mobile: 'a[href="#questions"]' },
+                subjects: { desktop: 'a[href="#subjects"]', mobile: 'a[href="#subjects"]' },
+                papers: { desktop: 'a[href="#papers"]', mobile: 'a[href="#papers"]' },
+                statistics: { desktop: 'a[href="#statistics"]', mobile: 'a[href="#statistics"]' }
+            };
+            
+            Object.keys(pageNavMap).forEach(page => {
+                const enabled = appSettings.enabledPages[page];
+                const navInfo = pageNavMap[page];
+                
+                // 桌面导航
+                const desktopLink = document.querySelector(`nav .hidden.md\\:flex ${navInfo.desktop}`);
+                if (desktopLink) {
+                    desktopLink.style.display = enabled ? '' : 'none';
+                }
+                
+                // 移动端导航
+                const mobileLink = document.querySelector(`#mobileMenu ${navInfo.mobile}`);
+                if (mobileLink) {
+                    mobileLink.style.display = enabled ? '' : 'none';
                 }
             });
         }
+
+        // 应用仪表盘部件可见性
+        function applyDashboardWidgets() {
+            const widgets = appSettings.dashboardWidgets;
+            
+            const quickActionsEl = document.getElementById('dashboardQuickActions');
+            if (quickActionsEl) quickActionsEl.style.display = widgets.quickActions ? '' : 'none';
+            
+            const statCardsEl = document.getElementById('dashboardStatCards');
+            if (statCardsEl) statCardsEl.style.display = widgets.statCards ? '' : 'none';
+            
+            const chartSectionEl = document.getElementById('dashboardChartSection');
+            if (chartSectionEl) chartSectionEl.style.display = widgets.chartSection ? '' : 'none';
+            
+            const recentSectionEl = document.getElementById('dashboardRecentSection');
+            if (recentSectionEl) recentSectionEl.style.display = widgets.recentQuestions ? '' : 'none';
+            
+            // 如果图表和最近添加都隐藏了，隐藏外层 grid 容器
+            const chartAndRecentEl = document.getElementById('dashboardChartAndRecent');
+            if (chartAndRecentEl) {
+                const hasVisibleChildren = (widgets.chartSection || widgets.recentQuestions);
+                chartAndRecentEl.style.display = hasVisibleChildren ? '' : 'none';
+            }
+        }
+
+        // 应用统计卡片排序
+        function applyStatCardOrder() {
+            const container = document.getElementById('dashboardStatCards');
+            if (!container) return;
+            
+            const order = appSettings.statCardOrder;
+            const cards = {};
+            container.querySelectorAll('[data-stat-card]').forEach(card => {
+                cards[card.getAttribute('data-stat-card')] = card;
+            });
+            
+            // 按 order 重新排列
+            order.forEach(key => {
+                if (cards[key]) {
+                    container.appendChild(cards[key]);
+                }
+            });
+        }
+
+        // ==================== 设置相关函数结束 ====================
 
         // 初始化模态框
         function initModals() {
@@ -1410,6 +2497,73 @@
             document.getElementById('closeQuestionDetailModal').addEventListener('click', function() {
                 document.getElementById('questionDetailModal').classList.add('hidden');
                 document.getElementById('questionDetailModal').classList.remove('flex');
+            });
+            
+            // 个人资料/设置模态框
+            document.getElementById('closeProfileSettingsModal').addEventListener('click', closeProfileSettingsModal);
+            document.getElementById('cancelProfileSettingsBtn').addEventListener('click', closeProfileSettingsModal);
+            document.getElementById('profileSettingsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveProfile();
+            });
+            
+            // 头像颜色选择按钮
+            document.querySelectorAll('.avatar-color-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const color = this.getAttribute('data-color');
+                    userProfile.avatarColor = color;
+                    // 如果当前是图片模式，切换到文本模式
+                    if (userProfile.avatarType === 'image') {
+                        userProfile.avatarType = 'text';
+                        userProfile.avatarUrl = '';
+                        document.getElementById('profileAvatarUrl').value = '';
+                    }
+                    // 高亮选中按钮
+                    document.querySelectorAll('.avatar-color-btn').forEach(b => {
+                        b.classList.remove('border-white', 'ring-2', 'ring-offset-2', 'ring-primary');
+                    });
+                    this.classList.add('border-white', 'ring-2', 'ring-offset-2', 'ring-primary');
+                    updateProfileAvatarPreview();
+                });
+            });
+            
+            // 头像URL输入实时预览
+            document.getElementById('profileAvatarUrl').addEventListener('input', function() {
+                const url = this.value.trim();
+                const avatarImg = document.getElementById('profileAvatarImg');
+                const avatarText = document.getElementById('profileAvatarText');
+                const avatarPreview = document.getElementById('profileAvatarPreview');
+                
+                if (url) {
+                    avatarImg.src = url;
+                    avatarImg.classList.remove('hidden');
+                    avatarText.classList.add('hidden');
+                    avatarPreview.style.backgroundColor = 'transparent';
+                } else {
+                    avatarImg.classList.add('hidden');
+                    avatarText.classList.remove('hidden');
+                    avatarPreview.style.backgroundColor = userProfile.avatarColor || '#3B82F6';
+                }
+            });
+            
+            // 设置模态框
+            document.getElementById('closeAppSettingsModal').addEventListener('click', closeAppSettingsModal);
+            document.getElementById('cancelAppSettingsBtn').addEventListener('click', closeAppSettingsModal);
+            document.getElementById('resetAppSettingsBtn').addEventListener('click', resetAppSettings);
+            document.getElementById('appSettingsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveAppSettings();
+            });
+            
+            // 设置模态框 - 页面开关联动默认首页下拉
+            document.querySelectorAll('.settings-page-toggle').forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const page = this.getAttribute('data-page');
+                    if (page) {
+                        appSettings.enabledPages[page] = this.checked;
+                        updateDefaultPageOptions();
+                    }
+                });
             });
         }
 
@@ -1741,7 +2895,7 @@
             }
             
             // 保存到本地存储
-            localStorage.setItem('questions', JSON.stringify(questions));
+            saveGradeData();
             
             // 立即关闭模态框
             closeQuestionModal();
@@ -1849,6 +3003,11 @@
             } else if (type === 'paper') {
                 currentPaperId = id;
                 document.getElementById('deleteConfirmMessage').textContent = '您确定要删除该试卷吗？删除试卷不会删除其中的错题。此操作不可撤销。';
+            } else if (type === 'logout') {
+                document.getElementById('deleteConfirmMessage').textContent = '确定要退出登录吗？退出后不会丢失数据，所有数据仍然保存在浏览器本地。';
+            } else if (type === 'grade') {
+                const grade = grades.find(g => g.id === id);
+                document.getElementById('deleteConfirmMessage').textContent = `确定要删除年级"${grade ? grade.name : ''}"吗？该年级下的所有错题、科目和试卷数据将被永久删除，且不可恢复。`;
             }
             
             document.getElementById('confirmDeleteModal').classList.remove('hidden');
@@ -1863,6 +3022,7 @@
             currentQuestionId = null;
             currentSubjectId = null;
             currentPaperId = null;
+            currentGradeDeleteId = null;
         }
 
         // 确认删除
@@ -1871,6 +3031,7 @@
             const questionId = currentQuestionId;
             const subjectId = currentSubjectId;
             const paperId = currentPaperId;
+            const gradeDeleteId = currentGradeDeleteId;
 
             if (type === 'question' && questionId) {
                 // 删除错题
@@ -1889,6 +3050,15 @@
                 papers = papers.filter(p => p.id !== paperId);
                 localStorage.setItem('papers', JSON.stringify(papers));
                 showNotification('试卷已删除', 'success');
+            } else if (type === 'logout') {
+                // 退出登录 - 跳转到首页
+                showNotification('已退出登录，数据仍保留在本地', 'success');
+                switchPage('dashboard');
+            } else if (type === 'grade' && gradeDeleteId) {
+                // 删除年级
+                closeConfirmDeleteModal();
+                deleteGrade(gradeDeleteId);
+                return; // deleteGrade 内部会处理后续 UI 刷新
             }
             
             closeConfirmDeleteModal();
@@ -2028,7 +3198,7 @@
             document.getElementById('subjectsTrend').innerHTML = `<i class="fa fa-folder-open mr-1"></i> ${totalSubjectsCount}`;
             document.getElementById('subjectsMeta').textContent = `覆盖 ${subjectCoverage} 道错题`;
             
-            document.getElementById('welcomeUserName').textContent = '学习达人';
+            document.getElementById('welcomeUserName').textContent = userProfile.displayName;
             
             renderRecentQuestions();
             updateCharts();
