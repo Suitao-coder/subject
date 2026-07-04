@@ -411,6 +411,14 @@
             <div class="mb-8">
                 <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">错题库</h1>
                 <p class="text-gray-600 mt-1">管理和查看您的所有错题</p>
+                <div class="flex flex-wrap gap-3 mt-4">
+                    <button id="addQuestionFromPageBtn" class="flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
+                        <i class="fa fa-plus-circle mr-2"></i> 添加错题
+                    </button>
+                    <button id="batchImportQuestionsBtn" class="flex items-center bg-white text-gray-700 px-5 py-2.5 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                        <i class="fa fa-file-excel-o mr-2"></i> 批量导入
+                    </button>
+                </div>
             </div>
             
             <!-- 筛选和搜索 -->
@@ -1029,6 +1037,42 @@
         </div>
     </div>
 
+    <!-- 批量导入错题弹窗 -->
+    <div id="batchImportModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">批量导入错题</h3>
+                    <p class="text-sm text-gray-500 mt-1">上传 XLSX 文件批量添加错题，科目列不存在时将自动创建</p>
+                </div>
+                <button id="closeBatchImportModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-6 overflow-y-auto">
+                <div class="border border-dashed border-gray-300 rounded-lg p-5 bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">XLSX 文件</p>
+                            <p class="text-xs text-gray-500 mt-1">文件第一行必须为：<b>科目</b>,序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源</p>
+                        </div>
+                        <button type="button" id="selectBatchImportFileBtn" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
+                            <i class="fa fa-upload mr-2"></i> 选择 XLSX
+                        </button>
+                    </div>
+                    <input type="file" id="batchImportFileInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
+                    <p class="text-xs text-gray-500 mt-3" id="batchImportFileName">未选择文件</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="cancelBatchImportBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 cursor-pointer">取消</button>
+                <button type="button" id="confirmBatchImportBtn" class="px-4 py-2 rounded-lg bg-primary text-white cursor-pointer">
+                    <i class="fa fa-save mr-2"></i> 开始导入
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 导出试卷弹窗 -->
     <div id="exportPapersModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -1347,6 +1391,20 @@
             document.getElementById('batchMarkMasteredBtn').addEventListener('click', batchMarkMastered);
             document.getElementById('batchMarkPendingBtn').addEventListener('click', batchMarkPending);
             document.getElementById('batchDeleteBtn').addEventListener('click', batchDeleteQuestions);
+            
+            // 错题库页面按钮
+            document.getElementById('addQuestionFromPageBtn').addEventListener('click', function() {
+                openQuestionModal();
+            });
+            document.getElementById('batchImportQuestionsBtn').addEventListener('click', openBatchImportModal);
+            // 批量导入错题弹窗
+            document.getElementById('closeBatchImportModal').addEventListener('click', closeBatchImportModal);
+            document.getElementById('cancelBatchImportBtn').addEventListener('click', closeBatchImportModal);
+            document.getElementById('confirmBatchImportBtn').addEventListener('click', confirmBatchImport);
+            document.getElementById('selectBatchImportFileBtn').addEventListener('click', function() {
+                document.getElementById('batchImportFileInput').click();
+            });
+            document.getElementById('batchImportFileInput').addEventListener('change', handleBatchImportFileSelection);
             
             // 题目详情弹窗关闭按钮
             document.getElementById('closeQuestionDetailModal').addEventListener('click', function() {
@@ -3647,7 +3705,120 @@
                 updateCharts();
                 renderPaperList();
                 closeImportPaperModal();
-                showNotification(`已导入 ${addedQuestionIds.length} 道题并创建试卷“${paperName}”`, 'success');
+                showNotification(`已导入 ${addedQuestionIds.length} 道题并创建试卷"${paperName}"`, 'success');
+            }, function() {
+                showNotification('读取 XLSX 文件失败，请重试', 'error');
+            });
+        }
+
+        // ========== 批量导入错题 ==========
+        function openBatchImportModal() {
+            document.getElementById('batchImportFileInput').value = '';
+            document.getElementById('batchImportFileName').textContent = '未选择文件';
+            const modal = document.getElementById('batchImportModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBatchImportModal() {
+            const modal = document.getElementById('batchImportModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function handleBatchImportFileSelection(event) {
+            const file = event.target.files && event.target.files[0];
+            const fileNameEl = document.getElementById('batchImportFileName');
+            if (!file) {
+                fileNameEl.textContent = '未选择文件';
+                return;
+            }
+            fileNameEl.textContent = file.name;
+        }
+
+        function confirmBatchImport() {
+            const fileInput = document.getElementById('batchImportFileInput');
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) {
+                showNotification('请选择 XLSX 文件', 'error');
+                return;
+            }
+            if (!file.name.toLowerCase().endsWith('.xlsx')) {
+                showNotification('请选择 XLSX 格式文件', 'error');
+                return;
+            }
+            parseXlsxFile(file, function(rows) {
+                if (!Array.isArray(rows) || rows.length < 2) {
+                    showNotification('XLSX 文件内容不足', 'error');
+                    return;
+                }
+                const header = Array.isArray(rows[0]) ? rows[0].map(item => String(item || '').replace(/\s+/g, '')) : [];
+                const expectedHeader = ['科目','序号','题型','题面','选项A','选项B','选项C','选项D','答案','解析','难度','知识点','来源'];
+                const normalizedHeader = header.map(item => item.replace(/\uFEFF/g, '')).slice(0, expectedHeader.length);
+                const headerMatch = expectedHeader.every((col, idx) => normalizedHeader[idx] === col);
+                if (!headerMatch) {
+                    showNotification('XLSX 首行格式不匹配。请确保第一行：科目,序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源', 'error');
+                    return;
+                }
+                let addedCount = 0;
+                let skippedCount = 0;
+                for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
+                    const row = rows[rowIndex];
+                    if (!row || row.length < expectedHeader.length) { skippedCount++; continue; }
+                    let subjectName = String(row[0] || '').trim();
+                    const questionType = String(row[2] || '').trim();
+                    const content = String(row[3] || '').trim();
+                    const answer = String(row[8] || '').trim();
+                    const optionA = String(row[4] || '').trim();
+                    const optionB = String(row[5] || '').trim();
+                    const optionC = String(row[6] || '').trim();
+                    const optionD = String(row[7] || '').trim();
+                    if (!content && !optionA && !optionB && !optionC && !optionD) { skippedCount++; continue; }
+                    const subject = findOrCreateSubjectByName(subjectName);
+                    if (!subject) { skippedCount++; continue; }
+                    const question = {
+                        id: generateId(),
+                        type: /选择/.test(questionType) || /choice/i.test(questionType) ? 'choice'
+                            : /填空/.test(questionType) || /fill/i.test(questionType) ? 'fill'
+                            : 'other',
+                        content: content,
+                        answer: answer,
+                        explanation: String(row[9] || '').trim(),
+                        difficulty: String(row[10] || '').trim(),
+                        knowledgePoint: String(row[11] || '').trim(),
+                        source: String(row[12] || '').trim(),
+                        subjectId: subject.id,
+                        status: 'pending',
+                        date: new Date().toISOString(),
+                        photos: [],
+                        explanationPhotos: [],
+                        options: []
+                    };
+                    if (question.type === 'choice') {
+                        question.options = [
+                            { label: 'A', text: optionA, photo: '' },
+                            { label: 'B', text: optionB, photo: '' },
+                            { label: 'C', text: optionC, photo: '' },
+                            { label: 'D', text: optionD, photo: '' }
+                        ];
+                    }
+                    questions.unshift(question);
+                    addedCount++;
+                }
+                if (!addedCount) {
+                    showNotification('未从 XLSX 中解析出有效题目', 'error');
+                    return;
+                }
+                localStorage.setItem('questions', JSON.stringify(questions));
+                localStorage.setItem('subjects', JSON.stringify(subjects));
+                renderSubjects();
+                renderQuestions();
+                renderDashboard();
+                updateCharts();
+                closeBatchImportModal();
+                let msg = `已导入 ${addedCount} 道错题`;
+                if (skippedCount > 0) msg += `，跳过 ${skippedCount} 条空行`;
+                showNotification(msg, 'success');
             }, function() {
                 showNotification('读取 XLSX 文件失败，请重试', 'error');
             });
