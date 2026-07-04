@@ -23,6 +23,7 @@
     <!-- KaTeX for TeX -> MathML conversion -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <!-- html-docx-js to convert HTML to .docx -->
     <script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
     
@@ -6552,6 +6553,22 @@
         }
 
         // ========== 做题功能 ==========
+        // KaTeX 公式预处理：$...$ → \(...\)，$$...$$ → \[...\]
+        function practiceTextToHtml(text) {
+            if (!text) return '';
+            let result = text;
+            result = result.replace(/\$\$([\s\S]*?)\$\$/g, (m, f) => '\\[' + f + '\\]');
+            result = result.replace(/\$([^$]+?)\$/g, (m, f) => '\\(' + f + '\\)');
+            return result;
+        }
+        function renderPracticeMath(element) {
+            if (typeof renderMathInElement === 'function') {
+                renderMathInElement(element, {
+                    delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }],
+                    throwOnError: false, output: 'html'
+                });
+            }
+        }
         let practiceQuestions = [];
         let practiceUserAnswers = [];
         let practiceCurrentIndex = 0;
@@ -6860,10 +6877,11 @@
             badge.textContent = typeMap[q.type] || q.type;
             container.appendChild(badge);
 
-            // 题目内容
+            // 题目内容（使用 innerHTML 支持 KaTeX）
             const titleDiv = document.createElement('div');
             titleDiv.className = 'text-lg font-medium mb-4 text-gray-800';
-            titleDiv.textContent = '题目 ' + (practiceCurrentIndex + 1) + ': ' + (q.content || '');
+            const escContent = (q.content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            titleDiv.innerHTML = '题目 ' + (practiceCurrentIndex + 1) + ': ' + practiceTextToHtml(escContent);
             container.appendChild(titleDiv);
 
             // 照片
@@ -6897,7 +6915,8 @@
                     label.textContent = opt.key + '.';
                     const content = document.createElement('span');
                     content.className = 'text-gray-600';
-                    content.textContent = opt.value || '';
+                    const escOpt = (opt.value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    content.innerHTML = practiceTextToHtml(escOpt);
                     div.appendChild(radio);
                     div.appendChild(label);
                     div.appendChild(content);
@@ -6920,6 +6939,9 @@
                 input.oninput = function(e) { practiceUserAnswers[practiceCurrentIndex][1] = e.target.value; };
                 container.appendChild(input);
             }
+
+            // 渲染 KaTeX 公式
+            renderPracticeMath(container);
         }
 
         function updatePracticeNavButtons() {
