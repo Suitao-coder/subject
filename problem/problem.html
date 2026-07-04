@@ -6,7 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>智能做题系统</title>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   
   <script>
     tailwind.config = {
@@ -62,65 +65,66 @@
 
 <body class="bg-gradient-to-br from-light to-gray-200 min-h-screen font-sans text-dark">
   <div class="container max-w-2xl mx-auto px-4 py-8">
-    <!-- 第一个界面：配置界面 -->
+    <!-- 配置界面：浏览并选择题库 -->
     <div id="config-page" class="bg-white rounded-xl p-6 card-shadow">
       <div class="text-center mb-6">
         <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-primary mb-2">做题配置</h1>
-        <p class="text-neutral">请选择科目和题目数量开始练习</p>
+        <p class="text-neutral" id="config-subtitle">从学习助手题库中选择题目开始练习</p>
       </div>
       
-      <div class="space-y-5">
-        <div>
-          <label for="subject" class="block text-sm font-medium text-gray-700 mb-1.5">
-            <i class="fa fa-book mr-2 text-primary"></i>科目
-          </label>
-          <select id="subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
-            <option value="语文">语文</option>
-            <option value="数学">数学</option>
-            <option value="英语">英语</option>
-            <option value="物理">物理</option>
-            <option value="化学">化学</option>
-            <option value="历史">历史</option>
-            <option value="道法">道法</option>
-          </select>
-        </div>
-        
-        <div>
-          <label for="choice-count" class="block text-sm font-medium text-gray-700 mb-1.5">
-            <i class="fa fa-list-ul mr-2 text-primary"></i>选择题数量
-          </label>
-          <input type="number" id="choice-count" min="0" value="0" 
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
-        </div>
-        
-        <div>
-          <label for="fill-count" class="block text-sm font-medium text-gray-700 mb-1.5">
-            <i class="fa fa-pencil mr-2 text-primary"></i>填空题数量
-          </label>
-          <input type="number" id="fill-count" min="0" value="0" 
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
-        </div>
-        
-        <div>
-          <label for="material-count" class="block text-sm font-medium text-gray-700 mb-1.5">
-            <i class="fa fa-file-text mr-2 text-primary"></i>材料题数量
-          </label>
-          <input type="number" id="material-count" min="0" value="0" 
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
-        </div>
-        
-        <div class="flex flex-wrap gap-3 mt-6">
-          <button id="start-btn" class="flex-1 bg-primary text-white font-medium py-2.5 px-4 rounded-lg btn-hover">
-            <i class="fa fa-play mr-2"></i>开始做题
+      <!-- 筛选栏 -->
+      <div class="flex flex-wrap gap-3 mb-4">
+        <select id="filter-grade" class="flex-1 min-w-[120px] px-3 py-2 border border-gray-300 rounded-lg text-sm input-focus">
+          <option value="">选择年级</option>
+        </select>
+        <select id="filter-subject" class="flex-1 min-w-[120px] px-3 py-2 border border-gray-300 rounded-lg text-sm input-focus">
+          <option value="all">全部科目</option>
+        </select>
+        <select id="filter-type" class="flex-1 min-w-[100px] px-3 py-2 border border-gray-300 rounded-lg text-sm input-focus">
+          <option value="all">全部题型</option>
+          <option value="choice">选择题</option>
+          <option value="fill">填空题</option>
+          <option value="other">问答题</option>
+        </select>
+      </div>
+
+      <!-- 操作按钮和统计 -->
+      <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+        <div class="flex gap-2">
+          <button id="select-all-btn" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors cursor-pointer">
+            <i class="fa fa-check-square-o mr-1"></i>全选
           </button>
-          <button id="history-btn" class="flex-1 bg-neutral text-white font-medium py-2.5 px-4 rounded-lg btn-hover">
-            <i class="fa fa-history mr-2"></i>历史记录
+          <button id="deselect-all-btn" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors cursor-pointer">
+            <i class="fa fa-square-o mr-1"></i>取消全选
+          </button>
+          <button id="random-select-btn" class="px-3 py-1.5 bg-warning/10 text-warning rounded-lg text-sm hover:bg-warning/20 transition-colors cursor-pointer">
+            <i class="fa fa-random mr-1"></i>随机选
           </button>
         </div>
+        <span class="text-sm text-gray-500">
+          已选 <b id="selected-count" class="text-primary">0</b> / <span id="total-count">0</span> 题
+        </span>
+      </div>
+
+      <!-- 题目列表 -->
+      <div id="question-browser" class="max-h-[400px] overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100 mb-4">
+        <div id="question-browser-empty" class="text-center py-12 text-gray-500">
+          <i class="fa fa-inbox text-4xl mb-3 block"></i>
+          <span id="empty-message">正在加载题库数据...</span>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button id="start-btn" class="flex-1 bg-primary text-white font-medium py-2.5 px-4 rounded-lg btn-hover">
+          <i class="fa fa-play mr-2"></i>开始做题
+        </button>
+        <button id="history-btn" class="flex-1 bg-neutral text-white font-medium py-2.5 px-4 rounded-lg btn-hover">
+          <i class="fa fa-history mr-2"></i>历史记录
+        </button>
       </div>
     </div>
 
-    <!-- 第二个界面：做题界面 -->
+    <!-- 做题界面 -->
     <div id="question-page" class="bg-white rounded-xl p-6 card-shadow" style="display: none;">
       <div id="header" class="flex justify-between items-center mb-6 pb-3 border-b border-gray-200">
         <div class="flex items-center text-neutral">
@@ -192,131 +196,130 @@
   </div>
 
   <script>
-    // 存储题目数据的全局变量
+    // ========== 数据加载：从学习助手的 localStorage 读取题库 ==========
+    let bankQuestions = [];
+    let bankSubjects = [];
+    let bankKnowledgePoints = [];
+    let bankPapers = [];
+    let bankGrades = [];
+    let bankSelectedIds = new Set();
+    let currentGradeId = '';
+
+    function loadBankData(gradeId) {
+      bankQuestions = []; bankSubjects = []; bankKnowledgePoints = []; bankPapers = []; bankGrades = [];
+      try { bankGrades = JSON.parse(localStorage.getItem('grades') || '[]'); } catch(e) {}
+      currentGradeId = gradeId || localStorage.getItem('currentGradeId') || '';
+      if (!currentGradeId && bankGrades.length > 0) currentGradeId = bankGrades[0].id;
+      if (currentGradeId) {
+        try {
+          const raw = localStorage.getItem('data_' + currentGradeId);
+          if (raw) {
+            const data = JSON.parse(raw);
+            bankQuestions = data.questions || [];
+            bankSubjects = data.subjects || [];
+            bankKnowledgePoints = data.knowledgePoints || [];
+            bankPapers = data.papers || [];
+          }
+        } catch(e) { console.error('加载题库数据失败:', e); }
+      }
+    }
+
+    function convertQuestion(q, idx) {
+      const typeMap = { choice: '选择题', fill: '填空题' };
+      const internalType = typeMap[q.type] || '材料题';
+      const question = { '题型': internalType, '题目': q.content || '', 'csvType': internalType, 'originalLineIndex': idx,
+        '_sourceId': q.id || '', '_subjectId': q.subjectId || '', '_knowledgePoint': q.knowledgePoint || '',
+        '_difficulty': q.difficulty || '', '_source': q.source || '',
+        '_subjectName': (bankSubjects.find(s => s.id === q.subjectId) || {}).name || '' };
+      const photoMarkdown = (q.photos || []).filter(p => p).map(p => '![]('+p+')').join('\n');
+      if (photoMarkdown) question['题目'] = photoMarkdown + '\n' + question['题目'];
+      if (internalType === '选择题') {
+        question['答案'] = q.answer || ''; question['displayAnswer'] = q.answer;
+        const opts = (q.options || []).filter(o => o.label && ['A','B','C','D'].includes(o.label.toUpperCase()));
+        opts.forEach(o => { question[o.label.toUpperCase()] = o.text || ''; });
+        question['shuffledOptions'] = opts.map(o => ({ key: o.label.toUpperCase(), value: o.text || '' }));
+        question['originalAnswer'] = q.answer;
+      } else if (internalType === '填空题') {
+        question['答案1'] = q.answer || '';
+      } else {
+        question['答案'] = q.answer || '';
+        question['材料内容'] = q.content || '';
+      }
+      return question;
+    }
+
+    // ========== 全局状态 ==========
     let questions = [];
-    // 存储用户答案的数组
     let userAnswers = [];
-    // 记录当前题目索引
     let currentQuestionIndex = 0;
-    // 计时器相关变量
     let timerInterval;
     let secondsElapsed = 0;
-    // 存储各题型原始CSV数据
-    let originalCsvDataMap = {
-      '选择题': '',
-      '填空题': '',
-      '材料题': ''
-    };
+    let currentSubjectLabel = '';
 
-    // 三个CSV文件的URL（使用统一的CSV文件）
-    const questionFiles = {
-      '选择题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/multiple-choice.csv',
-      '填空题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/blank-filling.csv',
-      '材料题': 'https://raw.githubusercontent.com/suitao-coder/subject/main/problem/material-based.csv'
-    };
-
-    // 数组随机排序（Fisher-Yates 洗牌算法）
+    // ========== 工具函数 ==========
     function shuffleArray(array) {
       const newArray = [...array];
-      for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-      }
+      for (let i = newArray.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [newArray[i], newArray[j]] = [newArray[j], newArray[i]]; }
       return newArray;
     }
 
-    // 处理选择题选项随机排序
     function getRandomOptions(question) {
-      // 收集有效的选项
       const options = [];
-      ['A', 'B', 'C', 'D'].forEach(key => {
-        if (question[key]) {
-          options.push({ key, value: question[key] });
-        }
-      });
-      
-      // 随机排序选项
+      ['A','B','C','D'].forEach(key => { if (question[key]) options.push({key, value:question[key]}); });
       const shuffledOptions = shuffleArray(options);
-      
-      // 找到正确答案对应的新选项字母
       let newCorrectAnswer = '';
-      shuffledOptions.forEach((opt, index) => {
-        if (opt.key === question['答案']) {
-          // 索引0对应A，1对应B，依此类推
-          newCorrectAnswer = String.fromCharCode(65 + index);
-        }
-      });
-      
-      return {
-        options: shuffledOptions,
-        newCorrectAnswer: newCorrectAnswer
-      };
+      shuffledOptions.forEach((opt, idx) => { if (opt.key === question['答案']) newCorrectAnswer = String.fromCharCode(65+idx); });
+      return { options: shuffledOptions, newCorrectAnswer };
     }
 
-    // 解析文本中的图片URL，将图片URL替换为img标签，同时保留其他文字
     function textToHtml(text) {
       if (!text) return '';
-      
-      const trimmedText = text.trim();
-      // 匹配Markdown格式的图片标记 和纯图片URL
-      const markdownImageRegex = /!\[.*?\]\((https?:\/\/[^\s]+)\)/gi;
-      const plainUrlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|bmp|webp|svg))/gi;
-      
-      let result = trimmedText;
-      
-      // 先处理Markdown格式的图片
-      result = result.replace(markdownImageRegex, (match, url) => {
-        return `<img src="${url}" class="question-image" alt="图片">`;
-      });
-      
-      // 再处理纯图片URL
-      result = result.replace(plainUrlRegex, (url) => {
-        return `<img src="${url}" class="question-image" alt="图片">`;
-      });
-      
+      let result = text.trim();
+      result = result.replace(/!\[.*?\]\((https?:\/\/[^\s]+)\)/gi, (m,u) => '<img src="'+u+'" class="question-image" alt="图片">');
+      result = result.replace(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|bmp|webp|svg))/gi, (u) => '<img src="'+u+'" class="question-image" alt="图片">');
+      result = result.replace(/\$\$([\s\S]*?)\$\$/g, (m,f) => '\\['+f+'\\]');
+      result = result.replace(/\$([^$]+?)\$/g, (m,f) => '\\('+f+'\\)');
       return result;
     }
 
-    // 解析文本中的图片URL，但只提取URL（用于答案比较）
-    function extractImageUrls(text) {
-      if (!text) return [];
-      
-      const imageUrls = [];
-      const markdownImageRegex = /!\[.*?\]\((https?:\/\/[^\s]+)\)/gi;
-      const plainUrlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|bmp|webp|svg))/gi;
-      
-      // 匹配Markdown格式的图片
-      let match;
-      while ((match = markdownImageRegex.exec(text)) !== null) {
-        imageUrls.push(match[1]);
+    function renderMath(element) {
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(element, { delimiters: [{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}], throwOnError:false, output:'html' });
       }
-      
-      // 匹配纯图片URL
-      while ((match = plainUrlRegex.exec(text)) !== null) {
-        imageUrls.push(match[0]);
-      }
-      
-      return imageUrls;
     }
 
-    // 科目对应的历史记录键名的映射
-    const subjectHistoryMap = {
-      语文: 'chinese_history',
-      数学: 'math_history',
-      英语: 'english_history',
-      物理: 'physics_history',
-      化学: 'chemistry_history',
-      历史: 'history_history',
-      道法: 'politics_history'
-    };
+    function escapeCsvField(field) {
+      if (!field) return '';
+      if (field.includes(',') || field.includes('"') || field.includes('\n')) return '"'+field.replace(/"/g,'""')+'"';
+      return field;
+    }
 
-    // 获取页面元素
+    function buildUserAnswerStr(question, index, answersArr) {
+      const answers = answersArr || userAnswers;
+      const ua = answers[index] || {};
+      if (question['题型'] === '选择题') return ua[1] || '未作答';
+      const parts = [];
+      for (let i = 1; i <= 10; i++) { if (ua[i]) parts.push(i+':'+ua[i]); }
+      return parts.join('; ') || '未作答';
+    }
+
+    function buildCorrectnessStr(question, index, answersArr) {
+      const answers = answersArr || userAnswers;
+      const ua = answers[index] || {};
+      if (question['题型'] === '选择题') return ua[1] === question['displayAnswer'] ? '正确' : '错误';
+      return '未判断';
+    }
+
+    function getCorrectAnswerStr(question) {
+      if (question['题型'] === '选择题') return question['displayAnswer'] || question['答案'] || '';
+      const parts = [];
+      for (let i = 1; i <= 10; i++) { if (question['答案'+i]) parts.push(i+':'+question['答案'+i]); }
+      return parts.join('; ') || question['答案'] || '';
+    }
+
+    // ========== DOM 元素 ==========
     const configPage = document.getElementById('config-page');
     const questionPage = document.getElementById('question-page');
-    const subjectSelect = document.getElementById('subject');
-    const choiceCountInput = document.getElementById('choice-count');
-    const fillCountInput = document.getElementById('fill-count');
-    const materialCountInput = document.getElementById('material-count');
     const startBtn = document.getElementById('start-btn');
     const historyBtn = document.getElementById('history-btn');
     const timerSpan = document.getElementById('timer');
@@ -336,8 +339,72 @@
     const closeHistoryBtn = document.getElementById('close-history-btn');
     const exportAllHistoryBtn = document.getElementById('export-all-history-btn');
     const clearAllHistoryBtn = document.getElementById('clear-all-history-btn');
+    const historyKey = 'problem_history';
 
-    // 初始化事件监听
+    // ========== 配置界面：题库浏览器 ==========
+    function initFilterUI() {
+      const gradeSelect = document.getElementById('filter-grade');
+      gradeSelect.innerHTML = '<option value="">选择年级</option>';
+      bankGrades.forEach(g => {
+        gradeSelect.innerHTML += '<option value="'+g.id+'"'+(g.id===currentGradeId?' selected':'')+'>'+g.name+'</option>';
+      });
+      gradeSelect.onchange = function() { loadBankData(this.value); renderQuestionBrowser(); };
+
+      const subjSelect = document.getElementById('filter-subject');
+      subjSelect.innerHTML = '<option value="all">全部科目</option>';
+      bankSubjects.forEach(s => { subjSelect.innerHTML += '<option value="'+s.id+'">'+s.name+'</option>'; });
+      subjSelect.onchange = renderQuestionBrowser;
+      document.getElementById('filter-type').onchange = renderQuestionBrowser;
+    }
+
+    function getFilteredQuestions() {
+      const subjId = document.getElementById('filter-subject').value;
+      const typeF = document.getElementById('filter-type').value;
+      let filtered = [...bankQuestions];
+      if (subjId !== 'all') filtered = filtered.filter(q => q.subjectId === subjId);
+      if (typeF !== 'all') filtered = filtered.filter(q => q.type === typeF);
+      return filtered;
+    }
+
+    function renderQuestionBrowser() {
+      const filtered = getFilteredQuestions();
+      const browser = document.getElementById('question-browser');
+      const emptyEl = document.getElementById('question-browser-empty');
+      document.getElementById('total-count').textContent = filtered.length;
+      updateSelectedCount();
+      const existing = browser.querySelectorAll('.question-browser-item');
+      existing.forEach(el => el.remove());
+      if (filtered.length === 0) {
+        emptyEl.style.display = '';
+        document.getElementById('empty-message').textContent = bankQuestions.length===0 ? '题库为空，请先在「学习助手」中添加题目' : '没有匹配的题目';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      filtered.forEach(q => {
+        const subj = bankSubjects.find(s => s.id === q.subjectId);
+        const typeLabel = {choice:'选择题',fill:'填空题',other:'问答题'}[q.type]||q.type;
+        const typeColor = {choice:'bg-blue-100 text-blue-700',fill:'bg-orange-100 text-orange-700',other:'bg-purple-100 text-purple-700'}[q.type]||'bg-gray-100 text-gray-700';
+        const preview = (q.content||'无内容').replace(/<[^>]+>/g,'').substring(0,60);
+        const item = document.createElement('div');
+        item.className = 'question-browser-item flex items-start gap-3 p-3 hover:bg-gray-50 transition-colors cursor-pointer';
+        item.innerHTML = '<input type="checkbox" class="question-checkbox mt-0.5 w-4 h-4 text-primary rounded" data-id="'+q.id+'"'+(bankSelectedIds.has(q.id)?' checked':'')+'>'+
+          '<div class="flex-1 min-w-0"><div class="flex items-center gap-2 mb-0.5"><span class="px-1.5 py-0.5 '+typeColor+' text-xs rounded">'+typeLabel+'</span>'+
+          (subj?'<span class="text-xs text-gray-400">'+subj.name+'</span>':'')+
+          '</div><div class="text-sm text-gray-700 truncate">'+preview+'</div></div>';
+        const cb = item.querySelector('.question-checkbox');
+        cb.onchange = function() { if (this.checked) bankSelectedIds.add(q.id); else bankSelectedIds.delete(q.id); updateSelectedCount(); };
+        item.onclick = function(e) { if (e.target.tagName!=='INPUT') { cb.checked = !cb.checked; cb.onchange(); } };
+        browser.appendChild(item);
+      });
+    }
+
+    function updateSelectedCount() {
+      const filtered = getFilteredQuestions();
+      const selInView = filtered.filter(q => bankSelectedIds.has(q.id)).length;
+      document.getElementById('selected-count').textContent = selInView;
+    }
+
+    // ========== 事件监听 ==========
     function initEventListeners() {
       startBtn.addEventListener('click', startQuizSetup);
       historyBtn.addEventListener('click', showHistory);
@@ -347,1123 +414,439 @@
       exitBtn.addEventListener('click', confirmExit);
       backBtn.addEventListener('click', returnToConfig);
       exportResultBtn.addEventListener('click', exportCurrentResult);
-      closeHistoryBtn.addEventListener('click', () => {
-        historyModal.style.display = 'none';
-      });
+      closeHistoryBtn.addEventListener('click', () => { historyModal.style.display = 'none'; });
       exportAllHistoryBtn.addEventListener('click', exportAllHistory);
       clearAllHistoryBtn.addEventListener('click', confirmClearAllHistory);
     }
 
-    // 确认提交答案
-    function confirmSubmit() {
-      if (confirm('确定要提交答案吗？提交后将无法修改。')) {
-        submitAnswers();
-      }
+    // 全选/取消全选/随机选
+    function initQuickButtons() {
+      document.getElementById('select-all-btn').onclick = function() {
+        getFilteredQuestions().forEach(q => bankSelectedIds.add(q.id));
+        renderQuestionBrowser();
+      };
+      document.getElementById('deselect-all-btn').onclick = function() {
+        getFilteredQuestions().forEach(q => bankSelectedIds.delete(q.id));
+        renderQuestionBrowser();
+      };
+      document.getElementById('random-select-btn').onclick = function() {
+        const filtered = getFilteredQuestions();
+        const n = parseInt(prompt('随机选择几道题？', String(Math.min(10, filtered.length))));
+        if (!n || n <= 0) return;
+        bankSelectedIds = new Set();
+        const shuffled = shuffleArray(filtered).slice(0, Math.min(n, filtered.length));
+        shuffled.forEach(q => bankSelectedIds.add(q.id));
+        renderQuestionBrowser();
+      };
     }
 
-    // 确认退出答题
-    function confirmExit() {
-      if (confirm('确定要退出答题吗？当前进度将会丢失。')) {
-        returnToConfig();
-      }
+    // ========== 开始做题 ==========
+    function startQuizSetup() {
+      const filtered = getFilteredQuestions();
+      const selected = filtered.filter(q => bankSelectedIds.has(q.id));
+      if (selected.length === 0) { alert('请先选择题库中的题目'); return; }
+      questions = selected.map((q, idx) => convertQuestion(q, idx));
+      questions.forEach(question => {
+        if (question['题型'] === '选择题') { const r = getRandomOptions(question); question['shuffledOptions'] = r.options; question['displayAnswer'] = r.newCorrectAnswer; }
+      });
+      questions = shuffleArray(questions);
+      userAnswers = new Array(questions.length).fill().map(() => ({}));
+      currentQuestionIndex = 0; secondsElapsed = 0;
+      currentSubjectLabel = document.getElementById('filter-subject').selectedOptions[0]?.textContent || '学习助手';
+      startQuiz();
     }
 
-    // 确认清空所有历史记录
-    function confirmClearAllHistory() {
-      const subject = subjectSelect.value;
-      const historyKey = subjectHistoryMap[subject];
-      const records = JSON.parse(localStorage.getItem(historyKey) || '[]');
-      
-      if (records.length === 0) {
-        alert('暂无历史记录可清空');
-        return;
-      }
-      
-      if (confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
-        localStorage.setItem(historyKey, JSON.stringify([]));
-        showHistory(); // 刷新历史记录列表
-      }
-    }
-
-    // 删除单条历史记录
-    function deleteHistoryRecord(index) {
-      if (confirm('确定要删除这条记录吗？此操作不可恢复。')) {
-        const subject = subjectSelect.value;
-        const historyKey = subjectHistoryMap[subject];
-        let records = JSON.parse(localStorage.getItem(historyKey) || '[]');
-        
-        // 删除指定索引的记录
-        records.splice(index, 1);
-        localStorage.setItem(historyKey, JSON.stringify(records));
-        showHistory(); // 刷新历史记录列表
-      }
-    }
-
-    // 检测文本编码
-    function detectEncoding(buffer) {
-      const encodings = ['utf-8', 'gbk', 'gb2312', 'iso-8859-1', 'big5'];
-      
-      for (const encoding of encodings) {
-        try {
-          const decoder = new TextDecoder(encoding, { fatal: true });
-          const text = decoder.decode(buffer);
-          // 检查是否包含中文字符来判断是否是正确的编码
-          if (/[\u4e00-\u9fff]/.test(text) || text.includes('题面') || text.includes('正确答案')) {
-            return encoding;
-          }
-        } catch (e) {
-          // 继续尝试下一个编码
-        }
-      }
-      
-      // 如果没有检测到，默认使用utf-8
-      return 'utf-8';
-    }
-
-    // 解析CSV文本为题目数组
-    function parseCSV(csvText, questionType, selectedSubject) {
-      const lines = csvText.trim().split('\n');
-      if (lines.length < 2) return [];
-      
-      // 保存对应题型的原始CSV数据
-      originalCsvDataMap[questionType] = csvText;
-      
-      // 解析表头
-      const headers = lines[0].split(',').map(h => h.trim());
-      
-      // 检查是否有科目列
-      const hasSubjectColumn = headers.includes('科目');
-      
-      // 解析每一行数据
-      const questions = [];
-      
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i];
-        // 处理CSV中的引号和逗号
-        const values = [];
-        let inQuotes = false;
-        let currentValue = '';
-        
-        for (let j = 0; j < line.length; j++) {
-          const char = line[j];
-          
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            values.push(currentValue.trim());
-            currentValue = '';
-          } else {
-            currentValue += char;
-          }
-        }
-        values.push(currentValue.trim()); // 添加最后一个值
-        
-        const question = {};
-        
-        // 设置题型
-        question['题型'] = questionType;
-        
-        // 映射CSV字段到对象属性
-        headers.forEach((header, index) => {
-          if (index < values.length) {
-            const value = values[index];
-            switch(header) {
-              case '题面':
-                question['题目'] = value;
-                break;
-              case '材料内容':
-                question['材料内容'] = value; // 材料题的题面内容
-                break;
-              case '问题':
-                question['问题'] = value;
-                break;
-              case '第1问题面':
-                question['问题1'] = value;
-                break;
-              case '第1问答案':
-                question['答案1'] = value;
-                break;
-              case '第2问题面':
-                question['问题2'] = value;
-                break;
-              case '第2问答案':
-                question['答案2'] = value;
-                break;
-              case '第3问题面':
-                question['问题3'] = value;
-                break;
-              case '第3问答案':
-                question['答案3'] = value;
-                break;
-              case '第4问题面':
-                question['问题4'] = value;
-                break;
-              case '第4问答案':
-                question['答案4'] = value;
-                break;
-              case '第5问题面':
-                question['问题5'] = value;
-                break;
-              case '第5问答案':
-                question['答案5'] = value;
-                break;
-              case '第6问题面':
-                question['问题6'] = value;
-                break;
-              case '第6问答案':
-                question['答案6'] = value;
-                break;
-              case '第7问题面':
-                question['问题7'] = value;
-                break;
-              case '第7问答案':
-                question['答案7'] = value;
-                break;
-              case '第8问题面':
-                question['问题8'] = value;
-                break;
-              case '第8问答案':
-                question['答案8'] = value;
-                break;
-              case '第9问题面':
-                question['问题9'] = value;
-                break;
-              case '第9问答案':
-                question['答案9'] = value;
-                break;
-              case '第10问题面':
-                question['问题10'] = value;
-                break;
-              case '第10问答案':
-                question['答案10'] = value;
-                break;
-              case 'A':
-              case 'B':
-              case 'C':
-              case 'D':
-                question[header] = value;
-                break;
-              case '正确答案':
-                question['答案'] = value;
-                // 保存原始答案，用于后续导出
-                question['originalAnswer'] = value;
-                break;
-              case '第1空答案':
-                question['答案1'] = value;
-                break;
-              case '第2空答案':
-                question['答案2'] = value;
-                break;
-              case '第3空答案':
-                question['答案3'] = value;
-                break;
-              case '第4空答案':
-                question['答案4'] = value;
-                break;
-              case '第5空答案':
-                question['答案5'] = value;
-                break;
-              case '第6空答案':
-                question['答案6'] = value;
-                break;
-              case '第7空答案':
-                question['答案7'] = value;
-                break;
-              case '第8空答案':
-                question['答案8'] = value;
-                break;
-              case '第9空答案':
-                question['答案9'] = value;
-                break;
-              case '第10空答案':
-                question['答案10'] = value;
-                break;
-              case '科目':
-                question['科目'] = value;
-                break;
-              case '来源':
-                question['来源'] = value;
-                break;
-              default:
-                question[header] = value;
-            }
-          }
-        });
-        
-        // 如果有科目列，检查是否匹配当前选择的科目
-        if (hasSubjectColumn && question['科目'] && question['科目'] !== selectedSubject) {
-          continue; // 跳过不匹配的科目
-        }
-        
-        // 检查是否有必要的数据
-        let hasData = false;
-        
-        if (questionType === '选择题') {
-          // 选择题需要有题目和答案
-          hasData = question['题目'] && question['答案'];
-        } else if (questionType === '填空题') {
-          // 填空题需要有题目
-          hasData = question['题目'];
-        } else if (questionType === '材料题') {
-          // 材料题需要有材料内容或问题
-          hasData = question['材料内容'] || question['问题'] || question['问题1'];
-        }
-        
-        if (!hasData) {
-          continue; // 跳过无效数据
-        }
-        
-        // 保存原始行索引，用于导出时准确匹配
-        question['originalLineIndex'] = i;
-        // 保存来自哪个题型，用于导出时查找对应的原始CSV数据
-        question['csvType'] = questionType;
-        questions.push(question);
-      }
-      return questions;
-    }
-
-    // 筛选符合条件的题目（随机排序）
-    function filterQuestions(allQuestions, choiceCount, fillCount, materialCount) {
-      const filtered = [];
-      
-      // 筛选选择题并随机排序
-      const choiceQuestions = shuffleArray(allQuestions.filter(q => q['题型'] === '选择题'));
-      const takeChoices = Math.min(choiceCount, choiceQuestions.length);
-      filtered.push(...choiceQuestions.slice(0, takeChoices));
-      
-      // 筛选填空题并随机排序
-      const fillQuestions = shuffleArray(allQuestions.filter(q => q['题型'] === '填空题'));
-      const takeFills = Math.min(fillCount, fillQuestions.length);
-      filtered.push(...fillQuestions.slice(0, takeFills));
-      
-      // 筛选材料题（解答题）并随机排序
-      const materialQuestions = shuffleArray(allQuestions.filter(q => q['题型'] === '材料题'));
-      const takeMaterials = Math.min(materialCount, materialQuestions.length);
-      filtered.push(...materialQuestions.slice(0, takeMaterials));
-      
-      // 对所有选中的题目再次进行随机排序
-      return shuffleArray(filtered);
-    }
-
-    // 开始做题设置
-    async function startQuizSetup() {
-      const subject = subjectSelect.value;
-      const choiceCount = parseInt(choiceCountInput.value) || 0;
-      const fillCount = parseInt(fillCountInput.value) || 0;
-      const materialCount = parseInt(materialCountInput.value) || 0;
-
-      // 验证输入
-      if (choiceCount <= 0 && fillCount <= 0 && materialCount <= 0) {
-        alert('请至少选择一种题型并设置数量');
-        return;
-      }
-      
-      try {
-        // 并行加载三个CSV文件
-        const [choiceResponse, fillResponse, materialResponse] = await Promise.all([
-          fetch(questionFiles['选择题']),
-          fetch(questionFiles['填空题']),
-          fetch(questionFiles['材料题'])
-        ]);
-        
-        if (!choiceResponse.ok || !fillResponse.ok || !materialResponse.ok) {
-          throw new Error('题目文件不存在');
-        }
-        
-        // 获取ArrayBuffer
-        const [choiceBuffer, fillBuffer, materialBuffer] = await Promise.all([
-          choiceResponse.arrayBuffer(),
-          fillResponse.arrayBuffer(),
-          materialResponse.arrayBuffer()
-        ]);
-        
-        // 自动检测编码并解码
-        const choiceEncoding = detectEncoding(choiceBuffer);
-        const fillEncoding = detectEncoding(fillBuffer);
-        const materialEncoding = detectEncoding(materialBuffer);
-        
-        const decoder1 = new TextDecoder(choiceEncoding);
-        const decoder2 = new TextDecoder(fillEncoding);
-        const decoder3 = new TextDecoder(materialEncoding);
-        
-        const choiceText = decoder1.decode(choiceBuffer);
-        const fillText = decoder2.decode(fillBuffer);
-        const materialText = decoder3.decode(materialBuffer);
-        
-        // 解析三个CSV文件
-        const choiceQuestions = parseCSV(choiceText, '选择题', subject);
-        const fillQuestions = parseCSV(fillText, '填空题', subject);
-        const materialQuestions = parseCSV(materialText, '材料题', subject);
-        
-        // 合并所有题目
-        const allQuestions = [...choiceQuestions, ...fillQuestions, ...materialQuestions];
-        
-        if (allQuestions.length === 0) {
-          alert('未解析到题目数据，请检查CSV格式和内容');
-          return;
-        }
-        
-        // 筛选出对应题型和数量的题目（随机）
-        const filteredQuestions = filterQuestions(allQuestions, choiceCount, fillCount, materialCount);
-        if (filteredQuestions.length === 0) {
-          alert('没有足够的题目，请减少题目数量');
-          return;
-        }
-        
-        // 处理选择题的随机选项并更新正确答案
-        filteredQuestions.forEach(question => {
-          if (question['题型'] === '选择题') {
-            const { options, newCorrectAnswer } = getRandomOptions(question);
-            // 保存随机后的选项映射关系
-            question['shuffledOptions'] = options;
-            // 更新当前题目使用的正确答案（随机后的字母）
-            question['displayAnswer'] = newCorrectAnswer;
-          }
-        });
-        
-        questions = filteredQuestions;
-        // 初始化用户答案数组
-        userAnswers = new Array(questions.length).fill().map(() => ({}));
-        currentQuestionIndex = 0;
-        secondsElapsed = 0;
-        
-        startQuiz();
-      } catch (error) {
-        console.error('加载题目出错:', error);
-        alert('加载题目失败，请确保题目文件存在。错误信息：' + error.message);
-      }
-    }
-
-    // 开始做题
     function startQuiz() {
       configPage.style.display = 'none';
       questionPage.style.display = 'block';
-      currentSubjectSpan.textContent = subjectSelect.value;
-      
-      // 重置计时器
+      currentSubjectSpan.textContent = currentSubjectLabel || '学习助手';
       clearInterval(timerInterval);
       timerInterval = setInterval(updateTimer, 1000);
-      
       showQuestion();
       updateNavigationButtons();
     }
 
-    // 显示当前题目
+    // ========== 计时器 ==========
+    function updateTimer() {
+      secondsElapsed++;
+      const m = Math.floor(secondsElapsed/60).toString().padStart(2,'0');
+      const s = (secondsElapsed%60).toString().padStart(2,'0');
+      timerSpan.textContent = m+':'+s;
+      if (secondsElapsed > 600) timerSpan.classList.add('text-warning','font-bold');
+      else timerSpan.classList.remove('text-warning','font-bold');
+    }
+
+    // ========== 显示题目 ==========
     function showQuestion() {
       if (currentQuestionIndex >= questions.length) return;
-      
       const question = questions[currentQuestionIndex];
-      progressSpan.textContent = `${currentQuestionIndex + 1}/${questions.length}`;
+      progressSpan.textContent = (currentQuestionIndex+1)+'/'+questions.length;
       questionContainer.innerHTML = '';
-      
-      // 题目类型标签
       const typeBadge = document.createElement('span');
       typeBadge.className = 'inline-block px-2 py-0.5 bg-gray-100 text-gray-800 text-xs font-medium rounded mb-3';
       typeBadge.textContent = question['题型'];
       questionContainer.appendChild(typeBadge);
-      
-      // 对于材料题，显示材料内容（题面）
+
       if (question['题型'] === '材料题') {
-        // 材料题题面
         if (question['材料内容']) {
-          const materialTextContainer = document.createElement('div');
-          materialTextContainer.className = 'text-base font-medium mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-primary';
-          materialTextContainer.innerHTML = `<strong>材料：</strong><div class="material-content mt-2">${textToHtml(question['材料内容'])}</div>`;
-          questionContainer.appendChild(materialTextContainer);
+          const mc = document.createElement('div');
+          mc.className = 'text-base font-medium mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-primary';
+          mc.innerHTML = '<strong>材料：</strong><div class="material-content mt-2">'+textToHtml(question['材料内容'])+'</div>';
+          questionContainer.appendChild(mc);
         }
-        
-        // 材料题问题
-        const questionTextContainer = document.createElement('div');
-        questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
-        
-        // 构建问题内容
-        let hasQuestions = false;
-        
         if (question['问题']) {
-          // 如果只有一个问题
-          hasQuestions = true;
-          const questionDiv = document.createElement('div');
-          questionDiv.className = 'mb-4 p-3 bg-gray-50 rounded-lg';
-          questionDiv.innerHTML = `
-            <div class="font-medium text-gray-700 mb-2">问题：</div>
-            <div class="question-content text-base">${textToHtml(question['问题'])}</div>
-          `;
-          questionContainer.appendChild(questionDiv);
-          
-          // 创建单个答题框
-          const inputContainer = document.createElement('div');
-          inputContainer.className = 'mb-6';
-          
+          const qd = document.createElement('div');
+          qd.className = 'mb-4 p-3 bg-gray-50 rounded-lg';
+          qd.innerHTML = '<div class="font-medium text-gray-700 mb-2">问题：</div><div class="question-content text-base">'+textToHtml(question['问题'])+'</div>';
+          questionContainer.appendChild(qd);
+          const ic = document.createElement('div'); ic.className = 'mb-6';
           const input = document.createElement('textarea');
           input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[100px] resize-y';
           input.placeholder = '请输入答案';
           input.value = userAnswers[currentQuestionIndex][1] || '';
-          input.dataset.questionIndex = 1;
-          input.addEventListener('input', (e) => {
-            userAnswers[currentQuestionIndex][1] = e.target.value;
-          });
-          
-          inputContainer.appendChild(input);
-          questionContainer.appendChild(inputContainer);
+          input.oninput = function(e) { userAnswers[currentQuestionIndex][1] = e.target.value; };
+          ic.appendChild(input); questionContainer.appendChild(ic);
         } else {
-          // 如果有多个问题
           for (let i = 1; i <= 10; i++) {
-            const problemKey = `问题${i}`;
-            
-            if (question[problemKey]) {
-              hasQuestions = true;
-              const questionDiv = document.createElement('div');
-              questionDiv.className = 'mb-4 p-3 bg-gray-50 rounded-lg';
-              questionDiv.innerHTML = `
-                <div class="font-medium text-gray-700 mb-2">第${i}问：</div>
-                <div class="question-content text-base">${textToHtml(question[problemKey])}</div>
-              `;
-              questionContainer.appendChild(questionDiv);
-              
-              // 创建多个答题框
-              const inputContainer = document.createElement('div');
-              inputContainer.className = 'mb-6';
-              
-              const input = document.createElement('textarea');
-              input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[80px] resize-y';
-              input.placeholder = `请输入第${i}问答案`;
-              input.dataset.questionIndex = i;
-              // 对于多问材料题，我们需要保存每个问题的答案
-              input.value = userAnswers[currentQuestionIndex][i] || '';
-              input.addEventListener('input', (e) => {
-                userAnswers[currentQuestionIndex][i] = e.target.value;
-              });
-              
-              inputContainer.appendChild(input);
-              questionContainer.appendChild(inputContainer);
-            }
+            const pk = '问题'+i; if (!question[pk]) continue;
+            const qd = document.createElement('div');
+            qd.className = 'mb-4 p-3 bg-gray-50 rounded-lg';
+            qd.innerHTML = '<div class="font-medium text-gray-700 mb-2">第'+i+'问：</div><div class="question-content text-base">'+textToHtml(question[pk])+'</div>';
+            questionContainer.appendChild(qd);
+            const ic = document.createElement('div'); ic.className = 'mb-6';
+            const input = document.createElement('textarea');
+            input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[80px] resize-y';
+            input.placeholder = '请输入第'+i+'问答案';
+            input.value = userAnswers[currentQuestionIndex][i] || '';
+            input.oninput = function(e) { userAnswers[currentQuestionIndex][i] = e.target.value; };
+            ic.appendChild(input); questionContainer.appendChild(ic);
           }
-        }
-        
-        if (!hasQuestions) {
-          const noQuestionMsg = document.createElement('div');
-          noQuestionMsg.className = 'text-gray-500 text-center py-4';
-          noQuestionMsg.textContent = '暂无问题';
-          questionContainer.appendChild(noQuestionMsg);
         }
       } else if (question['题型'] === '填空题') {
-        // 填空题直接显示题目
-        const questionTextContainer = document.createElement('div');
-        questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
-        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: <div class="question-content mt-2">${textToHtml(question['题目'])}</div>`;
-        questionContainer.appendChild(questionTextContainer);
-        
-        // 填空题可能有多个空
-        const inputContainer = document.createElement('div');
-        inputContainer.className = 'space-y-3';
-        
-        // 统计有多少个空
-        let blankCount = 0;
-        for (let i = 1; i <= 10; i++) {
-          if (question[`答案${i}`]) {
-            blankCount++;
-          }
-        }
-        
-        if (blankCount > 0) {
-          // 如果有多个空，为每个空创建一个输入框
-          for (let i = 1; i <= blankCount; i++) {
-            const inputGroup = document.createElement('div');
-            inputGroup.className = 'mb-4';
-            
-            const label = document.createElement('label');
-            label.className = 'block text-sm font-medium text-gray-700 mb-1';
-            label.textContent = `第${i}空：`;
-            inputGroup.appendChild(label);
-            
-            const input = document.createElement('input');
-            input.type = 'text';
+        const qtc = document.createElement('div');
+        qtc.className = 'text-lg font-medium mb-4 text-gray-800';
+        qtc.innerHTML = '题目 '+(currentQuestionIndex+1)+': <div class="question-content mt-2">'+textToHtml(question['题目'])+'</div>';
+        questionContainer.appendChild(qtc);
+        let bc = 0; for (let i = 1; i <= 10; i++) { if (question['答案'+i]) bc++; }
+        const ic = document.createElement('div'); ic.className = 'space-y-3';
+        if (bc > 0) {
+          for (let i = 1; i <= bc; i++) {
+            const ig = document.createElement('div'); ig.className = 'mb-4';
+            const lbl = document.createElement('label'); lbl.className = 'block text-sm font-medium text-gray-700 mb-1'; lbl.textContent = '第'+i+'空：';
+            ig.appendChild(lbl);
+            const input = document.createElement('input'); input.type = 'text';
             input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus';
-            input.placeholder = `请输入第${i}空答案`;
-            input.dataset.blankIndex = i;
+            input.placeholder = '请输入第'+i+'空答案';
             input.value = userAnswers[currentQuestionIndex][i] || '';
-            input.addEventListener('input', (e) => {
-              userAnswers[currentQuestionIndex][i] = e.target.value;
-            });
-            
-            inputGroup.appendChild(input);
-            inputContainer.appendChild(inputGroup);
+            input.oninput = function(e) { userAnswers[currentQuestionIndex][i] = e.target.value; };
+            ig.appendChild(input); ic.appendChild(ig);
           }
         } else {
-          // 如果只有一个空，使用单个输入框
           const input = document.createElement('textarea');
           input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[100px] resize-y';
           input.placeholder = '请输入填空题答案';
           input.value = userAnswers[currentQuestionIndex][1] || '';
-          input.dataset.blankIndex = 1;
-          input.addEventListener('input', (e) => {
-            userAnswers[currentQuestionIndex][1] = e.target.value;
-          });
-          
-          inputContainer.appendChild(input);
+          input.oninput = function(e) { userAnswers[currentQuestionIndex][1] = e.target.value; };
+          ic.appendChild(input);
         }
-        
-        questionContainer.appendChild(inputContainer);
+        questionContainer.appendChild(ic);
       } else {
-        // 选择题显示题目
-        const questionTextContainer = document.createElement('div');
-        questionTextContainer.className = 'text-lg font-medium mb-4 text-gray-800';
-        questionTextContainer.innerHTML = `题目 ${currentQuestionIndex + 1}: <div class="question-content mt-2">${textToHtml(question['题目'])}</div>`;
-        questionContainer.appendChild(questionTextContainer);
-        
-        // 选择题显示选项（支持文字+图片混合，且选项随机）
-        if (question['题型'] === '选择题') {
-          const choicesContainer = document.createElement('div');
-          choicesContainer.className = 'space-y-3';
-          
-          // 使用随机排序后的选项
-          question['shuffledOptions'].forEach((option, index) => {
-            // 显示的选项字母（A、B、C、D）
-            const displayLetter = String.fromCharCode(65 + index);
-            
-            const div = document.createElement('div');
-            div.className = 'flex flex-col p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
-            
-            const radioContainer = document.createElement('div');
-            radioContainer.className = 'flex items-center';
-            
-            const radio = document.createElement('input');
-            radio.type = 'radio';
-            radio.name = `question-${currentQuestionIndex}`;
-            radio.value = displayLetter;
-            radio.id = `q${currentQuestionIndex}-${displayLetter}`;
-            radio.className = 'w-4 h-4 text-primary focus:ring-primary';
-            if (userAnswers[currentQuestionIndex][1] === displayLetter) {
-              radio.checked = true;
-            }
-            
-            const label = document.createElement('label');
-            label.htmlFor = `q${currentQuestionIndex}-${displayLetter}`;
-            label.className = 'ml-3 text-gray-700 font-medium';
-            label.textContent = displayLetter;
-            
-            radio.addEventListener('change', (e) => {
-              userAnswers[currentQuestionIndex][1] = e.target.value;
-            });
-            
-            radioContainer.appendChild(radio);
-            radioContainer.appendChild(label);
-            div.appendChild(radioContainer);
-            
-            // 选项内容（支持文字+图片混合）
-            const choiceContent = document.createElement('div');
-            choiceContent.className = 'ml-7 mt-2 text-gray-700';
-            choiceContent.innerHTML = textToHtml(option.value);
-            div.appendChild(choiceContent);
-            
-            choicesContainer.appendChild(div);
-          });
-          
-          questionContainer.appendChild(choicesContainer);
-        }
+        const qtc = document.createElement('div');
+        qtc.className = 'text-lg font-medium mb-4 text-gray-800';
+        qtc.innerHTML = '题目 '+(currentQuestionIndex+1)+': <div class="question-content mt-2">'+textToHtml(question['题目'])+'</div>';
+        questionContainer.appendChild(qtc);
+        const cc = document.createElement('div'); cc.className = 'space-y-3';
+        (question['shuffledOptions'] || []).forEach(opt => {
+          const div = document.createElement('div');
+          div.className = 'flex items-start p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
+          div.onclick = function() {
+            userAnswers[currentQuestionIndex][1] = opt.key;
+            showQuestion();
+          };
+          const radio = document.createElement('input');
+          radio.type = 'radio'; radio.name = 'choice-'+currentQuestionIndex; radio.value = opt.key;
+          radio.className = 'w-4 h-4 text-primary focus:ring-primary mr-3 mt-0.5';
+          if (userAnswers[currentQuestionIndex][1] === opt.key) radio.checked = true;
+          const lbl = document.createElement('span'); lbl.className = 'font-medium text-gray-700 mr-2'; lbl.textContent = opt.key+'.';
+          div.appendChild(radio); div.appendChild(lbl);
+          const ct = document.createElement('div'); ct.className = 'ml-7 mt-1 text-gray-700'; ct.innerHTML = textToHtml(opt.value);
+          div.appendChild(ct);
+          cc.appendChild(div);
+        });
+        questionContainer.appendChild(cc);
       }
+      renderMath(questionContainer);
     }
 
-    // 更新计时器
-    function updateTimer() {
-      secondsElapsed++;
-      const minutes = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
-      const seconds = (secondsElapsed % 60).toString().padStart(2, '0');
-      timerSpan.textContent = `${minutes}:${seconds}`;
-      
-      // 超过10分钟添加警告样式
-      if (secondsElapsed > 600) {
-        timerSpan.classList.add('text-warning', 'font-bold');
-      } else {
-        timerSpan.classList.remove('text-warning', 'font-bold');
-      }
-    }
-
-    // 上一题
-    function goToPrevQuestion() {
-      if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        showQuestion();
-        updateNavigationButtons();
-      }
-    }
-
-    // 下一题
-    function goToNextQuestion() {
-      if (currentQuestionIndex < questions.length - 1) {
-        currentQuestionIndex++;
-        showQuestion();
-        updateNavigationButtons();
-      }
-    }
-
-    // 更新导航按钮状态
+    // ========== 导航 ==========
     function updateNavigationButtons() {
-      prevBtn.style.display = currentQuestionIndex > 0 ? 'block' : 'none';
-      
-      if (currentQuestionIndex === questions.length - 1) {
-        nextBtn.style.display = 'none';
-        submitBtn.style.display = 'block';
-      } else {
-        nextBtn.style.display = 'block';
-        submitBtn.style.display = 'none';
-      }
+      prevBtn.style.display = currentQuestionIndex > 0 ? '' : 'none';
+      if (currentQuestionIndex >= questions.length - 1) { nextBtn.style.display = 'none'; submitBtn.style.display = ''; }
+      else { nextBtn.style.display = ''; submitBtn.style.display = 'none'; }
     }
 
-    // 提交答案
+    function goToPrevQuestion() { if (currentQuestionIndex>0) { currentQuestionIndex--; showQuestion(); updateNavigationButtons(); } }
+    function goToNextQuestion() { if (currentQuestionIndex<questions.length-1) { currentQuestionIndex++; showQuestion(); updateNavigationButtons(); } }
+
+    function confirmSubmit() { if (confirm('确定要提交答案吗？提交后将无法修改。')) submitAnswers(); }
+    function confirmExit() { if (confirm('确定要退出答题吗？当前进度将会丢失。')) returnToConfig(); }
+
     function submitAnswers() {
       clearInterval(timerInterval);
       showResults();
     }
 
-    // 显示结果（支持文字+图片混合）
+    // ========== 显示结果 ==========
     function showResults() {
       resultContent.innerHTML = '';
       let correctCount = 0;
-      let totalSelectQuestions = questions.filter(q => q['题型'] === '选择题').length;
-      
+      let totalSelectQuestions = questions.filter(q => q['题型']==='选择题').length;
       questions.forEach((question, index) => {
-        const userAnswer = userAnswers[index] || {};
-        let isCorrect = false;
-        let correctAnswerDisplay = '';
-        let userAnswerDisplay = '';
-        
+        const ua = userAnswers[index] || {};
+        let isCorrect = false, correctDisplay = '', userDisplay = '';
         if (question['题型'] === '选择题') {
-          // 选择题使用随机后的答案进行判断
-          isCorrect = userAnswer[1] === question['displayAnswer'];
-          // 显示正确答案字母和对应的选项内容
-          const correctOption = question['shuffledOptions'].find((_, i) => 
-            String.fromCharCode(65 + i) === question['displayAnswer']
-          );
-          correctAnswerDisplay = `${question['displayAnswer']}: ${textToHtml(correctOption ? correctOption.value : '')}`;
-          userAnswerDisplay = textToHtml(userAnswer[1] || '未作答');
-        } else if (question['题型'] === '填空题') {
-          // 填空题不判断对错，只显示答案
-          isCorrect = true; // 填空题不计入正确计数
-          
-          // 构建填空题答案显示
-          let allAnswers = [];
-          for (let i = 1; i <= 10; i++) {
-            const answerKey = `答案${i}`;
-            if (question[answerKey]) {
-              allAnswers.push(`${i}. ${question[answerKey]}`);
-            }
-          }
-          if (allAnswers.length > 0) {
-            correctAnswerDisplay = allAnswers.map(a => textToHtml(a)).join('<br>');
-          } else if (question['答案']) {
-            correctAnswerDisplay = textToHtml(question['答案']);
-          }
-          
-          // 构建用户答案显示
-          let userAnswersArray = [];
-          for (let i = 1; i <= 10; i++) {
-            if (userAnswer[i]) {
-              userAnswersArray.push(`${i}. ${userAnswer[i]}`);
-            }
-          }
-          userAnswerDisplay = userAnswersArray.length > 0 ? 
-            userAnswersArray.map(a => textToHtml(a)).join('<br>') : '未作答';
-        } else if (question['题型'] === '材料题') {
-          // 材料题不判断对错，只显示答案
-          isCorrect = true; // 材料题不计入正确计数
-          
-          // 构建材料题答案显示
-          if (question['答案']) {
-            // 如果只有一个答案
-            correctAnswerDisplay = textToHtml(question['答案']);
-          } else {
-            // 如果有多个答案
-            let allAnswers = [];
-            for (let i = 1; i <= 10; i++) {
-              const answerKey = `答案${i}`;
-              if (question[answerKey]) {
-                allAnswers.push(`${i}. ${question[answerKey]}`);
-              }
-            }
-            correctAnswerDisplay = allAnswers.map(a => textToHtml(a)).join('<br>');
-          }
-          
-          // 构建用户答案显示
-          let userAnswersArray = [];
-          for (let i = 1; i <= 10; i++) {
-            if (userAnswer[i]) {
-              userAnswersArray.push(`${i}. ${userAnswer[i]}`);
-            }
-          }
-          userAnswerDisplay = userAnswersArray.length > 0 ? 
-            userAnswersArray.map(a => textToHtml(a)).join('<br>') : '未作答';
-        }
-        
-        if (isCorrect && question['题型'] === '选择题') correctCount++;
-        
-        const resultItem = document.createElement('div');
-        resultItem.className = `p-3 rounded-lg ${isCorrect && question['题型'] === '选择题' ? 'bg-green-50 border border-green-100' : 'bg-gray-50 border border-gray-200'}`;
-        
-        // 只有选择题显示对错标记
-        const showCorrectness = question['题型'] === '选择题';
-        
-        // 构建题目显示内容
-        let questionText = '';
-        if (question['题型'] === '材料题') {
-          questionText = `<strong>材料：</strong><div class="material-content mb-2">${textToHtml(question['材料内容'] || '')}</div>`;
-          
-          if (question['问题']) {
-            questionText += `<strong>问题：</strong><div class="question-content">${textToHtml(question['问题'])}</div>`;
-          } else {
-            // 显示多问问题
-            let questionsText = '';
-            for (let i = 1; i <= 10; i++) {
-              const problemKey = `问题${i}`;
-              if (question[problemKey]) {
-                questionsText += `${i}. ${question[problemKey]}<br>`;
-              }
-            }
-            if (questionsText) {
-              questionText += `<strong>问题：</strong><div class="question-content">${textToHtml(questionsText)}</div>`;
-            }
-          }
-        } else if (question['题型'] === '填空题') {
-          questionText = textToHtml(question['题目']);
+          isCorrect = ua[1] === question['displayAnswer'];
+          const co = question['shuffledOptions'] && question['shuffledOptions'][question['displayAnswer'].charCodeAt(0)-65];
+          correctDisplay = question['displayAnswer']+': '+textToHtml(co?co.value:'');
+          userDisplay = textToHtml(ua[1]||'未作答');
         } else {
-          questionText = textToHtml(question['题目']);
+          isCorrect = true;
+          let ca = [];
+          for (let i=1;i<=10;i++) { if (question['答案'+i]) ca.push(i+'. '+question['答案'+i]); }
+          correctDisplay = ca.length>0 ? ca.map(a=>textToHtml(a)).join('<br>') : textToHtml(question['答案']||'');
+          let ua2 = [];
+          for (let i=1;i<=10;i++) { if (ua[i]) ua2.push(i+'. '+ua[i]); }
+          userDisplay = ua2.length>0 ? ua2.map(a=>textToHtml(a)).join('<br>') : '未作答';
         }
-        
-        resultItem.innerHTML = `
-          <div class="font-medium mb-1">题目 ${index + 1} (${question['题型']})</div>
-          <div class="text-sm text-gray-600 mb-2">${questionText}</div>
-          <div class="text-sm mb-1"><span class="text-gray-600">你的答案：</span>${userAnswerDisplay}</div>
-          <div class="text-sm"><span class="text-gray-600">正确答案：</span>${correctAnswerDisplay}</div>
-          ${showCorrectness ? `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
-            ${isCorrect ? '正确' : '错误'}
-          </div>` : ''}
-        `;
-        
-        resultContent.appendChild(resultItem);
+        if (isCorrect && question['题型']==='选择题') correctCount++;
+        const ri = document.createElement('div');
+        ri.className = 'p-3 rounded-lg '+(question['题型']==='选择题'?(isCorrect?'bg-green-50 border border-green-100':'bg-red-50 border border-red-100'):'bg-gray-50 border border-gray-200');
+        let qt = question['题型']==='材料题' ? textToHtml(question['材料内容']||'') : textToHtml(question['题目']);
+        ri.innerHTML = '<div class="font-medium mb-1">题目 '+(index+1)+' ('+question['题型']+')</div>'+
+          '<div class="text-sm text-gray-600 mb-2">'+qt+'</div>'+
+          '<div class="text-sm mb-1"><span class="text-gray-600">你的答案：</span>'+userDisplay+'</div>'+
+          '<div class="text-sm"><span class="text-gray-600">正确答案：</span>'+correctDisplay+'</div>'+
+          (question['题型']==='选择题'?'<div class="text-sm font-medium mt-1 '+(isCorrect?'text-green-600':'text-red-600')+'">'+(isCorrect?'正确':'错误')+'</div>':'');
+        resultContent.appendChild(ri);
       });
-      
-      // 添加总分（只计算选择题）
-      const scoreItem = document.createElement('div');
-      scoreItem.className = 'p-3 bg-primary/5 rounded-lg text-center mt-4';
-      scoreItem.innerHTML = `
-        <div class="text-lg font-bold text-primary">
-          总得分：${correctCount}/${totalSelectQuestions}
-        </div>
-        <div class="text-sm text-gray-600">正确率：${totalSelectQuestions > 0 ? ((correctCount/totalSelectQuestions)*100).toFixed(1) : '0'}%</div>
-        <div class="text-sm text-gray-600">用时：${timerSpan.textContent}</div>
-        <div class="text-sm text-gray-600 mt-1">注：填空题和材料题不计分</div>
-      `;
-      resultContent.prepend(scoreItem);
-      
-      // 保存到历史记录
+      const si = document.createElement('div');
+      si.className = 'p-3 bg-primary/5 rounded-lg text-center mt-4';
+      si.innerHTML = '<div class="text-lg font-bold text-primary">总得分：'+correctCount+'/'+totalSelectQuestions+'</div>'+
+        '<div class="text-sm text-gray-600">正确率：'+(totalSelectQuestions>0?((correctCount/totalSelectQuestions)*100).toFixed(1):'0')+'%</div>'+
+        '<div class="text-sm text-gray-600">用时：'+timerSpan.textContent+'</div>'+
+        '<div class="text-sm text-gray-600 mt-1">注：填空题和问答题不计分</div>';
+      resultContent.prepend(si);
       saveHistory(correctCount);
-      
-      // 显示结果弹窗
+      renderMath(resultContent);
       resultModal.style.display = 'flex';
     }
 
-    // 保存历史记录到localStorage
     function saveHistory(correctCount) {
-      const subject = subjectSelect.value;
-      const historyKey = subjectHistoryMap[subject];
-      
-      // 构建历史记录对象
-      const historyRecord = {
+      const record = {
         date: new Date().toLocaleString(),
-        subject: subject,
+        subject: currentSubjectLabel || '学习助手',
         total: questions.length,
         correct: correctCount,
-        accuracy: questions.filter(q => q['题型'] === '选择题').length > 0 ? 
-          ((correctCount/questions.filter(q => q['题型'] === '选择题').length)*100).toFixed(1) + '%' : '0%',
+        accuracy: questions.filter(q=>q['题型']==='选择题').length>0?((correctCount/questions.filter(q=>q['题型']==='选择题').length)*100).toFixed(1)+'%':'0%',
         time: timerSpan.textContent,
-        // 保存题目原始数据
-        originalQuestions: questions.map(q => ({
-          ...q,
-          shuffledOptions: q['shuffledOptions'] ? [...q['shuffledOptions']] : undefined,
-          csvType: q['csvType'],
-          originalLineIndex: q['originalLineIndex']
-        })),
+        originalQuestions: questions.map(q => ({...q, shuffledOptions: q['shuffledOptions']?[...q['shuffledOptions']]:void 0})),
         userAnswers: [...userAnswers],
-        // 保存原始CSV数据引用
-        csvData: {
-          '选择题': originalCsvDataMap['选择题'],
-          '填空题': originalCsvDataMap['填空题'],
-          '材料题': originalCsvDataMap['材料题']
-        }
+        csvData: null
       };
-      
-      // 从localStorage获取已有记录
-      const existingRecords = JSON.parse(localStorage.getItem(historyKey) || '[]');
-      existingRecords.push(historyRecord);
-      
-      // 保存回localStorage
-      localStorage.setItem(historyKey, JSON.stringify(existingRecords));
+      const records = JSON.parse(localStorage.getItem(historyKey)||'[]');
+      records.push(record);
+      localStorage.setItem(historyKey, JSON.stringify(records));
     }
 
-    // 显示历史记录
-    function showHistory() {
-      const subject = subjectSelect.value;
-      const historyKey = subjectHistoryMap[subject];
-      const records = JSON.parse(localStorage.getItem(historyKey) || '[]');
-      
-      historyList.innerHTML = '';
-      
-      if (records.length === 0) {
-        const emptyMsg = document.createElement('div');
-        emptyMsg.className = 'text-center py-6 text-neutral';
-        emptyMsg.textContent = '暂无该科目的做题记录';
-        historyList.appendChild(emptyMsg);
-      } else {
-        // 倒序显示，最新的在前面
-        records.slice().reverse().forEach((record, i) => {
-          const originalIndex = records.length - 1 - i;
-          const recordItem = document.createElement('div');
-          recordItem.className = 'p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
-          
-          recordItem.innerHTML = `
-            <div class="flex justify-between items-start mb-2">
-              <div class="font-medium">${record.date}</div>
-              <div class="flex gap-2">
-                <button class="export-single-history text-primary text-sm" data-index="${originalIndex}">
-                  <i class="fa fa-download mr-1"></i>导出
-                </button>
-                <button class="delete-history text-danger text-sm" data-index="${originalIndex}">
-                  <i class="fa fa-trash mr-1"></i>删除
-                </button>
-              </div>
-            </div>
-            <div class="text-sm text-gray-600 space-y-1">
-              <div>得分：${record.correct}/${record.originalQuestions.filter(q => q['题型'] === '选择题').length}（${record.accuracy}）</div>
-              <div>用时：${record.time}</div>
-              <div class="text-xs text-gray-500">注：填空题和材料题不计分</div>
-            </div>
-          `;
-          
-          historyList.appendChild(recordItem);
-        });
-        
-        // 为单个记录导出按钮添加事件
-        document.querySelectorAll('.export-single-history').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const index = parseInt(e.target.closest('.export-single-history').dataset.index);
-            exportSingleHistory(records[index]);
-          });
-        });
-        
-        // 为单个记录删除按钮添加事件
-        document.querySelectorAll('.delete-history').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const index = parseInt(e.target.closest('.delete-history').dataset.index);
-            deleteHistoryRecord(index);
-          });
-        });
-      }
-      
-      historyModal.style.display = 'flex';
-    }
-
-    // 处理CSV字段中的特殊字符
-    function escapeCsvField(field) {
-      if (!field) return '';
-      // 如果包含逗号、引号或换行符，则需要用引号包裹
-      if (field.includes(',') || field.includes('"') || field.includes('\n')) {
-        // 替换引号为两个引号
-        return `"${field.replace(/"/g, '""')}"`;
-      }
-      return field;
-    }
-
-    // 导出当前结果为CSV（在原始CSV基础上添加用户答案和时间）
-    function exportCurrentResult() {
-      const subject = subjectSelect.value;
-      const timeUsed = timerSpan.textContent;
-      
-      // 分别处理三种题型的CSV数据
-      const resultLines = [];
-      
-      // 添加表头（基于选择题的CSV表头）
-      const choiceCsvLines = originalCsvDataMap['选择题'].trim().split('\n');
-      if (choiceCsvLines.length > 0) {
-        resultLines.push(choiceCsvLines[0] + ',用户答案,用时,是否正确,题型');
-      }
-      
-      // 处理每道题
-      questions.forEach((question, index) => {
-        const csvType = question['csvType'];
-        const originalLineIndex = question['originalLineIndex'];
-        const csvLines = originalCsvDataMap[csvType].trim().split('\n');
-        
-        if (originalLineIndex < csvLines.length) {
-          const originalLine = csvLines[originalLineIndex];
-          let userAnswer = userAnswers[index] || {};
-          let userAnswerStr = '';
-          let isCorrect = '未判断';
-          
-          // 构建用户答案字符串
-          if (question['题型'] === '选择题') {
-            userAnswerStr = userAnswer[1] || '未作答';
-            const correct = userAnswer[1] === question['displayAnswer'];
-            isCorrect = correct ? '正确' : '错误';
-          } else if (question['题型'] === '填空题' || question['题型'] === '材料题') {
-            // 对于填空题和材料题，合并所有小问的答案
-            const answerParts = [];
-            for (let i = 1; i <= 10; i++) {
-              if (userAnswer[i]) {
-                answerParts.push(`${i}:${userAnswer[i]}`);
-              }
-            }
-            userAnswerStr = answerParts.join('; ') || '未作答';
-          }
-          
-          // 转义特殊字符
-          const escapedUserAnswer = escapeCsvField(userAnswerStr);
-          const escapedTimeUsed = escapeCsvField(timeUsed);
-          const escapedIsCorrect = escapeCsvField(isCorrect);
-          const escapedQuestionType = escapeCsvField(question['题型']);
-          
-          resultLines.push(`${originalLine},${escapedUserAnswer},${escapedTimeUsed},${escapedIsCorrect},${escapedQuestionType}`);
-        }
-      });
-      
-      const csvContent = resultLines.join('\n');
-      
-      // 创建下载链接
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.setAttribute('href', url);
-      
-      // 处理文件名中的特殊字符
-      const safeDate = new Date().toLocaleDateString().replace(/\//g, '-');
-      const safeTime = new Date().toLocaleTimeString().replace(/:/g, '-');
-      a.setAttribute('download', `${subject}_做题结果_${safeDate}_${safeTime}.csv`);
-      
-      a.style.visibility = 'hidden';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    // 导出单条历史记录
-    function exportSingleHistory(record) {
-      const timeUsed = record.time;
-      
-      // 分别处理三种题型的CSV数据
-      const resultLines = [];
-      
-      // 添加表头（基于选择题的CSV表头）
-      const choiceCsvLines = record.csvData['选择题'].trim().split('\n');
-      if (choiceCsvLines.length > 0) {
-        resultLines.push(choiceCsvLines[0] + ',用户答案,用时,是否正确,题型,记录日期');
-      }
-      
-      // 处理每道题
-      record.originalQuestions.forEach((question, index) => {
-        const csvType = question['csvType'];
-        const originalLineIndex = question['originalLineIndex'];
-        const csvLines = record.csvData[csvType].trim().split('\n');
-        
-        if (originalLineIndex < csvLines.length) {
-          const originalLine = csvLines[originalLineIndex];
-          let userAnswer = record.userAnswers[index] || {};
-          let userAnswerStr = '';
-          let isCorrect = '未判断';
-          
-          // 构建用户答案字符串
-          if (question['题型'] === '选择题') {
-            userAnswerStr = userAnswer[1] || '未作答';
-            const correct = userAnswer[1] === question['displayAnswer'];
-            isCorrect = correct ? '正确' : '错误';
-          } else if (question['题型'] === '填空题' || question['题型'] === '材料题') {
-            // 对于填空题和材料题，合并所有小问的答案
-            const answerParts = [];
-            for (let i = 1; i <= 10; i++) {
-              if (userAnswer[i]) {
-                answerParts.push(`${i}:${userAnswer[i]}`);
-              }
-            }
-            userAnswerStr = answerParts.join('; ') || '未作答';
-          }
-          
-          // 转义特殊字符
-          const escapedUserAnswer = escapeCsvField(userAnswerStr);
-          const escapedTimeUsed = escapeCsvField(timeUsed);
-          const escapedIsCorrect = escapeCsvField(isCorrect);
-          const escapedQuestionType = escapeCsvField(question['题型']);
-          const escapedDate = escapeCsvField(record.date);
-          
-          resultLines.push(`${originalLine},${escapedUserAnswer},${escapedTimeUsed},${escapedIsCorrect},${escapedQuestionType},${escapedDate}`);
-        }
-      });
-      
-      const csvContent = resultLines.join('\n');
-      return csvContent;
-    }
-
-    // 导出所有历史记录（包含所有题目）
-    function exportAllHistory() {
-      const subject = subjectSelect.value;
-      const historyKey = subjectHistoryMap[subject];
-      const records = JSON.parse(localStorage.getItem(historyKey) || '[]');
-      
-      if (records.length === 0) {
-        alert('暂无历史记录可导出');
-        return;
-      }
-      
-      // 用于存储所有记录的CSV内容
-      let allCsvContent = '';
-      let isFirstRecord = true;
-      
-      // 逐个处理每条记录
-      records.forEach((record, recordIndex) => {
-        // 获取单条记录的CSV内容
-        const recordCsv = exportSingleHistory(record);
-        const lines = recordCsv.split('\n');
-        
-        if (lines.length === 0) return;
-        
-        // 对于第一条记录，保留表头
-        if (isFirstRecord) {
-          allCsvContent += lines.join('\n') + '\n';
-          isFirstRecord = false;
-        } else {
-          // 对于后续记录，跳过表头
-          if (lines.length > 1) {
-            allCsvContent += lines.slice(1).join('\n') + '\n';
-          }
-        }
-      });
-      
-      // 创建下载链接
-      const blob = new Blob([allCsvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.setAttribute('href', url);
-      
-      // 处理文件名中的特殊字符
-      const safeDate = new Date().toLocaleDateString().replace(/\//g, '-');
-      const safeTime = new Date().toLocaleTimeString().replace(/:/g, '-');
-      a.setAttribute('download', `${subject}_所有做题记录_${safeDate}_${safeTime}.csv`);
-      
-      a.style.visibility = 'hidden';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    // 返回配置页面
     function returnToConfig() {
       resultModal.style.display = 'none';
       questionPage.style.display = 'none';
       configPage.style.display = 'block';
       clearInterval(timerInterval);
+      if (window.location.hash) window.location.hash = '';
+      questions = []; userAnswers = [];
+      loadBankData(currentGradeId);
+      initFilterUI();
+      renderQuestionBrowser();
     }
 
-    // 初始化
-    initEventListeners();
+    // ========== 历史记录 ==========
+    function showHistory() {
+      const records = JSON.parse(localStorage.getItem(historyKey)||'[]');
+      historyList.innerHTML = '';
+      if (records.length === 0) {
+        const em = document.createElement('div'); em.className = 'text-center py-6 text-neutral'; em.textContent = '暂无做题记录';
+        historyList.appendChild(em);
+      } else {
+        records.slice().reverse().forEach((record, i) => {
+          const oi = records.length-1-i;
+          const ri = document.createElement('div');
+          ri.className = 'p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors';
+          ri.innerHTML = '<div class="flex justify-between items-start mb-2"><div class="font-medium">'+record.date+'</div>'+
+            '<div class="flex gap-2"><button class="export-single-history text-primary text-sm" data-index="'+oi+'"><i class="fa fa-download mr-1"></i>导出</button>'+
+            '<button class="delete-history text-danger text-sm" data-index="'+oi+'"><i class="fa fa-trash mr-1"></i>删除</button></div></div>'+
+            '<div class="text-sm text-gray-600 space-y-1"><div>得分：'+record.correct+'/'+(record.originalQuestions||[]).filter(q=>q['题型']==='选择题').length+'（'+record.accuracy+'）</div>'+
+            '<div>用时：'+record.time+'</div><div class="text-xs text-gray-500">注：填空题和问答题不计分</div></div>';
+          historyList.appendChild(ri);
+        });
+        document.querySelectorAll('.export-single-history').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            const idx = parseInt(this.dataset.index);
+            exportSingleHistory(records[idx]);
+          });
+        });
+        document.querySelectorAll('.delete-history').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            if (confirm('确定要删除这条记录吗？')) {
+              const idx = parseInt(this.dataset.index);
+              const recs = JSON.parse(localStorage.getItem(historyKey)||'[]');
+              recs.splice(idx, 1);
+              localStorage.setItem(historyKey, JSON.stringify(recs));
+              showHistory();
+            }
+          });
+        });
+      }
+      historyModal.style.display = 'flex';
+    }
+
+    function confirmClearAllHistory() {
+      const records = JSON.parse(localStorage.getItem(historyKey)||'[]');
+      if (records.length===0) { alert('暂无记录可清空'); return; }
+      if (confirm('确定要清空所有历史记录吗？')) { localStorage.setItem(historyKey,'[]'); showHistory(); }
+    }
+
+    // ========== 导出 ==========
+    function exportCurrentResult() {
+      const timeUsed = timerSpan.textContent;
+      const lines = ['题型,题目,用户答案,参考答案,是否正确,用时'];
+      questions.forEach((q, idx) => {
+        const uas = buildUserAnswerStr(q, idx);
+        const cas = getCorrectAnswerStr(q);
+        const cor = buildCorrectnessStr(q, idx);
+        lines.push([escapeCsvField(q['题型']),escapeCsvField(q['题目']||''),escapeCsvField(uas),escapeCsvField(cas),escapeCsvField(cor),escapeCsvField(timeUsed)].join(','));
+      });
+      downloadCsv('做题结果_'+new Date().toISOString().split('T')[0]+'.csv', lines.join('\n'));
+    }
+
+    function exportSingleHistory(record) {
+      const lines = ['题型,题目,用户答案,参考答案,是否正确,用时,记录日期'];
+      (record.originalQuestions||[]).forEach((q, idx) => {
+        const uas = buildUserAnswerStr(q, idx, record.userAnswers);
+        const cas = getCorrectAnswerStr(q);
+        const cor = buildCorrectnessStr(q, idx, record.userAnswers);
+        lines.push([escapeCsvField(q['题型']),escapeCsvField(q['题目']||''),escapeCsvField(uas),escapeCsvField(cas),escapeCsvField(cor),escapeCsvField(record.time),escapeCsvField(record.date)].join(','));
+      });
+      downloadCsv('做题记录_'+record.date.replace(/[/:\s]/g,'_')+'.csv', lines.join('\n'));
+    }
+
+    function exportAllHistory() {
+      const records = JSON.parse(localStorage.getItem(historyKey)||'[]');
+      if (records.length===0) { alert('暂无记录可导出'); return; }
+      const lines = ['题型,题目,用户答案,参考答案,是否正确,用时,记录日期'];
+      records.forEach(record => {
+        (record.originalQuestions||[]).forEach((q, idx) => {
+          const uas = buildUserAnswerStr(q, idx, record.userAnswers);
+          const cas = getCorrectAnswerStr(q);
+          const cor = buildCorrectnessStr(q, idx, record.userAnswers);
+          lines.push([escapeCsvField(q['题型']),escapeCsvField(q['题目']||''),escapeCsvField(uas),escapeCsvField(cas),escapeCsvField(cor),escapeCsvField(record.time),escapeCsvField(record.date)].join(','));
+        });
+      });
+      downloadCsv('全部做题记录_'+new Date().toISOString().split('T')[0]+'.csv', lines.join('\n'));
+    }
+
+    function downloadCsv(filename, csvContent) {
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    // ========== URL 数据注入：从学习助手传入 ==========
+    function checkExternalQuestions() {
+      const hash = window.location.hash.substring(1);
+      if (!hash) return false;
+
+      // 方式1: quiz-data 直接传题（旧格式兼容）
+      if (hash.startsWith('quiz-data=')) {
+        try {
+          const base64 = hash.substring(10);
+          const json = decodeURIComponent(escape(atob(base64)));
+          const extQs = JSON.parse(json);
+          if (!extQs || extQs.length === 0) return false;
+          questions = extQs.map((q, idx) => convertQuestionFromExternal(q, idx));
+          return startExternalQuiz();
+        } catch(e) { console.error('quiz-data解析失败:', e); return false; }
+      }
+
+      // 方式2: 按ID选择
+      if (hash.startsWith('grade=') || hash.startsWith('paper=')) {
+        try {
+          const params = {};
+          hash.split('&').forEach(part => { const [k,v] = part.split('='); params[k] = v||''; });
+          loadBankData(params.grade || '');
+          currentSubjectLabel = params.subject ? decodeURIComponent(params.subject) : '学习助手';
+
+          if (params.paper) {
+            // 按试卷：加载试卷中的题目
+            const paper = bankPapers.find(p => p.id === params.paper);
+            if (!paper) return false;
+            const paperQs = (paper.questionIds || []).map(id => bankQuestions.find(q => q.id === id)).filter(Boolean);
+            if (paperQs.length === 0) return false;
+            questions = paperQs.map((q, idx) => convertQuestion(q, idx));
+          } else if (params.ids) {
+            // 按ID列表
+            const idList = params.ids.split(',');
+            const selectedQs = idList.map(id => bankQuestions.find(q => q.id === id)).filter(Boolean);
+            if (selectedQs.length === 0) return false;
+            questions = selectedQs.map((q, idx) => convertQuestion(q, idx));
+          } else {
+            return false;
+          }
+
+          // 随机选项排列
+          questions.forEach(question => {
+            if (question['题型'] === '选择题') { const r = getRandomOptions(question); question['shuffledOptions'] = r.options; question['displayAnswer'] = r.newCorrectAnswer; }
+          });
+          return startExternalQuiz();
+        } catch(e) { console.error('参数解析失败:', e); return false; }
+      }
+      return false;
+    }
+
+    function convertQuestionFromExternal(q, idx) {
+      const question = { '题型': q.type==='choice'?'选择题':(q.type==='fill'?'填空题':'材料题'), '题目': q.content||'', 'csvType': q.type==='choice'?'选择题':(q.type==='fill'?'填空题':'材料题'), 'originalLineIndex': idx };
+      if (q._correctLetter) { question['答案'] = q._correctLetter; question['displayAnswer'] = q._correctLetter; }
+      else { question['答案'] = q.answer||''; question['displayAnswer'] = q.answer; }
+      const opts = q._shuffledOptions || [];
+      opts.forEach((o, i) => { question[String.fromCharCode(65+i)] = o.value; });
+      question['shuffledOptions'] = opts;
+      if (q.type === 'fill') question['答案1'] = q.answer||'';
+      else question['答案'] = q.answer||'';
+      return question;
+    }
+
+    function startExternalQuiz() {
+      userAnswers = new Array(questions.length).fill().map(() => ({}));
+      currentQuestionIndex = 0; secondsElapsed = 0;
+      configPage.style.display = 'none'; questionPage.style.display = 'block';
+      currentSubjectSpan.textContent = currentSubjectLabel || '学习助手';
+      timerInterval = setInterval(updateTimer, 1000);
+      showQuestion();
+      updateNavigationButtons();
+      return true;
+    }
+
+    // ========== 初始化 ==========
+    if (!checkExternalQuestions()) {
+      loadBankData();
+      initFilterUI();
+      initQuickButtons();
+      renderQuestionBrowser();
+      initEventListeners();
+    }
   </script>
 </body>
 
 </html>
-
