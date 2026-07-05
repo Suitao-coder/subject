@@ -410,6 +410,225 @@
                 transition: width 0.3s;
             }
         }
+
+        /* ========== 移动端适配 ========== */
+        @media (max-width: 767px) {
+            /* 全局紧凑化 */
+            body { font-size: 14px; }
+            .container { padding-left: 10px; padding-right: 10px; }
+
+            /* 主导航栏紧凑 */
+            nav .container { padding-left: 8px; padding-right: 8px; }
+            nav .h-16 { height: 48px; }
+            nav .text-xl { font-size: 1rem; }
+            nav .w-8 { width: 28px; height: 28px; }
+            #gradeSelectorBtn { padding: 4px 8px; font-size: 12px; }
+            #gradeSelectorBtn i { font-size: 11px; }
+            #userName { display: none !important; }
+            #headerAvatarContainer { width: 28px; height: 28px; font-size: 11px; }
+            #mobileMenuButton { margin-left: 6px; padding: 4px 6px; }
+            #mobileMenuButton i { font-size: 18px; }
+
+            /* 主内容区上移 */
+            main { padding-top: 56px !important; padding-bottom: 64px !important; }
+
+            /* 页面标题紧凑 */
+            section h1 { font-size: 1.25rem !important; line-height: 1.3 !important; }
+            section > div:first-child { margin-bottom: 12px !important; }
+            section > div:first-child p { font-size: 12px; margin-top: 2px; }
+
+            /* 卡片紧凑 */
+            .bg-white.rounded-xl.p-6 { padding: 12px !important; }
+            .bg-white.rounded-xl.p-4 { padding: 10px !important; }
+            .card-shadow { box-shadow: 0 2px 6px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02) !important; }
+
+            /* 筛选栏紧凑 */
+            .bg-white.rounded-xl.p-4.shadow-sm.mb-6 > .flex { gap: 6px !important; }
+            select, input[type="text"], input[type="number"] { padding: 6px 10px !important; font-size: 13px !important; }
+            .input-focus { font-size: 13px !important; }
+
+            /* 仪表盘统计卡片 */
+            #dashboardStatCards { gap: 8px !important; margin-bottom: 12px !important; }
+            #dashboardStatCards > div { padding: 10px 12px !important; }
+            #dashboardStatCards h3 { font-size: 1.5rem !important; }
+            #dashboardStatCards p { font-size: 11px !important; }
+            #dashboardStatCards .w-12 { width: 36px !important; height: 36px !important; }
+            #dashboardStatCards .w-12 i { font-size: 16px !important; }
+            #dashboardStatCards .mt-4 { margin-top: 6px !important; font-size: 11px !important; }
+            #dashboardQuickActions { gap: 6px !important; margin-bottom: 12px !important; }
+            #dashboardQuickActions button { padding: 8px 10px !important; font-size: 12px !important; }
+            #dashboardChartAndRecent { gap: 8px !important; }
+            #dashboardChartSection, #dashboardRecentSection { padding: 10px !important; }
+            #dashboardChartSection h2, #dashboardRecentSection h2 { font-size: 1rem !important; margin-bottom: 8px !important; }
+            #dashboardChartSection .h-80 { height: 220px !important; }
+
+            /* 表格 → 可水平滚动，自动隐藏次要列 */
+            table { min-width: 600px !important; }
+            table td { padding: 6px 8px !important; font-size: 12px !important; white-space: nowrap; }
+            table th { padding: 6px 8px !important; font-size: 10px !important; white-space: nowrap; }
+            /* 题目内容列允许换行 */
+            table td:nth-child(3) { white-space: normal; min-width: 120px; max-width: 200px; }
+            table td[colspan] { white-space: normal; text-align: center; }
+            /* 操作列按钮紧凑 */
+            table td:last-child button { font-size: 10px !important; padding: 3px 6px !important; }
+
+            /* 分页紧凑 */
+            #pagination { padding: 8px 10px !important; }
+            #pagination .hidden.sm\:flex { display: none !important; }
+            #pagination .sm\:hidden { display: flex !important; justify-content: space-between; width: 100%; }
+            #pagination button { padding: 6px 12px !important; font-size: 12px !important; }
+
+            /* 批量工具栏 */
+            #batchToolbar { padding: 8px 10px !important; }
+            #batchToolbar button { font-size: 11px !important; padding: 4px 8px !important; }
+
+            /* 按钮通用紧凑 */
+            .btn-effect { padding: 7px 12px !important; font-size: 12px !important; }
+
+            /* 科目卡片网格 */
+            #subjectsList { gap: 8px !important; }
+            #subjectsList > div { padding: 10px !important; }
+
+            /* 试卷列表 */
+            #papersList { gap: 8px !important; }
+
+            /* 试卷详情 */
+            #paperDetailQuestionsList { gap: 8px !important; }
+
+            /* 做题配置页面 */
+            #practice-config .bg-white { padding: 12px !important; }
+            #practiceModeRandom, #practiceModeSelect, #practiceModePaper { padding: 6px 8px !important; font-size: 11px !important; }
+            #practiceRandomConfig .space-y-5 > div { margin-bottom: 10px; }
+            #practiceRandomConfig label { font-size: 12px !important; margin-bottom: 2px !important; }
+            #practiceStartBtn, #practiceOpenProblemBtn { padding: 10px 12px !important; font-size: 13px !important; }
+
+            /* 做题答题界面 */
+            #practice-quiz { max-width: 100% !important; }
+            .practice-question-card { padding: 12px !important; }
+            .practice-question-card .w-8.h-8 { width: 28px; height: 28px; font-size: 12px; }
+            .practice-question-card .text-base { font-size: 14px !important; }
+            .practice-answer-area .p-3 { padding: 8px 10px !important; font-size: 13px !important; }
+            .practice-answer-area textarea { min-height: 60px !important; font-size: 13px !important; padding: 8px !important; }
+            #practice-quiz .sticky { top: 44px !important; }
+            #practice-quiz .sticky.p-4 { padding: 8px 10px !important; }
+            #practice-header { padding-bottom: 6px !important; }
+            #practice-header .text-sm { font-size: 12px !important; }
+            #practice-exit-btn, #practice-submit-top-btn { padding: 6px 10px !important; font-size: 12px !important; }
+            #practice-submit-btn { padding: 10px 20px !important; font-size: 15px !important; }
+
+            /* 题目表单模态框 */
+            #questionModal > div { margin: 8px !important; border-radius: 12px !important; max-height: 92vh !important; }
+            #questionModal .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
+            #questionModal .py-6, #questionModal .py-4 { padding-top: 10px !important; padding-bottom: 10px !important; }
+            #questionModal h3 { font-size: 1rem !important; }
+            #questionForm .mb-4 { margin-bottom: 10px !important; }
+            #questionForm label { font-size: 12px !important; }
+            #questionForm textarea, #questionForm select, #questionForm input[type="text"], #questionForm input[type="number"] { font-size: 13px !important; padding: 6px 10px !important; }
+
+            /* 科目/试卷模态框 */
+            #subjectModal > div, #paperModal > div, #createPaperModal > div, #exportPapersModal > div { margin: 8px !important; border-radius: 12px !important; max-height: 92vh !important; }
+            #subjectModal .px-6, #paperModal .px-6, #createPaperModal .px-6, #exportPapersModal .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
+
+            /* 结果弹窗 */
+            #practice-result-modal > div { margin: 8px !important; border-radius: 12px !important; max-height: 90vh !important; }
+            #practice-result-modal .px-6 { padding-left: 10px !important; padding-right: 10px !important; }
+            #practice-result-modal .py-4 { padding-top: 8px !important; padding-bottom: 8px !important; }
+            #practice-result-modal h3 { font-size: 1rem !important; }
+            #practice-result-content .p-3 { padding: 6px 8px !important; font-size: 12px !important; }
+            #practice-result-back { padding: 8px 12px !important; font-size: 13px !important; }
+
+            /* 统计分析页面 */
+            #statisticsPage .bg-white.rounded-xl.p-6 { padding: 10px !important; }
+            #statisticsPage h2 { font-size: 1rem !important; margin-bottom: 8px !important; }
+            #statisticsPage .h-80 { height: 200px !important; }
+            #statisticsPage .overflow-x-auto { margin: 0 -10px; }
+            #statisticsPage table td { padding: 5px 8px !important; font-size: 12px !important; }
+
+            /* 知识点页面 */
+            #knowledgePointsPage .bg-white.rounded-xl.p-6 { padding: 10px !important; }
+
+            /* 错题页面 */
+            #mistakePage .bg-white.rounded-xl.p-4.shadow-sm.card-shadow.mb-4 { padding: 10px !important; }
+            #mistakePage .flex-wrap.gap-3 { gap: 6px !important; }
+            #mistakePage select, #mistakePage input[type="text"] { font-size: 12px !important; }
+
+            /* 通知条 */
+            #notification { bottom: 72px !important; right: 8px !important; left: 8px !important; padding: 8px 12px !important; font-size: 12px !important; }
+
+            /* 图表canvas */
+            canvas { max-height: 200px; }
+
+            /* 错题/试卷等页面标题按钮区 */
+            .flex.flex-col.sm\:flex-row.sm\:items-center.sm\:justify-between { gap: 8px !important; }
+
+            /* 隐藏底部nav时预留空间 */
+            body.has-mobile-nav { padding-bottom: 56px; }
+
+            /* OCR按钮 */
+            .ocr-btn { padding: 4px 8px !important; font-size: 11px !important; }
+            .ocr-overlay-content { padding: 16px !important; max-width: 280px !important; }
+
+            /* 照片预览网格紧凑 */
+            .grid.grid-cols-3.sm\:grid-cols-4.md\:grid-cols-5 { grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
+            .grid img.h-24 { height: 64px !important; }
+
+            /* 试卷创建中选择题目列表 */
+            #createPaperModal .max-h-96 { max-height: 200px !important; }
+            #createPaperModal .overflow-y-auto tbody tr td { padding: 2px 0 !important; font-size: 11px !important; }
+
+            /* 图片缩放弹窗 */
+            #imageZoomModal img { max-width: 95vw !important; max-height: 80vh !important; }
+
+            /* 题目梳理弹窗 */
+            #organizeModal > div { margin: 8px !important; max-height: 92vh !important; }
+        }
+
+        /* ========== 移动端底部导航栏 ========== */
+        #mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-top: 1px solid #e5e7eb;
+            z-index: 39;
+            padding: 4px 0;
+            padding-bottom: max(4px, env(safe-area-inset-bottom));
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        @media (max-width: 767px) {
+            #mobile-bottom-nav { display: flex; }
+        }
+        #mobile-bottom-nav .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 2px;
+            color: #9ca3af;
+            font-size: 10px;
+            cursor: pointer;
+            transition: color 0.2s;
+            text-decoration: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #mobile-bottom-nav .nav-item i {
+            font-size: 18px;
+            margin-bottom: 1px;
+        }
+        #mobile-bottom-nav .nav-item.active {
+            color: #3B82F6;
+        }
+        #mobile-bottom-nav .nav-item:active {
+            opacity: 0.7;
+        }
+        /* 底部栏空间 */
+        @media (max-width: 767px) {
+            main { padding-bottom: 68px !important; }
+        }
     </style>
 </head>
 
@@ -1271,6 +1490,30 @@
         </div>
     </main>
 
+    <!-- 移动端底部导航栏 -->
+    <nav id="mobile-bottom-nav">
+        <a class="nav-item active" data-page="dashboard">
+            <i class="fa fa-tachometer"></i>
+            <span>仪表盘</span>
+        </a>
+        <a class="nav-item" data-page="questions">
+            <i class="fa fa-list-alt"></i>
+            <span>题库</span>
+        </a>
+        <a class="nav-item" data-page="practice">
+            <i class="fa fa-pencil-square-o"></i>
+            <span>做题</span>
+        </a>
+        <a class="nav-item" data-page="mistake">
+            <i class="fa fa-exclamation-triangle"></i>
+            <span>错题</span>
+        </a>
+        <a class="nav-item" data-page="statistics">
+            <i class="fa fa-bar-chart"></i>
+            <span>分析</span>
+        </a>
+    </nav>
+
     <!-- 添加/编辑题目模态框 -->
     <div id="questionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1297,6 +1540,10 @@
                     <div class="mb-4">
                         <label for="questionContent" class="block text-sm font-medium text-gray-700 mb-1">题目内容</label>
                         <textarea id="questionContent" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入题目内容，若只有图片可不填写"></textarea>
+                        <div class="flex gap-2 mt-1.5">
+                            <button type="button" class="ocr-btn" onclick="triggerOcrCamera('questionContent')"><i class="fa fa-camera"></i> 拍照</button>
+                            <button type="button" class="ocr-btn" onclick="triggerOcrUpload('questionContent')"><i class="fa fa-image"></i> 上传</button>
+                        </div>
                     </div>
 
                     <div id="questionOptionsSection" class="mb-4 hidden">
@@ -1319,11 +1566,19 @@
                     <div class="mb-4">
                         <label for="questionAnswer" class="block text-sm font-medium text-gray-700 mb-1">正确答案 <span class="text-danger">*</span></label>
                         <textarea id="questionAnswer" rows="2" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入正确答案" required></textarea>
+                        <div class="flex gap-2 mt-1.5">
+                            <button type="button" class="ocr-btn" onclick="triggerOcrCamera('questionAnswer')"><i class="fa fa-camera"></i> 拍照</button>
+                            <button type="button" class="ocr-btn" onclick="triggerOcrUpload('questionAnswer')"><i class="fa fa-image"></i> 上传</button>
+                        </div>
                     </div>
                     
                     <div class="mb-4">
                         <label for="questionExplanation" class="block text-sm font-medium text-gray-700 mb-1">解析</label>
                         <textarea id="questionExplanation" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入解析或错误原因，若只有图片可不填写"></textarea>
+                        <div class="flex gap-2 mt-1.5">
+                            <button type="button" class="ocr-btn" onclick="triggerOcrCamera('questionExplanation')"><i class="fa fa-camera"></i> 拍照</button>
+                            <button type="button" class="ocr-btn" onclick="triggerOcrUpload('questionExplanation')"><i class="fa fa-image"></i> 上传</button>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -3379,6 +3634,16 @@
             document.getElementById('mobileMenuButton').addEventListener('click', function() {
                 document.getElementById('mobileMenu').classList.toggle('hidden');
             });
+
+            // 移动端底部导航栏
+            document.querySelectorAll('#mobile-bottom-nav .nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.getAttribute('data-page');
+                    switchPage(page);
+                    window.scrollTo(0, 0);
+                });
+            });
         }
 
         // 切换页面
@@ -3400,6 +3665,15 @@
             
             // 更新导航链接样式
             updateNavStyles();
+
+            // 更新移动端底部导航栏高亮
+            document.querySelectorAll('#mobile-bottom-nav .nav-item').forEach(item => {
+                if (item.getAttribute('data-page') === page) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
             
             // 特定页面初始化
             if (page === 'statistics') {
@@ -7800,26 +8074,13 @@
                     showNotification('请先选择题目', 'error');
                     return;
                 }
-                // 深拷贝并随机选项
-                const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; };
+                // 深拷贝并保持选项原顺序
                 const processed = selected.map(q => {
                     const qCopy = JSON.parse(JSON.stringify(q));
                     if ((qCopy.type === 'choice' || qCopy.type === 'multi') && qCopy.options) {
                         const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
-                        const labels = shuffle(opts.map(o => o.label));
-                        if (qCopy.type === 'multi') {
-                            // 多选题：计算每个正确选项的新映射字母
-                            const origAnswerLetters = (qCopy.answer || '').toUpperCase().split('');
-                            const newCorrectLetters = origAnswerLetters.map(origLbl => {
-                                const idx = labels.indexOf(origLbl);
-                                return idx >= 0 ? String.fromCharCode(65 + idx) : origLbl;
-                            }).sort().join('');
-                            qCopy._correctLetter = newCorrectLetters;
-                        } else {
-                            const ci = labels.indexOf(qCopy.answer);
-                            qCopy._correctLetter = ci >= 0 ? String.fromCharCode(65+ci) : qCopy.answer;
-                        }
-                        qCopy._shuffledOptions = labels.map((lbl, i) => ({ key: String.fromCharCode(65+i), value: (opts.find(o => o.label===lbl)||{}).text||'' }));
+                        qCopy._shuffledOptions = opts.map((opt, i) => ({ key: String.fromCharCode(65+i), value: opt.text }));
+                        qCopy._correctLetter = qCopy.answer.toUpperCase();
                     }
                     return qCopy;
                 });
@@ -7924,29 +8185,14 @@
             // 随机洗牌
             const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
 
-            // 混洗选项的辅助函数
-            const shuffleOptions = (qCopy, type) => {
+            // 选项保持原顺序
+            const keepOptions = (qCopy) => {
                 const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
-                const optLabels = opts.map(o => o.label);
-                const shuffledLabels = shuffle([...optLabels]);
-                qCopy._shuffledOptions = shuffledLabels.map((lbl, i) => {
-                    const orig = opts.find(o => o.label === lbl);
-                    return { key: String.fromCharCode(65 + i), value: orig ? orig.text : '' };
-                });
-                if (type === 'multi') {
-                    const origAnswerLetters = (qCopy.answer || '').toUpperCase().split('');
-                    const newCorrectLetters = origAnswerLetters.map(origLbl => {
-                        const idx = shuffledLabels.indexOf(origLbl);
-                        return idx >= 0 ? String.fromCharCode(65 + idx) : origLbl;
-                    }).sort().join('');
-                    qCopy._correctLetter = newCorrectLetters;
-                } else {
-                    const correctIdx = shuffledLabels.indexOf(qCopy.answer);
-                    qCopy._correctLetter = correctIdx >= 0 ? String.fromCharCode(65 + correctIdx) : qCopy.answer;
-                }
+                qCopy._shuffledOptions = opts.map((opt, i) => ({ key: String.fromCharCode(65 + i), value: opt.text }));
+                qCopy._correctLetter = qCopy.answer.toUpperCase();
             };
 
-            // 对于选择题和多选题，随机选项顺序
+            // 对于选择题和多选题，保持选项原顺序
             const selected = [];
             const takeChoice = shuffle([...choicePool]).slice(0, Math.min(choiceCount, choicePool.length));
             takeChoice.forEach(q => {
@@ -7958,7 +8204,7 @@
             const takeMulti = shuffle([...multiPool]).slice(0, Math.min(multiCount, multiPool.length));
             takeMulti.forEach(q => {
                 const qCopy = JSON.parse(JSON.stringify(q));
-                shuffleOptions(qCopy, 'multi');
+                keepOptions(qCopy);
                 selected.push(qCopy);
             });
 
@@ -8156,13 +8402,13 @@
                     cameraBtn.type = 'button';
                     cameraBtn.className = 'ocr-btn';
                     cameraBtn.innerHTML = '<i class="fa fa-camera"></i> 拍照识别';
-                    cameraBtn.onclick = function() { triggerOcrCamera(idx); };
+                    cameraBtn.onclick = function() { triggerOcrCamera('practice-ta-' + idx); };
                     
                     const uploadBtn = document.createElement('button');
                     uploadBtn.type = 'button';
                     uploadBtn.className = 'ocr-btn';
                     uploadBtn.innerHTML = '<i class="fa fa-image"></i> 上传图片识别';
-                    uploadBtn.onclick = function() { triggerOcrUpload(idx); };
+                    uploadBtn.onclick = function() { triggerOcrUpload('practice-ta-' + idx); };
                     
                     btnRow.appendChild(cameraBtn);
                     btnRow.appendChild(uploadBtn);
@@ -8179,11 +8425,11 @@
             renderPracticeMath(container);
         }
 
-        // ======= OCR 手写答案识别 =======
-        let ocrWorker = null;
+        // ======= OCR 手写文字识别 =======
         let ocrIsProcessing = false;
+        let ocrCancelled = false;
 
-        function triggerOcrCamera(qIndex) {
+        function triggerOcrCamera(targetId) {
             if (ocrIsProcessing) { showNotification('正在识别中，请稍候...', 'warning'); return; }
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -8191,28 +8437,37 @@
             fileInput.capture = 'environment'; // 优先使用后置摄像头
             fileInput.onchange = function() {
                 if (this.files && this.files[0]) {
-                    processOcrImage(this.files[0], qIndex);
+                    processOcrImage(this.files[0], targetId);
                 }
             };
             fileInput.click();
         }
 
-        function triggerOcrUpload(qIndex) {
+        function triggerOcrUpload(targetId) {
             if (ocrIsProcessing) { showNotification('正在识别中，请稍候...', 'warning'); return; }
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
             fileInput.onchange = function() {
                 if (this.files && this.files[0]) {
-                    processOcrImage(this.files[0], qIndex);
+                    processOcrImage(this.files[0], targetId);
                 }
             };
             fileInput.click();
         }
 
-        async function processOcrImage(file, qIndex) {
+        function cancelOcr() {
+            ocrCancelled = true;
+            ocrIsProcessing = false;
+            const ov = document.getElementById('ocr-overlay');
+            if (ov) ov.remove();
+            showNotification('已取消识别', 'info');
+        }
+
+        async function processOcrImage(file, targetId) {
             ocrIsProcessing = true;
-            
+            ocrCancelled = false;
+
             // 显示识别进度覆盖层
             const overlay = document.createElement('div');
             overlay.className = 'ocr-overlay';
@@ -8222,16 +8477,19 @@
                     <div class="text-lg font-semibold text-gray-800 mb-2">正在识别手写文字...</div>
                     <div class="text-sm text-gray-500 mb-3" id="ocr-status">加载识别引擎...</div>
                     <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-progress-fill" style="width:0%"></div></div>
-                    <div class="text-xs text-gray-400 mt-2">首次加载可能需要下载语言包，请耐心等待</div>
+                    <div class="text-xs text-gray-400 mt-2 mb-3">首次加载可能需要下载语言包，请耐心等待</div>
+                    <button type="button" onclick="cancelOcr()" class="px-4 py-1.5 text-sm border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">取消识别</button>
                 </div>
             `;
             document.body.appendChild(overlay);
 
             try {
+                if (ocrCancelled) return;
                 const imgUrl = URL.createObjectURL(file);
-                
+
                 // 进度回调
                 const updateProgress = (p) => {
+                    if (ocrCancelled) return;
                     const fill = document.getElementById('ocr-progress-fill');
                     const status = document.getElementById('ocr-status');
                     if (fill) fill.style.width = Math.round(p * 100) + '%';
@@ -8245,6 +8503,7 @@
                 // 使用 Tesseract.js 识别，同时支持中英文
                 const result = await Tesseract.recognize(imgUrl, 'chi_sim+eng', {
                     logger: m => {
+                        if (ocrCancelled) return;
                         if (m.status === 'recognizing text') updateProgress(m.progress);
                         else updateProgress(0.1);
                     }
@@ -8252,17 +8511,23 @@
 
                 URL.revokeObjectURL(imgUrl);
 
+                if (ocrCancelled) return;
+
                 const recognizedText = result.data.text.trim();
-                
-                // 将识别结果追加到 textarea
+
+                // 将识别结果追加到目标 textarea
                 if (recognizedText) {
-                    const ta = document.getElementById('practice-ta-' + qIndex);
+                    const ta = document.getElementById(targetId);
                     if (ta) {
                         const currentVal = ta.value;
                         ta.value = currentVal + (currentVal ? '\n' : '') + recognizedText;
-                        practiceUserAnswers[qIndex][1] = ta.value;
+                        // 同步 practiceUserAnswers（如果是做题模式）
+                        const match = targetId.match(/^practice-ta-(\d+)$/);
+                        if (match) {
+                            practiceUserAnswers[parseInt(match[1])][1] = ta.value;
+                        }
                     }
-                    showNotification('识别成功！文字已填入答案框', 'success');
+                    showNotification('识别成功！文字已填入', 'success');
                 } else {
                     showNotification('未能识别到文字，请确认图片清晰度', 'warning');
                 }
