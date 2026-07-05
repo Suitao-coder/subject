@@ -270,6 +270,44 @@
                 max-height: 0;
                 opacity: 0;
             }
+            /* 知识点拖拽排序 */
+            .kp-row {
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+            }
+            .kp-row.dragging {
+                opacity: 0.5;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transform: scale(1.02);
+                z-index: 10;
+            }
+            .kp-row.drag-over {
+                border-top: 3px solid #3B82F6 !important;
+                background: #eff6ff !important;
+                border-radius: 4px;
+            }
+            .kp-drag-handle {
+                cursor: grab;
+                color: #9ca3af;
+                transition: color 0.15s;
+                font-size: 14px;
+                padding: 2px 4px;
+                user-select: none;
+            }
+            .kp-drag-handle:hover {
+                color: #3B82F6;
+            }
+            .kp-drag-handle:active {
+                cursor: grabbing;
+            }
+            #knowledgePointTree .kp-drag-hint {
+                display: none;
+                font-size: 12px;
+                color: #9ca3af;
+                margin-bottom: 8px;
+            }
+            #knowledgePointTree.show-drag-hint .kp-drag-hint {
+                display: block;
+            }
         }
     </style>
 </head>
@@ -866,7 +904,8 @@
                     </button>
                 </div>
             </div>
-            <div id="knowledgePointTree" class="bg-white rounded-xl p-6 shadow-sm card-shadow min-h-[200px]">
+            <div id="knowledgePointTree" class="bg-white rounded-xl p-6 shadow-sm card-shadow min-h-[200px] show-drag-hint">
+                <p class="kp-drag-hint text-gray-400 text-xs mb-3"><i class="fa fa-grip-vertical mr-1"></i> 拖动 <i class="fa fa-grip-vertical"></i> 手柄可以调整知识点顺序</p>
                 <p class="text-gray-500 text-center py-8">暂无知识点，点击"添加知识点"开始创建</p>
             </div>
         </section>
@@ -2268,10 +2307,15 @@
 
         // 获取知识点树（按指定科目，返回嵌套结构）
         function getKnowledgePointTree(subjectId) {
+            // 确保所有知识点有 sortOrder
+            ensureKnowledgePointSortOrder();
             const all = knowledgePoints.filter(kp => kp.subjectId === subjectId);
-            const roots = all.filter(kp => !kp.parentId);
+            // 按 sortOrder 排序
+            const sortChildren = (arr) => arr.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+            const sortedAll = sortChildren([...all]);
+            const roots = sortedAll.filter(kp => !kp.parentId);
             const buildChildren = (parentId) => {
-                return all.filter(kp => kp.parentId === parentId).map(kp => ({
+                return sortedAll.filter(kp => kp.parentId === parentId).map(kp => ({
                     ...kp,
                     children: buildChildren(kp.id)
                 }));
@@ -2280,6 +2324,27 @@
                 ...root,
                 children: buildChildren(root.id)
             }));
+        }
+
+        // 确保所有知识点都有 sortOrder
+        function ensureKnowledgePointSortOrder() {
+            let changed = false;
+            // 按 subjectId + parentId 分组处理
+            const groups = {};
+            knowledgePoints.forEach(kp => {
+                const key = (kp.subjectId || '') + '||' + (kp.parentId || '');
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(kp);
+            });
+            Object.values(groups).forEach(group => {
+                group.forEach((kp, i) => {
+                    if (kp.sortOrder === undefined || kp.sortOrder === null) {
+                        kp.sortOrder = i;
+                        changed = true;
+                    }
+                });
+            });
+            if (changed) saveGradeData();
         }
 
         // 获取知识点路径（如 "力学 > 牛顿定律"）
@@ -2434,21 +2499,101 @@
                 });
             });
 
+            // 绑定拖拽排序事件
+            initKnowledgePointDrag(container);
+
             // 渲染知识点名称中的 KaTeX/MathJax 公式
             renderMathJaxContent(container);
+        }
+
+        // 知识点拖拽排序
+        let dragSrcKpId = null;
+
+        function initKnowledgePointDrag(container) {
+            container.querySelectorAll('.kp-row[draggable="true"]').forEach(row => {
+                row.addEventListener('dragstart', function(e) {
+                    dragSrcKpId = this.getAttribute('data-kp-id');
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', dragSrcKpId);
+                });
+
+                row.addEventListener('dragend', function() {
+                    this.classList.remove('dragging');
+                    dragSrcKpId = null;
+                    container.querySelectorAll('.kp-row').forEach(r => r.classList.remove('drag-over'));
+                });
+
+                row.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    if (!dragSrcKpId || dragSrcKpId === this.getAttribute('data-kp-id')) return;
+                    // 只能在同父级之间排序
+                    const srcParent = container.querySelector(`.kp-row[data-kp-id="${dragSrcKpId}"]`);
+                    if (!srcParent) return;
+                    if (srcParent.getAttribute('data-kp-parent-id') !== this.getAttribute('data-kp-parent-id')) return;
+                    this.classList.add('drag-over');
+                    e.dataTransfer.dropEffect = 'move';
+                });
+
+                row.addEventListener('dragleave', function() {
+                    this.classList.remove('drag-over');
+                });
+
+                row.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('drag-over');
+                    const targetId = this.getAttribute('data-kp-id');
+                    if (!dragSrcKpId || dragSrcKpId === targetId) return;
+
+                    // 验证同父级
+                    const srcKp = knowledgePoints.find(k => k.id === dragSrcKpId);
+                    const tgtKp = knowledgePoints.find(k => k.id === targetId);
+                    if (!srcKp || !tgtKp) return;
+                    if (srcKp.parentId !== tgtKp.parentId || srcKp.subjectId !== tgtKp.subjectId) return;
+
+                    // 收集同组知识点并重新分配 sortOrder
+                    const group = knowledgePoints.filter(kp =>
+                        kp.subjectId === srcKp.subjectId && kp.parentId === srcKp.parentId
+                    );
+                    // 按当前 sortOrder 排序
+                    group.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+                    // 找到被拖动的和目标的位置
+                    const srcIdx = group.findIndex(k => k.id === dragSrcKpId);
+                    const tgtIdx = group.findIndex(k => k.id === targetId);
+                    if (srcIdx === -1 || tgtIdx === -1) return;
+
+                    // 移动：从原位置移除，插入到目标位置
+                    const [moved] = group.splice(srcIdx, 1);
+                    const newIdx = group.findIndex(k => k.id === targetId); // target 位置变了
+                    group.splice(newIdx, 0, moved);
+
+                    // 重新分配 sortOrder
+                    group.forEach((kp, i) => { kp.sortOrder = i; });
+
+                    saveGradeData();
+                    renderKnowledgePointTree();
+                    showNotification(`知识点顺序已更新`, 'success');
+                });
+            });
         }
 
         // 渲染树形HTML
         function renderTreeHTML(nodes, depth) {
             if (!nodes || nodes.length === 0) return '';
-            let html = '<div class="space-y-1">';
+            let html = '<div class="space-y-1 kp-sibling-group">';
             nodes.forEach(node => {
                 const hasChildren = knowledgePoints.some(kp => kp.parentId === node.id);
                 const descCount = hasChildren ? countAllDescendants(node.id) : 0;
                 const escName = (node.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 html += `
-                <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5 hover:bg-gray-100 transition-colors" style="margin-left: ${depth * 20}px;">
+                <div class="kp-row flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5 hover:bg-gray-100 transition-colors"
+                     draggable="true"
+                     data-kp-id="${node.id}"
+                     data-kp-parent-id="${node.parentId || ''}"
+                     style="margin-left: ${depth * 20}px;">
                     <div class="flex items-center space-x-2">
+                        <span class="kp-drag-handle" title="拖拽排序"><i class="fa fa-grip-vertical"></i></span>
                         ${hasChildren
                             ? `<span class="kp-toggle" data-kp-id="${node.id}" onclick="toggleKpChildren('${node.id}')" title="展开/收起"><i class="fa fa-chevron-down"></i></span>`
                             : `<span class="inline-block" style="width:20px;"></span>`}
@@ -2616,11 +2761,14 @@
                 showNotification('知识点已更新', 'success');
             } else {
                 // 新增模式
+                const siblings = knowledgePoints.filter(kp => kp.subjectId === subjectId && kp.parentId === parentId);
+                const maxOrder = siblings.reduce((max, kp) => Math.max(max, kp.sortOrder || 0), -1);
                 knowledgePoints.push({
                     id: generateId(),
                     name,
                     subjectId,
                     parentId,
+                    sortOrder: maxOrder + 1,
                     createDate: new Date().toISOString()
                 });
                 showNotification('知识点已添加', 'success');
@@ -2714,11 +2862,16 @@
                     skippedCount++;
                     return null;
                 }
+                const siblings2 = knowledgePoints.filter(kp2 =>
+                    kp2.subjectId === subjectId && kp2.parentId === parentId
+                );
+                const maxOrd = siblings2.reduce((m, kp) => Math.max(m, kp.sortOrder || 0), -1);
                 const newKp = {
                     id: generateId(),
                     name: name,
                     subjectId: subjectId,
                     parentId: parentId,
+                    sortOrder: maxOrd + 1,
                     createDate: new Date().toISOString()
                 };
                 knowledgePoints.push(newKp);
@@ -5758,11 +5911,16 @@
             );
             if (existing) return { id: existing.id, isNew: false };
             // 未找到则自动创建
+            const siblings = knowledgePoints.filter(kp =>
+                kp.subjectId === subjectId && kp.parentId === (parentId || null)
+            );
+            const maxOrder = siblings.reduce((m, kp) => Math.max(m, kp.sortOrder || 0), -1);
             const newKp = {
                 id: generateId(),
                 name: trimmedName,
                 subjectId: subjectId,
                 parentId: parentId || null,
+                sortOrder: maxOrder + 1,
                 createDate: new Date().toISOString()
             };
             knowledgePoints.push(newKp);
