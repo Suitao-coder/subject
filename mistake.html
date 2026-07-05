@@ -1289,6 +1289,12 @@
                     <button id="importKnowledgePointsBtn" class="flex items-center bg-teal-500 text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
                         <i class="fa fa-upload mr-1"></i> 批量导入
                     </button>
+                    <button id="exportMindBtn" class="flex items-center bg-purple-500 text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
+                        <i class="fa fa-download mr-1"></i> 导出 .xmind
+                    </button>
+                    <button id="importMindBtn" class="flex items-center bg-pink-500 text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
+                        <i class="fa fa-sitemap mr-1"></i> 导入 .xmind
+                    </button>
                 </div>
             </div>
             <div id="knowledgePointTree" class="bg-white rounded-xl p-6 shadow-sm card-shadow min-h-[200px] show-drag-hint">
@@ -2942,6 +2948,10 @@
                 const subjId = this.value;
                 populateKnowledgePointParentOptions(subjId);
             });
+
+            // .xmind 文件导出/导入
+            document.getElementById('exportMindBtn').addEventListener('click', exportKnowledgePointsToMind);
+            document.getElementById('importMindBtn').addEventListener('click', importMindFile);
         }
 
         // 渲染知识点树
@@ -3607,6 +3617,269 @@
         function getRandomColor() {
             const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316', '#6366F1', '#14B8A6'];
             return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // ====== XMind .xmind 文件导出 ======
+        function exportKnowledgePointsToMind() {
+            if (knowledgePoints.length === 0) {
+                showNotification('暂无知识点可导出', 'warning');
+                return;
+            }
+
+            // 为每个科目构建知识点树
+            var subjectTrees = {};
+            var subjectIds = [];
+            knowledgePoints.forEach(function(kp) {
+                if (subjectIds.indexOf(kp.subjectId) === -1) subjectIds.push(kp.subjectId);
+            });
+            subjectIds.forEach(function(subjId) {
+                subjectTrees[subjId] = getKnowledgePointTree(subjId);
+            });
+
+            // XMind ID 生成器
+            var mindIdCounter = 0;
+            function mindId() {
+                mindIdCounter++;
+                return 'm' + Date.now().toString(36) + '_' + mindIdCounter + '_' + Math.random().toString(36).substr(2, 5);
+            }
+
+            // 递归构建 XMind topic（带 structureClass）
+            function buildXMindChildren(treeNodes) {
+                return treeNodes.map(function(node) {
+                    var topic = {
+                        id: mindId(),
+                        class: 'topic',
+                        structureClass: 'org.xmind.ui.logic.right',
+                        title: node.name
+                    };
+                    if (node.children && node.children.length > 0) {
+                        topic.children = {
+                            attached: buildXMindChildren(node.children)
+                        };
+                    }
+                    return topic;
+                });
+            }
+
+            // 构建一级分支（学科）及下级知识点
+            var attachedChildren = [];
+            var sheetId = mindId();
+            subjectIds.forEach(function(subjId) {
+                var subject = subjects.find(function(s) { return s.id === subjId; });
+                var tree = subjectTrees[subjId];
+                if (!tree || tree.length === 0) return;
+
+                var subjectTopic = {
+                    id: mindId(),
+                    class: 'topic',
+                    structureClass: 'org.xmind.ui.logic.right',
+                    title: subject ? subject.name : '未知科目',
+                    children: {
+                        attached: buildXMindChildren(tree)
+                    }
+                };
+                attachedChildren.push(subjectTopic);
+            });
+
+            if (attachedChildren.length === 0) {
+                showNotification('没有可导出的知识点树', 'warning');
+                return;
+            }
+
+            // 构建完整的 content.json（必填字段齐全）
+            var content = [{
+                id: sheetId,
+                class: 'sheet',
+                title: '知识点',
+                extensions: [],
+                topicPositioning: 'fixed',
+                topicOverlapping: 'overlap',
+                coreVersion: '2.100.0',
+                rootTopic: {
+                    id: mindId(),
+                    class: 'topic',
+                    structureClass: 'org.xmind.ui.logic.right',
+                    title: '知识点',
+                    children: {
+                        attached: attachedChildren
+                    }
+                }
+            }];
+
+            // 构建完整的 metadata.json
+            var metadata = {
+                modifier: '',
+                dataStructureVersion: '2',
+                creator: { name: '学习助手' },
+                layoutEngineVersion: '3',
+                activeSheetId: sheetId
+            };
+
+            // 构建 manifest.json（必须！否则 XMind 报文件损坏）
+            var manifest = {
+                'file-entries': {
+                    'content.json': { 'media-type': 'application/json' },
+                    'metadata.json': { 'media-type': 'application/json' },
+                    'manifest.json': { 'media-type': 'application/json' }
+                }
+            };
+
+            // 打包为 .xmind（ZIP 含三个文件）
+            var zip = new JSZip();
+            zip.file('content.json', JSON.stringify(content, null, 2));
+            zip.file('metadata.json', JSON.stringify(metadata, null, 2));
+            zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+
+            zip.generateAsync({ type: 'blob' }).then(function(blob) {
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                var grade = grades.find(function(g) { return g.id === currentGradeId; });
+                var gradeName = grade ? grade.name : '知识点';
+                var date = new Date().toISOString().slice(0, 10);
+                a.download = gradeName + '_知识点_' + date + '.xmind';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+                showNotification('知识点已导出为 .xmind 文件', 'success');
+            }).catch(function(err) {
+                console.error('生成 .xmind 文件失败:', err);
+                showNotification('导出失败，请重试', 'error');
+            });
+        }
+
+        // ====== XMind .xmind 文件导入 ======
+        function importMindFile() {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xmind,.mind';
+            input.onchange = function() {
+                if (this.files && this.files[0]) {
+                    processMindImport(this.files[0]);
+                }
+            };
+            input.click();
+        }
+
+        async function processMindImport(file) {
+            try {
+                var zip = await JSZip.loadAsync(file);
+
+                // 读取 content.json
+                var contentJson = null;
+                if (zip.files['content.json']) {
+                    var raw = await zip.files['content.json'].async('string');
+                    contentJson = JSON.parse(raw);
+                } else {
+                    // 兼容：某些 .xmind/.mind 文件 content.json 不在根目录
+                    var names = Object.keys(zip.files);
+                    var contentFile = names.find(function(n) { return n.indexOf('content.json') !== -1; });
+                    if (contentFile) {
+                        var raw2 = await zip.files[contentFile].async('string');
+                        contentJson = JSON.parse(raw2);
+                    }
+                }
+
+                if (!contentJson || !Array.isArray(contentJson) || contentJson.length === 0) {
+                    showNotification('无效的 .xmind 文件：未找到画布内容', 'error');
+                    return;
+                }
+
+                var sheet = contentJson[0];
+                var rootTopic = sheet.rootTopic;
+                if (!rootTopic || !rootTopic.children || !rootTopic.children.attached || rootTopic.children.attached.length === 0) {
+                    showNotification('该思维导图没有分支内容，无法导入', 'warning');
+                    return;
+                }
+
+                var createdCount = 0;
+                var skippedCount = 0;
+                var newSubjects = 0;
+
+                // 添加知识点的工具函数
+                function addKp(name, subjectId, parentId) {
+                    var exists = knowledgePoints.some(function(kp) {
+                        return kp.name === name &&
+                            kp.subjectId === subjectId &&
+                            (kp.parentId === parentId || (!kp.parentId && !parentId));
+                    });
+                    if (exists) {
+                        skippedCount++;
+                        return null;
+                    }
+                    var siblings = knowledgePoints.filter(function(kp) {
+                        return kp.subjectId === subjectId && kp.parentId === parentId;
+                    });
+                    var maxOrd = siblings.reduce(function(m, kp) { return Math.max(m, kp.sortOrder || 0); }, -1);
+                    var newKp = {
+                        id: generateId(),
+                        name: name,
+                        subjectId: subjectId,
+                        parentId: parentId,
+                        sortOrder: maxOrd + 1,
+                        createDate: new Date().toISOString()
+                    };
+                    knowledgePoints.push(newKp);
+                    createdCount++;
+                    return newKp.id;
+                }
+
+                // 递归处理知识点节点（二级及以下）
+                function processTopic(topic, subjectId, parentKpId) {
+                    if (!topic || !topic.title) return;
+                    var name = topic.title.trim();
+                    if (!name) return;
+
+                    var newId = addKp(name, subjectId, parentKpId);
+
+                    if (topic.children && topic.children.attached && Array.isArray(topic.children.attached)) {
+                        topic.children.attached.forEach(function(child) {
+                            processTopic(child, subjectId, newId);
+                        });
+                    }
+                }
+
+                // 处理一级分支：学科
+                var firstLevelTopics = rootTopic.children.attached;
+                firstLevelTopics.forEach(function(topic) {
+                    var subjectName = (topic.title || '未命名学科').trim();
+                    if (!subjectName) return;
+
+                    // 查找或创建学科
+                    var subject = subjects.find(function(s) { return s.name === subjectName; });
+                    if (!subject) {
+                        subject = {
+                            id: generateId(),
+                            name: subjectName,
+                            color: getRandomColor(),
+                            createDate: new Date().toISOString()
+                        };
+                        subjects.push(subject);
+                        newSubjects++;
+                    }
+
+                    // 处理该学科下的知识点（二级及以下）
+                    if (topic.children && topic.children.attached && Array.isArray(topic.children.attached)) {
+                        topic.children.attached.forEach(function(child) {
+                            processTopic(child, subject.id, null);
+                        });
+                    }
+                });
+
+                // 保存并刷新
+                saveGradeData();
+                renderKnowledgePointTree();
+
+                var msg = '导入完成：新增 ' + createdCount + ' 个知识点';
+                if (newSubjects > 0) msg += '，' + newSubjects + ' 个学科';
+                if (skippedCount > 0) msg += '，跳过 ' + skippedCount + ' 个重复';
+                showNotification(msg, 'success');
+
+            } catch (err) {
+                console.error('导入 .xmind 文件失败:', err);
+                showNotification('导入失败：' + (err.message || '未知错误，请确认文件格式正确'), 'error');
+            }
         }
 
         // 初始化导航
@@ -8434,7 +8707,7 @@
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
-            fileInput.capture = 'environment'; // 优先使用后置摄像头
+            fileInput.capture = 'environment';
             fileInput.onchange = function() {
                 if (this.files && this.files[0]) {
                     processOcrImage(this.files[0], targetId);
@@ -8464,48 +8737,117 @@
             showNotification('已取消识别', 'info');
         }
 
+        // ====== 图片预处理：缩放 + 灰度化 + 对比度增强 ======
+        // 关键原则：不做二值化！Tesseract 内部已有自适应二值化，
+        // 预二值化会丢失灰度过渡信息（尤其是浅色手写笔迹），反而降低识别率。
+        function preprocessImageSync(file) {
+            return new Promise(function(resolve, reject) {
+                var img = new Image();
+                img.onload = function() {
+                    var MAX = 1800;
+                    var w = img.naturalWidth, h = img.naturalHeight;
+                    if (Math.max(w, h) > MAX) {
+                        var r = MAX / Math.max(w, h);
+                        w = Math.round(w * r);
+                        h = Math.round(h * r);
+                    }
+                    var cvs = document.createElement('canvas');
+                    cvs.width = w;
+                    cvs.height = h;
+                    var ctx = cvs.getContext('2d');
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    var idata = ctx.getImageData(0, 0, w, h);
+                    var d = idata.data, len = d.length;
+
+                    // 灰度化 + 适度对比度增强（不二值化）
+                    for (var i = 0; i < len; i += 4) {
+                        var gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                        // 对比度拉伸：因子1.5，保留中间灰度层次
+                        var v = Math.round((gray - 128) * 1.5 + 128);
+                        if (v < 0) v = 0;
+                        if (v > 255) v = 255;
+                        d[i] = d[i + 1] = d[i + 2] = v;
+                    }
+                    ctx.putImageData(idata, 0, 0);
+
+                    cvs.toBlob(function(blob) {
+                        URL.revokeObjectURL(img.src);
+                        resolve(blob);
+                    }, 'image/png');
+                };
+                img.onerror = function() {
+                    URL.revokeObjectURL(img.src);
+                    reject(new Error('图片加载失败'));
+                };
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // OCR 文本后处理：清理常见识别噪声
+        function cleanOcrText(text) {
+            return text
+                .replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+                .replace(/\n{3,}/g, '\n\n')           // 多余空行合并
+                .replace(/^\s+|\s+$/gm, '')           // 每行首尾空格
+                .replace(/,{2,}|\.{2,}/g, '')         // 连续标点噪声
+                .replace(/[OＯ](?=\d)/g, '0')         // 数字前的 O/Ｏ → 0
+                .replace(/(\d)[OＯ]/g, '$10')         // 数字后的 O/Ｏ → 0
+                .replace(/[|l](?=\d)/g, '1')          // |/l 在数字前可能是1
+                .trim();
+        }
+
         async function processOcrImage(file, targetId) {
             ocrIsProcessing = true;
             ocrCancelled = false;
 
-            // 显示识别进度覆盖层
-            const overlay = document.createElement('div');
+            var overlay = document.createElement('div');
             overlay.className = 'ocr-overlay';
             overlay.id = 'ocr-overlay';
-            overlay.innerHTML = `
-                <div class="ocr-overlay-content">
-                    <div class="text-lg font-semibold text-gray-800 mb-2">正在识别手写文字...</div>
-                    <div class="text-sm text-gray-500 mb-3" id="ocr-status">加载识别引擎...</div>
-                    <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-progress-fill" style="width:0%"></div></div>
-                    <div class="text-xs text-gray-400 mt-2 mb-3">首次加载可能需要下载语言包，请耐心等待</div>
-                    <button type="button" onclick="cancelOcr()" class="px-4 py-1.5 text-sm border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">取消识别</button>
-                </div>
-            `;
+            overlay.innerHTML = '' +
+                '<div class="ocr-overlay-content">' +
+                    '<div class="text-lg font-semibold text-gray-800 mb-2">正在识别文字...</div>' +
+                    '<div class="text-sm text-gray-500 mb-3" id="ocr-status">预处理图片中...</div>' +
+                    '<div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-progress-fill" style="width:0%"></div></div>' +
+                    '<div class="text-xs text-gray-400 mt-2 mb-3">首次使用需下载语言包</div>' +
+                    '<button type="button" onclick="cancelOcr()" class="px-4 py-1.5 text-sm border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">取消识别</button>' +
+                '</div>';
             document.body.appendChild(overlay);
 
             try {
                 if (ocrCancelled) return;
-                const imgUrl = URL.createObjectURL(file);
 
-                // 进度回调
-                const updateProgress = (p) => {
-                    if (ocrCancelled) return;
-                    const fill = document.getElementById('ocr-progress-fill');
-                    const status = document.getElementById('ocr-status');
-                    if (fill) fill.style.width = Math.round(p * 100) + '%';
-                    if (status) {
-                        if (p < 0.3) status.textContent = '加载识别引擎...';
-                        else if (p < 0.7) status.textContent = '正在分析图片...';
-                        else status.textContent = '识别文字中...';
-                    }
-                };
+                var statusEl = document.getElementById('ocr-status');
+                if (statusEl) statusEl.textContent = '预处理图片中...';
 
-                // 使用 Tesseract.js 识别，同时支持中英文
-                const result = await Tesseract.recognize(imgUrl, 'chi_sim+eng', {
-                    logger: m => {
+                // 预处理：缩放 + 灰度 + 适度对比增强
+                var processedBlob = await preprocessImageSync(file);
+                if (ocrCancelled) return;
+                var imgUrl = URL.createObjectURL(processedBlob);
+
+                if (statusEl) statusEl.textContent = '正在识别文字...';
+
+                // Tesseract.js v5 recognize API（内部自动管理 worker）
+                // 参数使用数字值，避免 CDN 构建中 PSM 常量不可用
+                var result = await Tesseract.recognize(imgUrl, 'chi_sim+eng', {
+                    // PSM=6: 假设为统一文本块（默认值，不加也行但显式声明更可靠）
+                    tessedit_pageseg_mode: '6',
+                    preserve_interword_spaces: '1',
+                    logger: function(m) {
                         if (ocrCancelled) return;
-                        if (m.status === 'recognizing text') updateProgress(m.progress);
-                        else updateProgress(0.1);
+                        var fill = document.getElementById('ocr-progress-fill');
+                        var s = document.getElementById('ocr-status');
+                        if (fill && m.progress) {
+                            fill.style.width = Math.round(m.progress * 100) + '%';
+                        }
+                        if (s) {
+                            if (m.status === 'loading tesseract core') s.textContent = '加载识别引擎...';
+                            else if (m.status === 'initializing tesseract') s.textContent = '初始化引擎...';
+                            else if (m.status === 'loading language traineddata') s.textContent = '加载中文语言包...';
+                            else if (m.status === 'recognizing text') s.textContent = '识别文字中...';
+                        }
                     }
                 });
 
@@ -8513,30 +8855,29 @@
 
                 if (ocrCancelled) return;
 
-                const recognizedText = result.data.text.trim();
+                var recognizedText = cleanOcrText(result.data.text);
+                console.log('OCR 识别结果:', recognizedText);
 
-                // 将识别结果追加到目标 textarea
                 if (recognizedText) {
-                    const ta = document.getElementById(targetId);
+                    var ta = document.getElementById(targetId);
                     if (ta) {
-                        const currentVal = ta.value;
-                        ta.value = currentVal + (currentVal ? '\n' : '') + recognizedText;
-                        // 同步 practiceUserAnswers（如果是做题模式）
-                        const match = targetId.match(/^practice-ta-(\d+)$/);
-                        if (match) {
-                            practiceUserAnswers[parseInt(match[1])][1] = ta.value;
+                        var old = ta.value;
+                        ta.value = old + (old ? '\n' : '') + recognizedText;
+                        var m = targetId.match(/^practice-ta-(\d+)$/);
+                        if (m) {
+                            practiceUserAnswers[parseInt(m[1])][1] = ta.value;
                         }
                     }
                     showNotification('识别成功！文字已填入', 'success');
                 } else {
-                    showNotification('未能识别到文字，请确认图片清晰度', 'warning');
+                    showNotification('未能识别到文字，请确保图片清晰、光照充足', 'warning');
                 }
             } catch (err) {
-                console.error('OCR error:', err);
-                showNotification('识别失败，请重试或手动输入', 'error');
+                console.error('OCR 错误详情:', err.message, err.stack);
+                showNotification('识别失败：' + (err.message || '未知错误，请重试'), 'error');
             } finally {
                 ocrIsProcessing = false;
-                const ov = document.getElementById('ocr-overlay');
+                var ov = document.getElementById('ocr-overlay');
                 if (ov) ov.remove();
             }
         }
