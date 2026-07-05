@@ -1066,6 +1066,12 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                <i class="fa fa-list-ul mr-2 text-primary"></i>多选题数量
+                            </label>
+                            <input type="number" id="practiceMultiCount" min="0" value="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
                                 <i class="fa fa-pencil mr-2 text-primary"></i>填空题数量
                             </label>
                             <input type="number" id="practiceFillCount" min="0" value="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
@@ -1090,6 +1096,7 @@
                             <select id="practiceSelectType" class="flex-1 min-w-[100px] px-3 py-2 border border-gray-300 rounded-lg text-sm input-focus">
                                 <option value="all">全部题型</option>
                                 <option value="choice">选择题</option>
+                                <option value="multi">多选题</option>
                                 <option value="fill">填空题</option>
                                 <option value="other">问答题</option>
                             </select>
@@ -1196,6 +1203,7 @@
                         <label for="questionType" class="block text-sm font-medium text-gray-700 mb-1">题型 <span class="text-danger">*</span></label>
                         <select id="questionType" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white" required>
                             <option value="choice">选择题</option>
+                            <option value="multi">多选题</option>
                             <option value="fill">填空题</option>
                             <option value="other">其他</option>
                         </select>
@@ -1365,8 +1373,14 @@
                                     <button type="button" class="avatar-color-btn w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition-transform" style="background:#78716C;" data-color="#78716C" title="灰色"></button>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs text-gray-500">或使用图片链接：</span>
-                                    <input type="text" id="profileAvatarUrl" class="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none input-focus" placeholder="输入图片URL地址">
+                                    <span class="text-xs text-gray-500">或上传图片：</span>
+                                    <input type="file" id="profileAvatarFile" accept="image/*" class="hidden">
+                                    <button type="button" id="uploadAvatarBtn" class="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer border border-gray-300">
+                                        <i class="fa fa-upload mr-1"></i> 选择图片
+                                    </button>
+                                    <button type="button" id="removeAvatarBtn" class="px-3 py-1.5 text-sm text-danger hover:bg-red-50 rounded-lg transition-colors cursor-pointer hidden">
+                                        <i class="fa fa-trash mr-1"></i> 移除头像
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2103,8 +2117,9 @@
             displayName: '学习达人',
             avatarColor: '#3B82F6',
             avatarType: 'text', // 'text' 或 'image'
-            avatarUrl: ''
+            avatarUrl: '' // 存储 base64 data URL（也兼容旧的 http(s) URL）
         };
+        let pendingAvatarDataUrl = null; // 临时存储上传的图片 base64 数据
         let appSettings = JSON.parse(localStorage.getItem('appSettings')) || {
             enabledPages: {
                 dashboard: true,
@@ -3410,7 +3425,10 @@
             
             // 填充当前值
             document.getElementById('profileDisplayName').value = userProfile.displayName;
-            document.getElementById('profileAvatarUrl').value = userProfile.avatarType === 'image' ? userProfile.avatarUrl : '';
+            // 重置文件上传状态
+            pendingAvatarDataUrl = userProfile.avatarType === 'image' ? userProfile.avatarUrl : null;
+            document.getElementById('profileAvatarFile').value = '';
+            updateAvatarUploadButtonState();
             
             // 更新头像预览
             updateProfileAvatarPreview();
@@ -3459,6 +3477,19 @@
             }
         }
 
+        // 更新头像上传按钮状态（显示/隐藏移除按钮）
+        function updateAvatarUploadButtonState() {
+            const uploadBtn = document.getElementById('uploadAvatarBtn');
+            const removeBtn = document.getElementById('removeAvatarBtn');
+            if (pendingAvatarDataUrl) {
+                uploadBtn.classList.add('hidden');
+                removeBtn.classList.remove('hidden');
+            } else {
+                uploadBtn.classList.remove('hidden');
+                removeBtn.classList.add('hidden');
+            }
+        }
+
         // 保存个人资料
         function saveProfile() {
             const displayName = document.getElementById('profileDisplayName').value.trim();
@@ -3468,16 +3499,15 @@
                 return;
             }
             
-            const avatarUrl = document.getElementById('profileAvatarUrl').value.trim();
-            
             userProfile.displayName = displayName;
             
-            if (avatarUrl) {
+            if (pendingAvatarDataUrl) {
+                // 用户上传了新图片
                 userProfile.avatarType = 'image';
-                userProfile.avatarUrl = avatarUrl;
+                userProfile.avatarUrl = pendingAvatarDataUrl;
             } else {
-                // 如果之前是图片模式，现在清空了URL，则回到首字母模式
-                if (userProfile.avatarType === 'image') {
+                // 检查是否是移除了头像
+                if (userProfile.avatarType === 'image' && !pendingAvatarDataUrl && !document.getElementById('profileAvatarFile').value) {
                     userProfile.avatarType = 'text';
                     userProfile.avatarUrl = '';
                 }
@@ -3485,6 +3515,9 @@
             
             // 保存到 localStorage
             localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            
+            // 清理临时状态
+            pendingAvatarDataUrl = null;
             
             // 更新UI
             updateUserUI();
@@ -3898,7 +3931,9 @@
                     if (userProfile.avatarType === 'image') {
                         userProfile.avatarType = 'text';
                         userProfile.avatarUrl = '';
-                        document.getElementById('profileAvatarUrl').value = '';
+                        pendingAvatarDataUrl = null;
+                        document.getElementById('profileAvatarFile').value = '';
+                        updateAvatarUploadButtonState();
                     }
                     // 高亮选中按钮
                     document.querySelectorAll('.avatar-color-btn').forEach(b => {
@@ -3909,23 +3944,53 @@
                 });
             });
             
-            // 头像URL输入实时预览
-            document.getElementById('profileAvatarUrl').addEventListener('input', function() {
-                const url = this.value.trim();
-                const avatarImg = document.getElementById('profileAvatarImg');
-                const avatarText = document.getElementById('profileAvatarText');
-                const avatarPreview = document.getElementById('profileAvatarPreview');
+            // 头像文件上传按钮
+            document.getElementById('uploadAvatarBtn').addEventListener('click', function() {
+                document.getElementById('profileAvatarFile').click();
+            });
+            
+            // 头像文件选择处理
+            document.getElementById('profileAvatarFile').addEventListener('change', function() {
+                const file = this.files[0];
+                if (!file) return;
                 
-                if (url) {
-                    avatarImg.src = url;
+                // 验证文件类型
+                if (!file.type.startsWith('image/')) {
+                    showNotification('请选择图片文件', 'error');
+                    this.value = '';
+                    return;
+                }
+                
+                // 验证文件大小（最大5MB）
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('图片大小不能超过5MB', 'error');
+                    this.value = '';
+                    return;
+                }
+                
+                // 读取并转换为base64
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    pendingAvatarDataUrl = e.target.result;
+                    // 实时预览
+                    const avatarImg = document.getElementById('profileAvatarImg');
+                    const avatarText = document.getElementById('profileAvatarText');
+                    const avatarPreview = document.getElementById('profileAvatarPreview');
+                    avatarImg.src = pendingAvatarDataUrl;
                     avatarImg.classList.remove('hidden');
                     avatarText.classList.add('hidden');
                     avatarPreview.style.backgroundColor = 'transparent';
-                } else {
-                    avatarImg.classList.add('hidden');
-                    avatarText.classList.remove('hidden');
-                    avatarPreview.style.backgroundColor = userProfile.avatarColor || '#3B82F6';
-                }
+                    updateAvatarUploadButtonState();
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // 移除头像按钮
+            document.getElementById('removeAvatarBtn').addEventListener('click', function() {
+                pendingAvatarDataUrl = null;
+                document.getElementById('profileAvatarFile').value = '';
+                updateAvatarUploadButtonState();
+                updateProfileAvatarPreview();
             });
             
             // 设置模态框
@@ -4007,7 +4072,7 @@
         function renderQuestionOptionsSection() {
             const type = document.getElementById('questionType').value;
             const section = document.getElementById('questionOptionsSection');
-            if (type !== 'choice') {
+            if (type !== 'choice' && type !== 'multi') {
                 section.classList.add('hidden');
                 return;
             }
@@ -4259,6 +4324,18 @@
                 return;
             }
 
+            // 多选题答案验证
+            if (type === 'multi') {
+                const cleanAnswer = answer.toUpperCase().replace(/\s+/g, '');
+                if (!/^[A-Z]+$/.test(cleanAnswer)) {
+                    showNotification('多选题答案格式错误，请输入选项字母组合，如：ABD', 'error');
+                    return;
+                }
+                // 自动排序
+                const sorted = cleanAnswer.split('').sort().join('');
+                document.getElementById('questionAnswer').value = sorted;
+            }
+
             if (!content && currentQuestionImages.length === 0) {
                 showNotification('请填写题目内容或上传题目照片', 'error');
                 return;
@@ -4267,7 +4344,7 @@
             const question = {
                 id,
                 content,
-                answer,
+                answer: type === 'multi' ? document.getElementById('questionAnswer').value.trim().toUpperCase() : answer,
                 explanation,
                 subjectId,
                 difficulty,
@@ -4276,7 +4353,7 @@
                 status: 'pending',
                 source,
                 type,
-                options: type === 'choice' ? currentQuestionOptions : [],
+                options: (type === 'choice' || type === 'multi') ? currentQuestionOptions : [],
                 date,
                 photos: currentQuestionImages,
                 explanationPhotos: currentExplanationImages
@@ -4496,7 +4573,7 @@
                 <div class="space-y-6">
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">题型</h4>
-                        <div class="p-2 bg-gray-50 rounded-lg">${question.type === 'choice' ? '选择题' : question.type === 'fill' ? '填空题' : '其他'}</div>
+                        <div class="p-2 bg-gray-50 rounded-lg">${question.type === 'choice' ? '选择题' : question.type === 'multi' ? '多选题' : question.type === 'fill' ? '填空题' : '其他'}</div>
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">题目内容</h4>
@@ -4858,7 +4935,7 @@
             tbody.innerHTML = '';
             mistakeQuestions.forEach((q, i) => {
                 const subj = subjects.find(s => s.id === q.subjectId);
-                const typeLabel = { choice: '选择题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
                 const preview = (q.content || '无内容').replace(/<[^>]+>/g, '').substring(0, 60);
                 const kpText = getQuestionKnowledgePointPaths(q).join('|') || '-';
 
@@ -5906,11 +5983,12 @@
 
             const grouped = {
                 choice: filteredQuestions.filter(q => (q.type || 'other') === 'choice'),
+                multi: filteredQuestions.filter(q => (q.type || 'other') === 'multi'),
                 fill: filteredQuestions.filter(q => (q.type || 'other') === 'fill'),
-                other: filteredQuestions.filter(q => !['choice', 'fill'].includes(q.type || 'other'))
+                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill'].includes(q.type || 'other'))
             };
-            const typeLabels = { choice: '选择题', fill: '填空题', other: '其他' };
-            const sections = ['choice', 'fill', 'other'];
+            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', other: '其他' };
+            const sections = ['choice', 'multi', 'fill', 'other'];
 
             container.innerHTML = sections.map(type => {
                 const items = grouped[type];
@@ -6084,11 +6162,12 @@
 
             const grouped = {
                 choice: filteredQuestions.filter(q => (q.type || 'other') === 'choice'),
+                multi: filteredQuestions.filter(q => (q.type || 'other') === 'multi'),
                 fill: filteredQuestions.filter(q => (q.type || 'other') === 'fill'),
-                other: filteredQuestions.filter(q => !['choice', 'fill'].includes(q.type || 'other'))
+                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill'].includes(q.type || 'other'))
             };
-            const typeLabels = { choice: '选择题', fill: '填空题', other: '其他' };
-            const sections = ['choice', 'fill', 'other'];
+            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', other: '其他' };
+            const sections = ['choice', 'multi', 'fill', 'other'];
 
             container.innerHTML = sections.map(type => {
                 const items = grouped[type];
@@ -6350,7 +6429,7 @@
                         <div class="flex items-start gap-3 mb-3">
                             <div class="cursor-grab drag-handle p-2 rounded border border-dotted border-gray-200 mr-2" title="拖动以调整顺序">☰</div>
                             <div class="flex-1">
-                                <div class="text-sm text-gray-500 mb-2">第 ${index + 1} 题 · ${question.type === 'choice' ? '选择题' : question.type === 'fill' ? '填空题' : '其他'}</div>
+                                <div class="text-sm text-gray-500 mb-2">第 ${index + 1} 题 · ${question.type === 'choice' ? '选择题' : question.type === 'multi' ? '多选题' : question.type === 'fill' ? '填空题' : '其他'}</div>
                                 <div class="text-gray-900 font-medium line-clamp-2 mb-3"><span class="math-content">${renderLatexContent(question.content || '未填写题面')}</span></div>
                                 <div class="flex flex-wrap gap-3 text-xs">
                                     <span style="color: ${subject ? subject.color : '#6B7280'}">科目：${subjectName}</span>
@@ -6932,7 +7011,7 @@
             function renderQuestionBlock(q, index) {
                 const contentHtml = q.content ? renderTextWithMath(q.content) : '';
                 const photoHtml = q.photos && q.photos.length ? `<img src="${q.photos[0]}" alt="题目图片">` : '';
-                const optionsHtml = q.type === 'choice' && q.options && q.options.length
+                const optionsHtml = (q.type === 'choice' || q.type === 'multi') && q.options && q.options.length
                     ? `<div class="print-options">${q.options.map(option => `
                             <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
                         `).join('')}</div>`
@@ -7108,7 +7187,7 @@
             function renderQuestionBlock(q, index) {
                 const contentHtml = q.content ? renderTextWithMath(q.content) : '';
                 const photoHtml = q.photos && q.photos.length ? `<img src="${q.photos[0]}" alt="题目图片">` : '';
-                const optionsHtml = q.type === 'choice' && q.options && q.options.length
+                const optionsHtml = (q.type === 'choice' || q.type === 'multi') && q.options && q.options.length
                     ? `<div class="print-options">${q.options.map(option => `
                             <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
                         `).join('')}</div>`
@@ -7505,7 +7584,7 @@
             }
             filtered.forEach(q => {
                 const subj = subjects.find(s => s.id === q.subjectId);
-                const typeLabel = { choice: '选择题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
                 const preview = (q.content || '无内容').replace(/<[^>]+>/g, '').substring(0, 50);
                 const item = document.createElement('div');
                 item.className = 'flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm';
@@ -7577,12 +7656,22 @@
                 const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; };
                 const processed = selected.map(q => {
                     const qCopy = JSON.parse(JSON.stringify(q));
-                    if (qCopy.type === 'choice' && qCopy.options) {
+                    if ((qCopy.type === 'choice' || qCopy.type === 'multi') && qCopy.options) {
                         const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
                         const labels = shuffle(opts.map(o => o.label));
-                        const ci = labels.indexOf(qCopy.answer);
+                        if (qCopy.type === 'multi') {
+                            // 多选题：计算每个正确选项的新映射字母
+                            const origAnswerLetters = (qCopy.answer || '').toUpperCase().split('');
+                            const newCorrectLetters = origAnswerLetters.map(origLbl => {
+                                const idx = labels.indexOf(origLbl);
+                                return idx >= 0 ? String.fromCharCode(65 + idx) : origLbl;
+                            }).sort().join('');
+                            qCopy._correctLetter = newCorrectLetters;
+                        } else {
+                            const ci = labels.indexOf(qCopy.answer);
+                            qCopy._correctLetter = ci >= 0 ? String.fromCharCode(65+ci) : qCopy.answer;
+                        }
                         qCopy._shuffledOptions = labels.map((lbl, i) => ({ key: String.fromCharCode(65+i), value: (opts.find(o => o.label===lbl)||{}).text||'' }));
-                        qCopy._correctLetter = ci >= 0 ? String.fromCharCode(65+ci) : qCopy.answer;
                     }
                     return qCopy;
                 });
@@ -7600,10 +7689,11 @@
             const subjId = document.getElementById('practiceSubject').value;
             const kpId = document.getElementById('practiceKnowledgePoint').value;
             const choiceCount = parseInt(document.getElementById('practiceChoiceCount').value) || 0;
+            const multiCount = parseInt(document.getElementById('practiceMultiCount').value) || 0;
             const fillCount = parseInt(document.getElementById('practiceFillCount').value) || 0;
             const otherCount = parseInt(document.getElementById('practiceOtherCount').value) || 0;
 
-            if (choiceCount + fillCount + otherCount === 0) {
+            if (choiceCount + multiCount + fillCount + otherCount === 0) {
                 showNotification('请至少设置一种题型的数量', 'error');
                 return;
             }
@@ -7625,28 +7715,48 @@
 
             // 分类
             let choicePool = pool.filter(q => q.type === 'choice');
+            let multiPool = pool.filter(q => q.type === 'multi');
             let fillPool = pool.filter(q => q.type === 'fill');
             let otherPool = pool.filter(q => q.type === 'other');
 
             // 随机洗牌
             const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
 
-            // 对于选择题，随机选项顺序
-            const selected = [];
-            const takeChoice = shuffle([...choicePool]).slice(0, Math.min(choiceCount, choicePool.length));
-            takeChoice.forEach(q => {
-                const qCopy = JSON.parse(JSON.stringify(q));
-                // options 格式: [{label:'A',text:'...',photo:''}, ...]
+            // 混洗选项的辅助函数
+            const shuffleOptions = (qCopy, type) => {
                 const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
                 const optLabels = opts.map(o => o.label);
                 const shuffledLabels = shuffle([...optLabels]);
-                // 找正确答案的新字母
-                const correctIdx = shuffledLabels.indexOf(qCopy.answer);
                 qCopy._shuffledOptions = shuffledLabels.map((lbl, i) => {
                     const orig = opts.find(o => o.label === lbl);
                     return { key: String.fromCharCode(65 + i), value: orig ? orig.text : '' };
                 });
-                qCopy._correctLetter = correctIdx >= 0 ? String.fromCharCode(65 + correctIdx) : qCopy.answer;
+                if (type === 'multi') {
+                    const origAnswerLetters = (qCopy.answer || '').toUpperCase().split('');
+                    const newCorrectLetters = origAnswerLetters.map(origLbl => {
+                        const idx = shuffledLabels.indexOf(origLbl);
+                        return idx >= 0 ? String.fromCharCode(65 + idx) : origLbl;
+                    }).sort().join('');
+                    qCopy._correctLetter = newCorrectLetters;
+                } else {
+                    const correctIdx = shuffledLabels.indexOf(qCopy.answer);
+                    qCopy._correctLetter = correctIdx >= 0 ? String.fromCharCode(65 + correctIdx) : qCopy.answer;
+                }
+            };
+
+            // 对于选择题和多选题，随机选项顺序
+            const selected = [];
+            const takeChoice = shuffle([...choicePool]).slice(0, Math.min(choiceCount, choicePool.length));
+            takeChoice.forEach(q => {
+                const qCopy = JSON.parse(JSON.stringify(q));
+                shuffleOptions(qCopy, 'choice');
+                selected.push(qCopy);
+            });
+
+            const takeMulti = shuffle([...multiPool]).slice(0, Math.min(multiCount, multiPool.length));
+            takeMulti.forEach(q => {
+                const qCopy = JSON.parse(JSON.stringify(q));
+                shuffleOptions(qCopy, 'multi');
                 selected.push(qCopy);
             });
 
@@ -7705,7 +7815,7 @@
             container.innerHTML = '';
 
             // 题号
-            const typeMap = { choice: '选择题', fill: '填空题', other: '问答题' };
+            const typeMap = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' };
             const badge = document.createElement('span');
             badge.className = 'inline-block px-2 py-0.5 bg-gray-100 text-gray-800 text-xs font-medium rounded mb-3';
             badge.textContent = typeMap[q.type] || q.type;
@@ -7730,7 +7840,7 @@
             }
 
             if (q.type === 'choice') {
-                // 选择题选项
+                // 选择题选项（单选）
                 const choicesDiv = document.createElement('div');
                 choicesDiv.className = 'space-y-3';
                 const opts = q._shuffledOptions || [];
@@ -7756,6 +7866,48 @@
                     div.appendChild(content);
                     choicesDiv.appendChild(div);
                 });
+                container.appendChild(choicesDiv);
+            } else if (q.type === 'multi') {
+                // 多选题选项（多选checkbox）
+                const choicesDiv = document.createElement('div');
+                choicesDiv.className = 'space-y-3';
+                // 初始化用户答案数组
+                if (!practiceUserAnswers[practiceCurrentIndex]['_multi']) {
+                    practiceUserAnswers[practiceCurrentIndex]['_multi'] = new Set();
+                }
+                const opts = q._shuffledOptions || [];
+                const updateMultiAnswer = () => {
+                    practiceUserAnswers[practiceCurrentIndex][1] = [...practiceUserAnswers[practiceCurrentIndex]['_multi']].sort().join('');
+                };
+                opts.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = opt.key;
+                    checkbox.className = 'w-4 h-4 text-primary rounded focus:ring-primary mr-3 cursor-pointer';
+                    if (practiceUserAnswers[practiceCurrentIndex]['_multi'].has(opt.key)) checkbox.checked = true;
+                    checkbox.onchange = function() {
+                        if (this.checked) {
+                            practiceUserAnswers[practiceCurrentIndex]['_multi'].add(opt.key);
+                        } else {
+                            practiceUserAnswers[practiceCurrentIndex]['_multi'].delete(opt.key);
+                        }
+                        updateMultiAnswer();
+                    };
+                    const label = document.createElement('span');
+                    label.className = 'font-medium text-gray-700 mr-2';
+                    label.textContent = opt.key + '.';
+                    const content = document.createElement('span');
+                    content.className = 'text-gray-600';
+                    const escOpt = (opt.value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    content.innerHTML = practiceTextToHtml(escOpt);
+                    div.appendChild(checkbox);
+                    div.appendChild(label);
+                    div.appendChild(content);
+                    choicesDiv.appendChild(div);
+                });
+                choicesDiv.insertAdjacentHTML('afterbegin', '<div class="text-xs text-gray-500 mb-1">可多选，点击选项切换选中状态</div>');
                 container.appendChild(choicesDiv);
             } else if (q.type === 'fill') {
                 const input = document.createElement('textarea');
@@ -7840,6 +7992,20 @@
                     userDisplay = ua[1] || '未作答';
                     // 选择题做错时记录
                     if (!isCorrect && q.id) wrongQuestionIds.push(q.id);
+                } else if (q.type === 'multi') {
+                    totalScoreQuestions++;
+                    const correctLetters = q._correctLetter || (q.answer || '').toUpperCase();
+                    const userSorted = (ua[1] || '').toUpperCase();
+                    isCorrect = userSorted === correctLetters;
+                    correctDisplay = correctLetters;
+                    // Show option values for correct answer
+                    const opts = q._shuffledOptions || [];
+                    correctDisplay += ': ' + correctLetters.split('').map(l => {
+                        const o = opts.find(oo => oo.key === l);
+                        return (o ? o.value : l);
+                    }).filter(Boolean).join('; ');
+                    userDisplay = userSorted || '未作答';
+                    if (!isCorrect && q.id) wrongQuestionIds.push(q.id);
                 } else if (q.type === 'fill') {
                     correctDisplay = q.answer || '（无标准答案）';
                     userDisplay = ua[1] || '未作答';
@@ -7854,13 +8020,13 @@
                 const escU = (userDisplay || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const escD = (correctDisplay || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const item = document.createElement('div');
-                item.className = 'p-3 rounded-lg mb-3 ' + (q.type === 'choice' ? (isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100') : 'bg-gray-50 border border-gray-200');
+                item.className = 'p-3 rounded-lg mb-3 ' + ((q.type === 'choice' || q.type === 'multi') ? (isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100') : 'bg-gray-50 border border-gray-200');
                 item.innerHTML = `
-                    <div class="font-medium mb-1">题目 ${i + 1} (${({choice:'选择题',fill:'填空题',other:'问答题'})[q.type] || q.type})</div>
+                    <div class="font-medium mb-1">题目 ${i + 1} (${({choice:'选择题',multi:'多选题',fill:'填空题',other:'问答题'})[q.type] || q.type})</div>
                     <div class="text-sm text-gray-600 mb-2">${practiceTextToHtml(escC).substring(0, 200)}</div>
                     <div class="text-sm mb-1"><span class="text-gray-500">你的答案：</span>${practiceTextToHtml(escU)}</div>
                     <div class="text-sm"><span class="text-gray-500">参考答案：</span>${practiceTextToHtml(escD)}</div>
-                    ${q.type === 'choice' ? `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">${isCorrect ? '✓ 正确' : '✗ 错误'}</div>` : ''}
+                    ${(q.type === 'choice' || q.type === 'multi') ? `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">${isCorrect ? '✓ 正确' : '✗ 错误'}</div>` : ''}
                 `;
                 resultContainer.appendChild(item);
             });
@@ -7872,7 +8038,7 @@
             scoreDiv.innerHTML = `
                 <div class="text-lg font-bold text-primary">得分：${correctCount}/${totalScoreQuestions}</div>
                 <div class="text-sm text-gray-600">正确率：${totalScoreQuestions > 0 ? ((correctCount/totalScoreQuestions)*100).toFixed(1) : '0'}% | 用时：${m}:${s}</div>
-                <div class="text-xs text-gray-500 mt-1">仅选择题计分，填空题和问答题不计分</div>
+                <div class="text-xs text-gray-500 mt-1">仅选择题和多选题计分，填空题和问答题不计分</div>
             `;
             resultContainer.insertBefore(scoreDiv, resultContainer.firstChild);
 
@@ -7938,10 +8104,11 @@
                 const subjId = document.getElementById('practiceSubject').value;
                 const kpId = document.getElementById('practiceKnowledgePoint').value;
                 const choiceCount = parseInt(document.getElementById('practiceChoiceCount').value) || 0;
+                const multiCount = parseInt(document.getElementById('practiceMultiCount').value) || 0;
                 const fillCount = parseInt(document.getElementById('practiceFillCount').value) || 0;
                 const otherCount = parseInt(document.getElementById('practiceOtherCount').value) || 0;
 
-                if (choiceCount + fillCount + otherCount === 0) {
+                if (choiceCount + multiCount + fillCount + otherCount === 0) {
                     showNotification('请至少设置一种题型的数量', 'error');
                     return;
                 }
@@ -7962,12 +8129,14 @@
 
                 const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; };
                 const choicePool = pool.filter(q => q.type === 'choice');
+                const multiPool = pool.filter(q => q.type === 'multi');
                 const fillPool = pool.filter(q => q.type === 'fill');
                 const otherPool = pool.filter(q => q.type === 'other');
                 const takeChoice = shuffle([...choicePool]).slice(0, Math.min(choiceCount, choicePool.length));
+                const takeMulti = shuffle([...multiPool]).slice(0, Math.min(multiCount, multiPool.length));
                 const takeFill = shuffle([...fillPool]).slice(0, Math.min(fillCount, fillPool.length));
                 const takeOther = shuffle([...otherPool]).slice(0, Math.min(otherCount, otherPool.length));
-                const selected = [...takeChoice, ...takeFill, ...takeOther];
+                const selected = [...takeChoice, ...takeMulti, ...takeFill, ...takeOther];
 
                 if (selected.length === 0) {
                     showNotification('没有符合条件的题目', 'error');
