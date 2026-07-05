@@ -6562,7 +6562,13 @@
             return result;
         }
         function renderPracticeMath(element) {
-            if (typeof renderMathInElement === 'function') {
+            // 优先使用 MathJax（与页面其他部分一致）
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise([element]).catch(function() {});
+            } else if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+                MathJax.typeset([element]);
+            } else if (typeof renderMathInElement === 'function') {
+                // 回退到 KaTeX auto-render
                 renderMathInElement(element, {
                     delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }],
                     throwOnError: false, output: 'html'
@@ -7013,13 +7019,16 @@
 
                 if (isCorrect) correctCount++;
 
+                const escC = (q.content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const escU = (userDisplay || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const escD = (correctDisplay || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const item = document.createElement('div');
                 item.className = 'p-3 rounded-lg mb-3 ' + (q.type === 'choice' ? (isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100') : 'bg-gray-50 border border-gray-200');
                 item.innerHTML = `
                     <div class="font-medium mb-1">题目 ${i + 1} (${({choice:'选择题',fill:'填空题',other:'问答题'})[q.type] || q.type})</div>
-                    <div class="text-sm text-gray-600 mb-2">${(q.content || '').substring(0, 100)}</div>
-                    <div class="text-sm mb-1"><span class="text-gray-500">你的答案：</span>${userDisplay}</div>
-                    <div class="text-sm"><span class="text-gray-500">参考答案：</span>${correctDisplay}</div>
+                    <div class="text-sm text-gray-600 mb-2">${practiceTextToHtml(escC).substring(0, 200)}</div>
+                    <div class="text-sm mb-1"><span class="text-gray-500">你的答案：</span>${practiceTextToHtml(escU)}</div>
+                    <div class="text-sm"><span class="text-gray-500">参考答案：</span>${practiceTextToHtml(escD)}</div>
                     ${q.type === 'choice' ? `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">${isCorrect ? '✓ 正确' : '✗ 错误'}</div>` : ''}
                 `;
                 resultContainer.appendChild(item);
@@ -7035,6 +7044,9 @@
                 <div class="text-xs text-gray-500 mt-1">仅选择题计分，填空题和问答题不计分</div>
             `;
             resultContainer.insertBefore(scoreDiv, resultContainer.firstChild);
+
+            // 渲染结果页中的 KaTeX 公式
+            renderPracticeMath(resultContainer);
 
             const modal = document.getElementById('practice-result-modal');
             modal.classList.remove('hidden');
