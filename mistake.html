@@ -26,6 +26,8 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <!-- html-docx-js to convert HTML to .docx -->
     <script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
+    <!-- Tesseract.js for OCR handwritten text recognition -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     
     <!-- Tailwind 配置 -->
     <script>
@@ -351,6 +353,61 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+            }
+            .ocr-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                background: #f0fdf4;
+                color: #166534;
+                border: 1px solid #bbf7d0;
+                border-radius: 6px;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .ocr-btn:hover {
+                background: #dcfce7;
+                border-color: #86efac;
+            }
+            .ocr-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+            .ocr-btn .fa-spin {
+                animation: fa-spin 1s linear infinite;
+            }
+            .ocr-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 100;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .ocr-overlay-content {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                text-align: center;
+                max-width: 320px;
+                width: 90%;
+            }
+            .ocr-progress-bar {
+                width: 100%;
+                height: 6px;
+                background: #e5e7eb;
+                border-radius: 3px;
+                margin-top: 12px;
+                overflow: hidden;
+            }
+            .ocr-progress-fill {
+                height: 100%;
+                background: #10B981;
+                border-radius: 3px;
+                transition: width 0.3s;
             }
         }
     </style>
@@ -1038,6 +1095,9 @@
                         <button id="practiceModeSelect" class="flex-1 py-2 px-3 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
                             <i class="fa fa-check-square-o mr-1"></i>选择题目
                         </button>
+                        <button id="practiceModePaper" class="flex-1 py-2 px-3 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
+                            <i class="fa fa-file-text-o mr-1"></i>选择试卷
+                        </button>
                     </div>
 
                     <!-- 随机出题模式 -->
@@ -1062,7 +1122,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">
                                 <i class="fa fa-list-ul mr-2 text-primary"></i>选择题数量
                             </label>
-                            <input type="number" id="practiceChoiceCount" min="0" value="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                            <input type="number" id="practiceChoiceCount" min="0" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">
@@ -1074,13 +1134,13 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">
                                 <i class="fa fa-pencil mr-2 text-primary"></i>填空题数量
                             </label>
-                            <input type="number" id="practiceFillCount" min="0" value="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                            <input type="number" id="practiceFillCount" min="0" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">
                                 <i class="fa fa-file-text mr-2 text-primary"></i>其他题型数量
                             </label>
-                            <input type="number" id="practiceOtherCount" min="0" value="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                            <input type="number" id="practiceOtherCount" min="0" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
                         </div>
                         <div class="text-sm text-gray-500">
                             可用题目数：<span id="practiceAvailableCount" class="font-medium text-primary">0</span>
@@ -1112,6 +1172,29 @@
                             <div class="text-center py-8 text-gray-500 text-sm">加载中...</div>
                         </div>
                     </div>
+                    </div>
+
+                    <!-- 选择试卷模式 -->
+                    <div id="practicePaperConfig" class="hidden space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                <i class="fa fa-file-text-o mr-2 text-teal-500"></i>选择试卷
+                            </label>
+                            <select id="practicePaperSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                                <option value="">-- 请选择一份试卷 --</option>
+                            </select>
+                        </div>
+                        <div id="practicePaperInfo" class="hidden bg-teal-50 rounded-lg p-3 text-sm">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i class="fa fa-info-circle text-teal-500"></i>
+                                <span class="font-medium text-teal-700" id="practicePaperInfoName"></span>
+                            </div>
+                            <div class="text-teal-600 text-xs space-y-0.5">
+                                <div id="practicePaperInfoDesc"></div>
+                                <div id="practicePaperInfoCount"></div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="mt-4 pt-3 border-t border-gray-100">
                         <label class="flex items-center cursor-pointer">
@@ -1132,37 +1215,39 @@
             </div>
 
             <!-- 做题答题界面 -->
-            <div id="practice-quiz" class="max-w-2xl mx-auto hidden">
-                <div class="bg-white rounded-xl p-6 shadow-sm card-shadow">
-                    <div id="practice-header" class="flex justify-between items-center mb-6 pb-3 border-b border-gray-200">
+            <div id="practice-quiz" class="max-w-4xl mx-auto hidden">
+                <!-- 顶部工具栏 -->
+                <div class="bg-white rounded-xl p-4 shadow-sm card-shadow mb-4 sticky top-16 z-50">
+                    <div id="practice-header" class="flex justify-between items-center pb-3 border-b border-gray-200">
                         <div class="flex items-center text-gray-600">
                             <i class="fa fa-clock-o mr-2"></i>
                             <span id="practice-timer" class="font-medium">00:00</span>
                         </div>
                         <div class="flex items-center text-gray-600">
-                            <i class="fa fa-progress mr-2"></i>
-                            <span id="practice-progress" class="font-medium">0/0</span>
+                            <i class="fa fa-file-text-o mr-2"></i>
+                            <span id="practice-progress" class="font-medium">共 0 题</span>
                         </div>
                         <div class="flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
                             <i class="fa fa-bookmark-o mr-1"></i>
                             <span id="practice-current-subject"></span>
                         </div>
                     </div>
-                    <div id="practice-question-container" class="min-h-[300px] mb-6"></div>
-                    <div class="flex justify-between">
+                    <div class="flex justify-between mt-3">
                         <button id="practice-exit-btn" class="bg-danger text-white font-medium py-2 px-4 rounded-lg btn-effect cursor-pointer">
                             <i class="fa fa-sign-out mr-1"></i>退出答题
                         </button>
-                        <button id="practice-prev-btn" class="bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg btn-effect cursor-pointer hidden">
-                            <i class="fa fa-arrow-left mr-1"></i>上一题
-                        </button>
-                        <button id="practice-next-btn" class="bg-primary text-white font-medium py-2 px-4 rounded-lg btn-effect cursor-pointer">
-                            下一题<i class="fa fa-arrow-right ml-1"></i>
-                        </button>
-                        <button id="practice-submit-btn" class="bg-secondary text-white font-medium py-2 px-4 rounded-lg btn-effect cursor-pointer hidden">
+                        <button id="practice-submit-top-btn" class="bg-secondary text-white font-medium py-2 px-6 rounded-lg btn-effect cursor-pointer">
                             <i class="fa fa-check mr-1"></i>提交答案
                         </button>
                     </div>
+                </div>
+                <!-- 所有题目容器 -->
+                <div id="practice-all-questions" class="space-y-6"></div>
+                <!-- 底部提交 -->
+                <div class="mt-8 mb-12 text-center">
+                    <button id="practice-submit-btn" class="bg-secondary text-white font-medium py-3 px-10 rounded-lg btn-effect cursor-pointer text-lg shadow-lg">
+                        <i class="fa fa-check mr-2"></i>提交答案
+                    </button>
                 </div>
             </div>
         </section>
@@ -7481,8 +7566,11 @@
             document.getElementById('practiceModeRandom').classList.remove('text-gray-500');
             document.getElementById('practiceModeSelect').classList.remove('bg-white', 'shadow-sm');
             document.getElementById('practiceModeSelect').classList.add('text-gray-500');
+            document.getElementById('practiceModePaper').classList.remove('bg-white', 'shadow-sm');
+            document.getElementById('practiceModePaper').classList.add('text-gray-500');
             document.getElementById('practiceRandomConfig').classList.remove('hidden');
             document.getElementById('practiceSelectConfig').classList.add('hidden');
+            document.getElementById('practicePaperConfig').classList.add('hidden');
 
             // 加载科目选项
             const subjectSelect = document.getElementById('practiceSubject');
@@ -7493,6 +7581,10 @@
 
             // 加载知识点选项
             updatePracticeKnowledgePointOptions();
+            document.getElementById('practiceChoiceCount').value = 0;
+            document.getElementById('practiceMultiCount').value = 0;
+            document.getElementById('practiceFillCount').value = 0;
+            document.getElementById('practiceOtherCount').value = 0;
             updatePracticeAvailableCount();
 
             // 事件监听
@@ -7536,17 +7628,58 @@
                 this.classList.remove('text-gray-500');
                 document.getElementById('practiceModeSelect').classList.remove('bg-white', 'shadow-sm');
                 document.getElementById('practiceModeSelect').classList.add('text-gray-500');
+                document.getElementById('practiceModePaper').classList.remove('bg-white', 'shadow-sm');
+                document.getElementById('practiceModePaper').classList.add('text-gray-500');
                 document.getElementById('practiceRandomConfig').classList.remove('hidden');
                 document.getElementById('practiceSelectConfig').classList.add('hidden');
+                document.getElementById('practicePaperConfig').classList.add('hidden');
+                updatePracticeAvailableCount();
             };
             document.getElementById('practiceModeSelect').onclick = function() {
                 this.classList.add('bg-white', 'shadow-sm', 'text-gray-800');
                 this.classList.remove('text-gray-500');
                 document.getElementById('practiceModeRandom').classList.remove('bg-white', 'shadow-sm');
                 document.getElementById('practiceModeRandom').classList.add('text-gray-500');
+                document.getElementById('practiceModePaper').classList.remove('bg-white', 'shadow-sm');
+                document.getElementById('practiceModePaper').classList.add('text-gray-500');
                 document.getElementById('practiceRandomConfig').classList.add('hidden');
                 document.getElementById('practiceSelectConfig').classList.remove('hidden');
+                document.getElementById('practicePaperConfig').classList.add('hidden');
                 renderPracticeSelectList();
+            };
+            document.getElementById('practiceModePaper').onclick = function() {
+                this.classList.add('bg-white', 'shadow-sm', 'text-gray-800');
+                this.classList.remove('text-gray-500');
+                document.getElementById('practiceModeRandom').classList.remove('bg-white', 'shadow-sm');
+                document.getElementById('practiceModeRandom').classList.add('text-gray-500');
+                document.getElementById('practiceModeSelect').classList.remove('bg-white', 'shadow-sm');
+                document.getElementById('practiceModeSelect').classList.add('text-gray-500');
+                document.getElementById('practiceRandomConfig').classList.add('hidden');
+                document.getElementById('practiceSelectConfig').classList.add('hidden');
+                document.getElementById('practicePaperConfig').classList.remove('hidden');
+                populatePracticePaperSelect();
+            };
+
+            // 试卷选择下拉
+            document.getElementById('practicePaperSelect').onchange = function() {
+                const paperId = this.value;
+                const infoDiv = document.getElementById('practicePaperInfo');
+                if (!paperId) {
+                    infoDiv.classList.add('hidden');
+                    return;
+                }
+                const paper = papers.find(p => p.id === paperId);
+                if (!paper) {
+                    infoDiv.classList.add('hidden');
+                    return;
+                }
+                const questionCount = Array.isArray(paper.questionIds) ? paper.questionIds.length : 0;
+                // 统计有效题目数（题目可能已被删除）
+                const validCount = Array.isArray(paper.questionIds) ? paper.questionIds.filter(id => questions.some(q => q.id === id)).length : 0;
+                document.getElementById('practicePaperInfoName').textContent = paper.name;
+                document.getElementById('practicePaperInfoDesc').textContent = (paper.description || '无描述') + ' · ' + formatDate(paper.createDate);
+                document.getElementById('practicePaperInfoCount').innerHTML = '试卷含 <b>' + questionCount + '</b> 道题，其中 <b>' + validCount + '</b> 道在题库中';
+                infoDiv.classList.remove('hidden');
             };
 
             // 全选/取消/快速按钮
@@ -7558,6 +7691,20 @@
                 getPracticeFilteredQuestions().forEach(q => practiceSelectedIds.delete(q.id));
                 renderPracticeSelectList();
             };
+        }
+
+        // 填充试卷选择下拉
+        function populatePracticePaperSelect() {
+            const sel = document.getElementById('practicePaperSelect');
+            sel.innerHTML = '<option value="">-- 请选择一份试卷 --</option>';
+            papers.forEach(p => {
+                const qCount = Array.isArray(p.questionIds) ? p.questionIds.length : 0;
+                sel.innerHTML += `<option value="${p.id}">${p.name}（${qCount} 题）</option>`;
+            });
+            if (papers.length === 0) {
+                sel.innerHTML = '<option value="">暂无试卷，请先创建试卷</option>';
+            }
+            document.getElementById('practicePaperInfo').classList.add('hidden');
         }
 
         function getPracticeFilteredQuestions() {
@@ -7643,6 +7790,7 @@
         // 开始做题
         document.getElementById('practiceStartBtn').addEventListener('click', function() {
             const selectMode = !document.getElementById('practiceSelectConfig').classList.contains('hidden');
+            const paperMode = !document.getElementById('practicePaperConfig').classList.contains('hidden');
 
             if (selectMode) {
                 // 选择题目模式：使用已选题目ID
@@ -7681,6 +7829,60 @@
                 document.getElementById('practice-timer').textContent = '00:00';
                 const mainSubj = subjects.find(s => s.id === practiceQuestions[0]?.subjectId);
                 document.getElementById('practice-current-subject').textContent = mainSubj ? mainSubj.name : '全部科目';
+                startPracticeQuiz();
+                return;
+            }
+
+            if (paperMode) {
+                // 选择试卷模式
+                const paperId = document.getElementById('practicePaperSelect').value;
+                if (!paperId) {
+                    showNotification('请先选择一份试卷', 'error');
+                    return;
+                }
+                const paper = papers.find(p => p.id === paperId);
+                if (!paper || !Array.isArray(paper.questionIds) || paper.questionIds.length === 0) {
+                    showNotification('该试卷没有题目', 'error');
+                    return;
+                }
+                // 按试卷顺序获取题目（保持原顺序不打乱）
+                const paperQuestions = [];
+                paper.questionIds.forEach(qId => {
+                    const q = questions.find(q2 => q2.id === qId);
+                    if (q) paperQuestions.push(q);
+                });
+                if (paperQuestions.length === 0) {
+                    showNotification('该试卷中的题目均已被删除', 'error');
+                    return;
+                }
+                // 处理选项（打乱选择题选项顺序）
+                const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; };
+                const processed = paperQuestions.map(q => {
+                    const qCopy = JSON.parse(JSON.stringify(q));
+                    if ((qCopy.type === 'choice' || qCopy.type === 'multi') && qCopy.options) {
+                        const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
+                        const labels = shuffle(opts.map(o => o.label));
+                        if (qCopy.type === 'multi') {
+                            const origAnswerLetters = (qCopy.answer || '').toUpperCase().split('');
+                            const newCorrectLetters = origAnswerLetters.map(origLbl => {
+                                const idx = labels.indexOf(origLbl);
+                                return idx >= 0 ? String.fromCharCode(65 + idx) : origLbl;
+                            }).sort().join('');
+                            qCopy._correctLetter = newCorrectLetters;
+                        } else {
+                            const ci = labels.indexOf(qCopy.answer);
+                            qCopy._correctLetter = ci >= 0 ? String.fromCharCode(65+ci) : qCopy.answer;
+                        }
+                        qCopy._shuffledOptions = labels.map((lbl, i) => ({ key: String.fromCharCode(65+i), value: (opts.find(o => o.label===lbl)||{}).text||'' }));
+                    }
+                    return qCopy;
+                });
+                practiceQuestions = processed; // 保持试卷顺序
+                practiceUserAnswers = practiceQuestions.map(() => ({}));
+                practiceCurrentIndex = 0; practiceSecondsElapsed = 0;
+                document.getElementById('practice-timer').textContent = '00:00';
+                const mainSubj = subjects.find(s => s.id === practiceQuestions[0]?.subjectId);
+                document.getElementById('practice-current-subject').textContent = (mainSubj ? mainSubj.name : '未知') + ' · ' + paper.name;
                 startPracticeQuiz();
                 return;
             }
@@ -7796,8 +7998,9 @@
             document.getElementById('practice-quiz').classList.remove('hidden');
             clearInterval(practiceTimerInterval);
             practiceTimerInterval = setInterval(updatePracticeTimer, 1000);
-            showPracticeQuestion();
-            updatePracticeNavButtons();
+            document.getElementById('practice-progress').textContent = '共 ' + practiceQuestions.length + ' 题';
+            showAllPracticeQuestions();
+            window.scrollTo(0, 0);
         }
 
         function updatePracticeTimer() {
@@ -7807,148 +8010,281 @@
             document.getElementById('practice-timer').textContent = m + ':' + s;
         }
 
-        function showPracticeQuestion() {
-            if (practiceCurrentIndex >= practiceQuestions.length) return;
-            const q = practiceQuestions[practiceCurrentIndex];
-            document.getElementById('practice-progress').textContent = (practiceCurrentIndex + 1) + '/' + practiceQuestions.length;
-            const container = document.getElementById('practice-question-container');
-            container.innerHTML = '';
-
-            // 题号
-            const typeMap = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' };
-            const badge = document.createElement('span');
-            badge.className = 'inline-block px-2 py-0.5 bg-gray-100 text-gray-800 text-xs font-medium rounded mb-3';
-            badge.textContent = typeMap[q.type] || q.type;
-            container.appendChild(badge);
-
-            // 题目内容（使用 innerHTML 支持 KaTeX）
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'text-lg font-medium mb-4 text-gray-800';
-            const escContent = (q.content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            titleDiv.innerHTML = '题目 ' + (practiceCurrentIndex + 1) + ': ' + practiceTextToHtml(escContent);
-            container.appendChild(titleDiv);
-
-            // 照片
-            if (q.photos && q.photos.length > 0) {
-                q.photos.forEach(photo => {
-                    const img = document.createElement('img');
-                    img.src = photo;
-                    img.className = 'question-image max-w-full h-auto rounded mb-3';
-                    img.style.maxHeight = '300px';
-                    container.appendChild(img);
-                });
-            }
-
-            if (q.type === 'choice') {
-                // 选择题选项（单选）
-                const choicesDiv = document.createElement('div');
-                choicesDiv.className = 'space-y-3';
-                const opts = q._shuffledOptions || [];
-                opts.forEach(opt => {
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
-                    const radio = document.createElement('input');
-                    radio.type = 'radio';
-                    radio.name = 'practice-choice-' + practiceCurrentIndex;
-                    radio.value = opt.key;
-                    radio.className = 'w-4 h-4 text-primary focus:ring-primary mr-3';
-                    if (practiceUserAnswers[practiceCurrentIndex][1] === opt.key) radio.checked = true;
-                    radio.onchange = function() { practiceUserAnswers[practiceCurrentIndex][1] = this.value; };
-                    const label = document.createElement('span');
-                    label.className = 'font-medium text-gray-700 mr-2';
-                    label.textContent = opt.key + '.';
-                    const content = document.createElement('span');
-                    content.className = 'text-gray-600';
-                    const escOpt = (opt.value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    content.innerHTML = practiceTextToHtml(escOpt);
-                    div.appendChild(radio);
-                    div.appendChild(label);
-                    div.appendChild(content);
-                    choicesDiv.appendChild(div);
-                });
-                container.appendChild(choicesDiv);
-            } else if (q.type === 'multi') {
-                // 多选题选项（多选checkbox）
-                const choicesDiv = document.createElement('div');
-                choicesDiv.className = 'space-y-3';
-                // 初始化用户答案数组
-                if (!practiceUserAnswers[practiceCurrentIndex]['_multi']) {
-                    practiceUserAnswers[practiceCurrentIndex]['_multi'] = new Set();
+        // 收集所有答案（在提交前调用，确保 textarea 最新值被收集）
+        function collectAllAnswers() {
+            practiceQuestions.forEach((q, i) => {
+                if (q.type === 'fill' || q.type === 'other') {
+                    const ta = document.getElementById('practice-ta-' + i);
+                    if (ta) practiceUserAnswers[i][1] = ta.value;
                 }
-                const opts = q._shuffledOptions || [];
-                const updateMultiAnswer = () => {
-                    practiceUserAnswers[practiceCurrentIndex][1] = [...practiceUserAnswers[practiceCurrentIndex]['_multi']].sort().join('');
-                };
-                opts.forEach(opt => {
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.value = opt.key;
-                    checkbox.className = 'w-4 h-4 text-primary rounded focus:ring-primary mr-3 cursor-pointer';
-                    if (practiceUserAnswers[practiceCurrentIndex]['_multi'].has(opt.key)) checkbox.checked = true;
-                    checkbox.onchange = function() {
-                        if (this.checked) {
-                            practiceUserAnswers[practiceCurrentIndex]['_multi'].add(opt.key);
-                        } else {
-                            practiceUserAnswers[practiceCurrentIndex]['_multi'].delete(opt.key);
-                        }
-                        updateMultiAnswer();
+            });
+        }
+
+        function showAllPracticeQuestions() {
+            const container = document.getElementById('practice-all-questions');
+            container.innerHTML = '';
+            const typeMap = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' };
+
+            practiceQuestions.forEach((q, idx) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl p-6 shadow-sm card-shadow practice-question-card';
+                card.id = 'practice-card-' + idx;
+
+                // 题号 + 类型徽章
+                let headerHtml = '<div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">';
+                headerHtml += '<div class="flex items-center gap-3">';
+                headerHtml += '<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-sm font-bold">' + (idx + 1) + '</span>';
+                headerHtml += '<span class="inline-block px-2 py-0.5 text-xs font-medium rounded ' + (q.type === 'multi' ? 'bg-orange-100 text-orange-700' : q.type === 'choice' ? 'bg-blue-100 text-blue-700' : q.type === 'fill' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700') + '">' + (typeMap[q.type] || q.type) + '</span>';
+                headerHtml += '</div></div>';
+
+                // 题目内容
+                const escContent = (q.content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                card.innerHTML = headerHtml;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'text-base font-medium mb-4 text-gray-800';
+                contentDiv.innerHTML = practiceTextToHtml(escContent);
+                card.appendChild(contentDiv);
+
+                // 题目照片
+                if (q.photos && q.photos.length > 0) {
+                    const photoWrap = document.createElement('div');
+                    photoWrap.className = 'mb-4 flex flex-wrap gap-2';
+                    q.photos.forEach(photo => {
+                        const img = document.createElement('img');
+                        img.src = photo;
+                        img.className = 'question-image rounded-lg';
+                        img.style.maxHeight = '280px';
+                        img.style.maxWidth = '100%';
+                        photoWrap.appendChild(img);
+                    });
+                    card.appendChild(photoWrap);
+                }
+
+                // 选项/答案区域
+                const answerArea = document.createElement('div');
+                answerArea.className = 'practice-answer-area';
+
+                if (q.type === 'choice') {
+                    const choicesDiv = document.createElement('div');
+                    choicesDiv.className = 'space-y-2';
+                    const opts = q._shuffledOptions || [];
+                    opts.forEach(opt => {
+                        const div = document.createElement('div');
+                        div.className = 'flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
+                        const radio = document.createElement('input');
+                        radio.type = 'radio';
+                        radio.name = 'practice-choice-' + idx;
+                        radio.value = opt.key;
+                        radio.className = 'w-4 h-4 text-primary focus:ring-primary mr-3';
+                        if (practiceUserAnswers[idx][1] === opt.key) radio.checked = true;
+                        radio.onchange = function() { practiceUserAnswers[idx][1] = this.value; };
+                        const label = document.createElement('span');
+                        label.className = 'font-medium text-gray-700 mr-2';
+                        label.textContent = opt.key + '.';
+                        const content = document.createElement('span');
+                        content.className = 'text-gray-600';
+                        const escOpt = (opt.value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        content.innerHTML = practiceTextToHtml(escOpt);
+                        div.appendChild(radio);
+                        div.appendChild(label);
+                        div.appendChild(content);
+                        choicesDiv.appendChild(div);
+                    });
+                    answerArea.appendChild(choicesDiv);
+                } else if (q.type === 'multi') {
+                    const choicesDiv = document.createElement('div');
+                    choicesDiv.className = 'space-y-2';
+                    if (!practiceUserAnswers[idx]['_multi']) {
+                        practiceUserAnswers[idx]['_multi'] = new Set();
+                    }
+                    const updateMultiAnswer = () => {
+                        practiceUserAnswers[idx][1] = [...practiceUserAnswers[idx]['_multi']].sort().join('');
                     };
-                    const label = document.createElement('span');
-                    label.className = 'font-medium text-gray-700 mr-2';
-                    label.textContent = opt.key + '.';
-                    const content = document.createElement('span');
-                    content.className = 'text-gray-600';
-                    const escOpt = (opt.value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    content.innerHTML = practiceTextToHtml(escOpt);
-                    div.appendChild(checkbox);
-                    div.appendChild(label);
-                    div.appendChild(content);
-                    choicesDiv.appendChild(div);
-                });
-                choicesDiv.insertAdjacentHTML('afterbegin', '<div class="text-xs text-gray-500 mb-1">可多选，点击选项切换选中状态</div>');
-                container.appendChild(choicesDiv);
-            } else if (q.type === 'fill') {
-                const input = document.createElement('textarea');
-                input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[120px] resize-y';
-                input.placeholder = '请输入答案';
-                input.value = practiceUserAnswers[practiceCurrentIndex][1] || '';
-                input.oninput = function(e) { practiceUserAnswers[practiceCurrentIndex][1] = e.target.value; };
-                container.appendChild(input);
-            } else {
-                // other类型
-                const input = document.createElement('textarea');
-                input.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[120px] resize-y';
-                input.placeholder = '请输入答案';
-                input.value = practiceUserAnswers[practiceCurrentIndex][1] || '';
-                input.oninput = function(e) { practiceUserAnswers[practiceCurrentIndex][1] = e.target.value; };
-                container.appendChild(input);
-            }
+                    const hint = document.createElement('div');
+                    hint.className = 'text-xs text-gray-500 mb-2';
+                    hint.textContent = '可多选，点击选项切换选中状态';
+                    choicesDiv.appendChild(hint);
+                    const opts = q._shuffledOptions || [];
+                    opts.forEach(opt => {
+                        const div = document.createElement('div');
+                        div.className = 'flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = opt.key;
+                        checkbox.className = 'w-4 h-4 text-primary rounded focus:ring-primary mr-3 cursor-pointer';
+                        if (practiceUserAnswers[idx]['_multi'].has(opt.key)) checkbox.checked = true;
+                        checkbox.onchange = function() {
+                            if (this.checked) {
+                                practiceUserAnswers[idx]['_multi'].add(opt.key);
+                            } else {
+                                practiceUserAnswers[idx]['_multi'].delete(opt.key);
+                            }
+                            updateMultiAnswer();
+                        };
+                        const label = document.createElement('span');
+                        label.className = 'font-medium text-gray-700 mr-2';
+                        label.textContent = opt.key + '.';
+                        const content = document.createElement('span');
+                        content.className = 'text-gray-600';
+                        const escOpt = (opt.value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        content.innerHTML = practiceTextToHtml(escOpt);
+                        div.appendChild(checkbox);
+                        div.appendChild(label);
+                        div.appendChild(content);
+                        choicesDiv.appendChild(div);
+                    });
+                    answerArea.appendChild(choicesDiv);
+                } else {
+                    // 填空题 / 问答题 - textarea + OCR拍照按钮
+                    const textareaDiv = document.createElement('div');
+                    textareaDiv.className = 'space-y-2';
+                    
+                    const ta = document.createElement('textarea');
+                    ta.id = 'practice-ta-' + idx;
+                    ta.className = 'w-full p-3 border border-gray-300 rounded-lg input-focus min-h-[100px] resize-y';
+                    ta.placeholder = q.type === 'fill' ? '请输入答案，也可拍照上传手写答案' : '请输入答案，也可拍照上传手写答案';
+                    ta.value = practiceUserAnswers[idx][1] || '';
+                    ta.oninput = function(e) { practiceUserAnswers[idx][1] = e.target.value; };
+                    textareaDiv.appendChild(ta);
+                    
+                    // OCR 拍照按钮区域
+                    const btnRow = document.createElement('div');
+                    btnRow.className = 'flex gap-2 flex-wrap';
+                    
+                    const cameraBtn = document.createElement('button');
+                    cameraBtn.type = 'button';
+                    cameraBtn.className = 'ocr-btn';
+                    cameraBtn.innerHTML = '<i class="fa fa-camera"></i> 拍照识别';
+                    cameraBtn.onclick = function() { triggerOcrCamera(idx); };
+                    
+                    const uploadBtn = document.createElement('button');
+                    uploadBtn.type = 'button';
+                    uploadBtn.className = 'ocr-btn';
+                    uploadBtn.innerHTML = '<i class="fa fa-image"></i> 上传图片识别';
+                    uploadBtn.onclick = function() { triggerOcrUpload(idx); };
+                    
+                    btnRow.appendChild(cameraBtn);
+                    btnRow.appendChild(uploadBtn);
+                    textareaDiv.appendChild(btnRow);
+                    
+                    answerArea.appendChild(textareaDiv);
+                }
+
+                card.appendChild(answerArea);
+                container.appendChild(card);
+            });
 
             // 渲染 KaTeX 公式
             renderPracticeMath(container);
         }
 
-        function updatePracticeNavButtons() {
-            document.getElementById('practice-prev-btn').style.display = practiceCurrentIndex > 0 ? '' : 'none';
-            if (practiceCurrentIndex >= practiceQuestions.length - 1) {
-                document.getElementById('practice-next-btn').style.display = 'none';
-                document.getElementById('practice-submit-btn').style.display = '';
-            } else {
-                document.getElementById('practice-next-btn').style.display = '';
-                document.getElementById('practice-submit-btn').style.display = 'none';
+        // ======= OCR 手写答案识别 =======
+        let ocrWorker = null;
+        let ocrIsProcessing = false;
+
+        function triggerOcrCamera(qIndex) {
+            if (ocrIsProcessing) { showNotification('正在识别中，请稍候...', 'warning'); return; }
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.capture = 'environment'; // 优先使用后置摄像头
+            fileInput.onchange = function() {
+                if (this.files && this.files[0]) {
+                    processOcrImage(this.files[0], qIndex);
+                }
+            };
+            fileInput.click();
+        }
+
+        function triggerOcrUpload(qIndex) {
+            if (ocrIsProcessing) { showNotification('正在识别中，请稍候...', 'warning'); return; }
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.onchange = function() {
+                if (this.files && this.files[0]) {
+                    processOcrImage(this.files[0], qIndex);
+                }
+            };
+            fileInput.click();
+        }
+
+        async function processOcrImage(file, qIndex) {
+            ocrIsProcessing = true;
+            
+            // 显示识别进度覆盖层
+            const overlay = document.createElement('div');
+            overlay.className = 'ocr-overlay';
+            overlay.id = 'ocr-overlay';
+            overlay.innerHTML = `
+                <div class="ocr-overlay-content">
+                    <div class="text-lg font-semibold text-gray-800 mb-2">正在识别手写文字...</div>
+                    <div class="text-sm text-gray-500 mb-3" id="ocr-status">加载识别引擎...</div>
+                    <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-progress-fill" style="width:0%"></div></div>
+                    <div class="text-xs text-gray-400 mt-2">首次加载可能需要下载语言包，请耐心等待</div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            try {
+                const imgUrl = URL.createObjectURL(file);
+                
+                // 进度回调
+                const updateProgress = (p) => {
+                    const fill = document.getElementById('ocr-progress-fill');
+                    const status = document.getElementById('ocr-status');
+                    if (fill) fill.style.width = Math.round(p * 100) + '%';
+                    if (status) {
+                        if (p < 0.3) status.textContent = '加载识别引擎...';
+                        else if (p < 0.7) status.textContent = '正在分析图片...';
+                        else status.textContent = '识别文字中...';
+                    }
+                };
+
+                // 使用 Tesseract.js 识别，同时支持中英文
+                const result = await Tesseract.recognize(imgUrl, 'chi_sim+eng', {
+                    logger: m => {
+                        if (m.status === 'recognizing text') updateProgress(m.progress);
+                        else updateProgress(0.1);
+                    }
+                });
+
+                URL.revokeObjectURL(imgUrl);
+
+                const recognizedText = result.data.text.trim();
+                
+                // 将识别结果追加到 textarea
+                if (recognizedText) {
+                    const ta = document.getElementById('practice-ta-' + qIndex);
+                    if (ta) {
+                        const currentVal = ta.value;
+                        ta.value = currentVal + (currentVal ? '\n' : '') + recognizedText;
+                        practiceUserAnswers[qIndex][1] = ta.value;
+                    }
+                    showNotification('识别成功！文字已填入答案框', 'success');
+                } else {
+                    showNotification('未能识别到文字，请确认图片清晰度', 'warning');
+                }
+            } catch (err) {
+                console.error('OCR error:', err);
+                showNotification('识别失败，请重试或手动输入', 'error');
+            } finally {
+                ocrIsProcessing = false;
+                const ov = document.getElementById('ocr-overlay');
+                if (ov) ov.remove();
             }
         }
 
-        document.getElementById('practice-prev-btn').addEventListener('click', function() {
-            if (practiceCurrentIndex > 0) { practiceCurrentIndex--; showPracticeQuestion(); updatePracticeNavButtons(); }
-        });
-        document.getElementById('practice-next-btn').addEventListener('click', function() {
-            if (practiceCurrentIndex < practiceQuestions.length - 1) { practiceCurrentIndex++; showPracticeQuestion(); updatePracticeNavButtons(); }
-        });
         document.getElementById('practice-submit-btn').addEventListener('click', function() {
             if (confirm('确定要提交答案吗？提交后将无法修改。')) {
+                collectAllAnswers();
+                submitPractice();
+            }
+        });
+        document.getElementById('practice-submit-top-btn').addEventListener('click', function() {
+            if (confirm('确定要提交答案吗？提交后将无法修改。')) {
+                collectAllAnswers();
                 submitPractice();
             }
         });
@@ -8081,6 +8417,7 @@
         // 在练习页打开 - 桥接到 problem.html
         document.getElementById('practiceOpenProblemBtn').addEventListener('click', function() {
             const selectMode = !document.getElementById('practiceSelectConfig').classList.contains('hidden');
+            const paperMode = !document.getElementById('practicePaperConfig').classList.contains('hidden');
 
             if (selectMode) {
                 // 选择题目模式：使用题目ID列表
@@ -8099,6 +8436,22 @@
                 }
                 window.open(url, '_blank');
                 showNotification('已在新窗口打开做题页面，共 ' + selectedIds.length + ' 道题', 'success');
+            } else if (paperMode) {
+                // 试卷模式：使用试卷ID
+                const paperId = document.getElementById('practicePaperSelect').value;
+                if (!paperId) {
+                    showNotification('请先选择一份试卷', 'error');
+                    return;
+                }
+                const paper = papers.find(p => p.id === paperId);
+                if (!paper) {
+                    showNotification('未找到该试卷', 'error');
+                    return;
+                }
+                const url = 'problem/problem.html#grade=' + encodeURIComponent(currentGradeId) + '&paper=' + encodeURIComponent(paperId);
+                window.open(url, '_blank');
+                const count = Array.isArray(paper.questionIds) ? paper.questionIds.length : 0;
+                showNotification('已在新窗口打开试卷练习：「' + paper.name + '」共 ' + count + ' 道题', 'success');
             } else {
                 // 随机出题模式：使用题目ID列表（让problem.html自己查找）
                 const subjId = document.getElementById('practiceSubject').value;
