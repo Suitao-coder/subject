@@ -3757,7 +3757,7 @@
                 return 'm' + Date.now().toString(36) + '_' + mindIdCounter + '_' + Math.random().toString(36).substr(2, 5);
             }
 
-            // 递归构建 XMind topic（带 structureClass）
+            // 递归构建 XMind 2026 (Vana 26.x) topic 子节点
             function buildXMindChildren(treeNodes) {
                 return treeNodes.map(function(node) {
                     var topic = {
@@ -3800,7 +3800,7 @@
                 return;
             }
 
-            // 构建完整的 content.json（必填字段齐全）
+            // 构建完整的 content.json（XMind 2026 Vana 26.x 格式）
             var content = [{
                 id: sheetId,
                 class: 'sheet',
@@ -3809,6 +3809,8 @@
                 topicPositioning: 'fixed',
                 topicOverlapping: 'overlap',
                 coreVersion: '2.100.0',
+                arrangeableLayerOrder: [],
+                zones: [],
                 rootTopic: {
                     id: mindId(),
                     class: 'topic',
@@ -3820,12 +3822,12 @@
                 }
             }];
 
-            // 构建完整的 metadata.json
+            // 构建完整的 metadata.json（XMind 2026 Vana 26.x 版本号）
             var metadata = {
                 modifier: '',
-                dataStructureVersion: '2',
-                creator: { name: '学习助手' },
-                layoutEngineVersion: '3',
+                dataStructureVersion: '3',
+                creator: { name: '学习助手', version: '26.02.04171' },
+                layoutEngineVersion: '5',
                 activeSheetId: sheetId
             };
 
@@ -3879,53 +3881,123 @@
         async function processMindImport(file) {
             try {
                 var zip = await JSZip.loadAsync(file);
+                var fileNames = Object.keys(zip.files);
 
-                // 读取 content.json
+                // 检测是否为 XMind 2026 格式：通过 metadata.json 中的 dataStructureVersion
+                var detectedVersion = '';
+                if (zip.files['metadata.json']) {
+                    try {
+                        var metaRaw = await zip.files['metadata.json'].async('string');
+                        var metadata = JSON.parse(metaRaw);
+                        detectedVersion = metadata.dataStructureVersion || '';
+                    } catch(e) { /* 忽略 metadata 解析错误 */ }
+                }
+
+                // 优先读取 content.json（XMind Zen / 2020+ / 2026 新版格式）
                 var contentJson = null;
                 if (zip.files['content.json']) {
                     var raw = await zip.files['content.json'].async('string');
                     contentJson = JSON.parse(raw);
                 } else {
                     // 兼容：某些 .xmind/.mind 文件 content.json 不在根目录
-                    var names = Object.keys(zip.files);
-                    var contentFile = names.find(function(n) { return n.indexOf('content.json') !== -1; });
+                    var contentFile = fileNames.find(function(n) { return n.indexOf('content.json') !== -1; });
                     if (contentFile) {
                         var raw2 = await zip.files[contentFile].async('string');
                         contentJson = JSON.parse(raw2);
                     }
                 }
 
-                if (!contentJson || !Array.isArray(contentJson) || contentJson.length === 0) {
-                    showNotification('无效的 .xmind 文件：未找到画布内容', 'error');
-                    return;
+                // 用来统一存放待处理的学科分支数据
+                var firstLevelTopics = null;
+
+                if (contentJson && Array.isArray(contentJson) && contentJson.length > 0) {
+                    // XMind Zen / 2020+ / 2026 JSON 格式
+                    var sheet = contentJson[0];
+                    var rootTopic = sheet.rootTopic;
+                    if (rootTopic && rootTopic.children && rootTopic.children.attached && rootTopic.children.attached.length > 0) {
+                        firstLevelTopics = rootTopic.children.attached;
+                    }
                 }
 
-                var sheet = contentJson[0];
-                var rootTopic = sheet.rootTopic;
-                if (!rootTopic || !rootTopic.children || !rootTopic.children.attached || rootTopic.children.attached.length === 0) {
-                    showNotification('该思维导图没有分支内容，无法导入', 'warning');
+                // 如果 JSON 解析失败或没有内容，尝试 XMind 8 的 XML 格式（content.xml）
+                if (!firstLevelTopics) {
+                    var xmlRaw = null;
+                    if (zip.files['content.xml']) {
+                        xmlRaw = await zip.files['content.xml'].async('string');
+                    } else {
+                        var xmlFile = fileNames.find(function(n) { return n.indexOf('content.xml') !== -1; });
+                        if (xmlFile) {
+                            xmlRaw = await zip.files[xmlFile].async('string');
+                        }
+                    }
+
+                    if (xmlRaw) {
+                        // 检查是否为占位 XML（XMind 2020+ 中 content.xml 只是警告）
+                        if (xmlRaw.indexOf('content.json') !== -1 && xmlRaw.indexOf('This file cannot be opened') !== -1) {
+                            // 这是新版 XMind 的占位 XML，忽略
+                        } else {
+                            // XMind 8 旧版 XML 格式
+                            firstLevelTopics = parseXMind8XML(xmlRaw);
+                        }
+                    }
+                }
+
+                if (!firstLevelTopics || firstLevelTopics.length === 0) {
+                    showNotification('该思维导图没有分支内容，无法导入（支持 XMind 8 和 XMind 2026 格式）', 'warning');
                     return;
                 }
 
                 var createdCount = 0;
-                var skippedCount = 0;
+                var skippedCount = 0;     // 名称完全相同的重复
+                var replacedCount = 0;    // 路径一致且相似度>80%的替换
                 var newSubjects = 0;
 
-                // 添加知识点的工具函数
+                // 字符串相似度计算（基于 bigram Dice 系数，对中文友好）
+                function stringSimilarity(a, b) {
+                    if (a === b) return 1.0;
+                    var aLen = a.length, bLen = b.length;
+                    if (aLen < 2 || bLen < 2) return 0;
+                    var bigramsA = new Set();
+                    var bigramsB = new Set();
+                    for (var i = 0; i < aLen - 1; i++) bigramsA.add(a.substring(i, i + 2));
+                    for (var i = 0; i < bLen - 1; i++) bigramsB.add(b.substring(i, i + 2));
+                    var intersection = 0;
+                    bigramsA.forEach(function(bg) { if (bigramsB.has(bg)) intersection++; });
+                    var total = bigramsA.size + bigramsB.size;
+                    return total === 0 ? 0 : (2 * intersection) / total;
+                }
+
+                // 添加知识点的工具函数（含相似度替换逻辑）
                 function addKp(name, subjectId, parentId) {
-                    var exists = knowledgePoints.some(function(kp) {
-                        return kp.name === name &&
+                    var nameLower = name.toLowerCase();
+
+                    // 第一步：精确匹配（名称完全相同）
+                    var exactMatch = knowledgePoints.find(function(kp) {
+                        return kp.name.toLowerCase() === nameLower &&
                             kp.subjectId === subjectId &&
                             (kp.parentId === parentId || (!kp.parentId && !parentId));
                     });
-                    if (exists) {
+                    if (exactMatch) {
                         skippedCount++;
-                        return null;
+                        return exactMatch.id;
                     }
-                    var siblings = knowledgePoints.filter(function(kp) {
-                        return kp.subjectId === subjectId && kp.parentId === parentId;
+
+                    // 第二步：同路径下相似度 > 80% 的匹配，直接替换名称
+                    var samePositionKps = knowledgePoints.filter(function(kp) {
+                        return kp.subjectId === subjectId &&
+                            (kp.parentId === parentId || (!kp.parentId && !parentId));
                     });
-                    var maxOrd = siblings.reduce(function(m, kp) { return Math.max(m, kp.sortOrder || 0); }, -1);
+                    for (var j = 0; j < samePositionKps.length; j++) {
+                        var sim = stringSimilarity(nameLower, samePositionKps[j].name.toLowerCase());
+                        if (sim > 0.8) {
+                            samePositionKps[j].name = name; // 替换为新名称
+                            replacedCount++;
+                            return samePositionKps[j].id;
+                        }
+                    }
+
+                    // 第三步：没有匹配，创建新知识点
+                    var maxOrd = samePositionKps.reduce(function(m, kp) { return Math.max(m, kp.sortOrder || 0); }, -1);
                     var newKp = {
                         id: generateId(),
                         name: name,
@@ -3939,6 +4011,16 @@
                     return newKp.id;
                 }
 
+                // 获取 topic 的子节点列表（兼容 JSON children.attached 和归一化后的 children 数组）
+                function getChildList(topic) {
+                    if (!topic.children) return null;
+                    // 归一化格式：children 为数组（来自 XMind 8 XML 解析）
+                    if (Array.isArray(topic.children)) return topic.children;
+                    // XMind 2026 JSON 格式：children 为 {attached: [...], detached: [...]}
+                    if (topic.children.attached && Array.isArray(topic.children.attached)) return topic.children.attached;
+                    return null;
+                }
+
                 // 递归处理知识点节点（二级及以下）
                 function processTopic(topic, subjectId, parentKpId) {
                     if (!topic || !topic.title) return;
@@ -3947,21 +4029,22 @@
 
                     var newId = addKp(name, subjectId, parentKpId);
 
-                    if (topic.children && topic.children.attached && Array.isArray(topic.children.attached)) {
-                        topic.children.attached.forEach(function(child) {
+                    var childList = getChildList(topic);
+                    if (childList) {
+                        childList.forEach(function(child) {
                             processTopic(child, subjectId, newId);
                         });
                     }
                 }
 
                 // 处理一级分支：学科
-                var firstLevelTopics = rootTopic.children.attached;
                 firstLevelTopics.forEach(function(topic) {
                     var subjectName = (topic.title || '未命名学科').trim();
                     if (!subjectName) return;
 
-                    // 查找或创建学科
-                    var subject = subjects.find(function(s) { return s.name === subjectName; });
+                    // 查找已有科目（不区分大小写）
+                    var subjectNameLower = subjectName.toLowerCase();
+                    var subject = subjects.find(function(s) { return s.name.toLowerCase() === subjectNameLower; });
                     if (!subject) {
                         subject = {
                             id: generateId(),
@@ -3974,8 +4057,9 @@
                     }
 
                     // 处理该学科下的知识点（二级及以下）
-                    if (topic.children && topic.children.attached && Array.isArray(topic.children.attached)) {
-                        topic.children.attached.forEach(function(child) {
+                    var childList = getChildList(topic);
+                    if (childList) {
+                        childList.forEach(function(child) {
                             processTopic(child, subject.id, null);
                         });
                     }
@@ -3986,14 +4070,88 @@
                 renderKnowledgePointTree();
 
                 var msg = '导入完成：新增 ' + createdCount + ' 个知识点';
+                if (replacedCount > 0) msg += '，替换 ' + replacedCount + ' 个相似';
                 if (newSubjects > 0) msg += '，' + newSubjects + ' 个学科';
                 if (skippedCount > 0) msg += '，跳过 ' + skippedCount + ' 个重复';
+                if (detectedVersion === '2') msg += '（XMind 2026 格式）';
                 showNotification(msg, 'success');
 
             } catch (err) {
                 console.error('导入 .xmind 文件失败:', err);
                 showNotification('导入失败：' + (err.message || '未知错误，请确认文件格式正确'), 'error');
             }
+        }
+
+        // 解析 XMind 8 content.xml 旧版格式，返回 [{title, children: [{title, children: ...}]}]
+        function parseXMind8XML(xmlString) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(xmlString, 'text/xml');
+            // 检查解析错误
+            if (doc.querySelector('parsererror')) return null;
+
+            // XMind 8 使用命名空间 urn:xmind:xmap:xmlns:content:2.0
+            var ns = 'urn:xmind:xmap:xmlns:content:2.0';
+            function getElementsByTagNameNS(el, tag) {
+                return el.getElementsByTagNameNS ? el.getElementsByTagNameNS(ns, tag) : el.querySelectorAll(tag);
+            }
+
+            // 获取第一个 sheet
+            var sheets = getElementsByTagNameNS(doc, 'sheet');
+            if (!sheets.length) {
+                // 尝试无命名空间查找
+                sheets = doc.querySelectorAll('sheet');
+            }
+            if (!sheets.length) return null;
+
+            var sheet = sheets[0];
+            var rootTopics = getElementsByTagNameNS(sheet, 'topic');
+            if (!rootTopics.length) {
+                rootTopics = sheet.querySelectorAll('topic');
+            }
+            if (!rootTopics.length) return null;
+            var rootTopic = rootTopics[0]; // 根 topic
+
+            // 递归解析 topic 节点
+            function parseTopicNS(topicEl) {
+                var titleEls = getElementsByTagNameNS(topicEl, 'title');
+                if (!titleEls.length) {
+                    titleEls = topicEl.querySelectorAll('title');
+                }
+                var title = '';
+                if (titleEls.length) {
+                    title = (titleEls[0].textContent || '').trim();
+                }
+
+                var children = [];
+                // 查找 children > topics[type="attached"] > topic
+                var childrenEls = getElementsByTagNameNS(topicEl, 'children');
+                if (!childrenEls.length) {
+                    childrenEls = topicEl.querySelectorAll('children');
+                }
+                for (var c = 0; c < childrenEls.length; c++) {
+                    var topicsWrappers = getElementsByTagNameNS(childrenEls[c], 'topics');
+                    if (!topicsWrappers.length) {
+                        topicsWrappers = childrenEls[c].querySelectorAll('topics');
+                    }
+                    for (var w = 0; w < topicsWrappers.length; w++) {
+                        var type = topicsWrappers[w].getAttribute('type') || 'attached';
+                        if (type === 'attached') {
+                            var childTopics = getElementsByTagNameNS(topicsWrappers[w], 'topic');
+                            if (!childTopics.length) {
+                                childTopics = topicsWrappers[w].querySelectorAll('topic');
+                            }
+                            for (var t = 0; t < childTopics.length; t++) {
+                                children.push(parseTopicNS(childTopics[t]));
+                            }
+                        }
+                    }
+                }
+                return { title: title, children: children };
+            }
+
+            var result = parseTopicNS(rootTopic);
+            // 根 topic 的直接子节点作为学科一级分支
+            return result.children && result.children.length > 0 ? result.children : null;
         }
 
         // 初始化导航
