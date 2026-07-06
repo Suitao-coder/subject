@@ -3176,21 +3176,37 @@
             });
         }
 
-        // 渲染树形HTML
-        function renderTreeHTML(nodes, depth) {
+        // 渲染树形HTML（depth: 层级深度, parentLines: 数组标记每层祖先是否还有后续兄弟）
+        function renderTreeHTML(nodes, depth, parentLines) {
             if (!nodes || nodes.length === 0) return '';
+            if (!parentLines) parentLines = [];
             let html = '<div class="space-y-1 kp-sibling-group">';
-            nodes.forEach(node => {
+            nodes.forEach((node, idx) => {
+                const isLast = idx === nodes.length - 1;
                 const hasChildren = knowledgePoints.some(kp => kp.parentId === node.id);
                 const descCount = hasChildren ? countAllDescendants(node.id) : 0;
                 const escName = (node.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                // 生成树形引导线（仿编辑器制表符/文件树效果）
+                let treeGuide = '';
+                if (depth > 0) {
+                    // 祖先层级：有后续兄弟显示 │，否则空格
+                    for (var d = 0; d < depth - 1; d++) {
+                        treeGuide += parentLines[d]
+                            ? '<span class="kp-guide kp-guide-v">│</span><span class="kp-guide-sp"> </span>'
+                            : '<span class="kp-guide kp-guide-empty"> </span><span class="kp-guide-sp"> </span>';
+                    }
+                    // 当前层级分支线
+                    treeGuide += isLast
+                        ? '<span class="kp-guide kp-guide-last">└─</span>'
+                        : '<span class="kp-guide kp-guide-branch">├─</span>';
+                }
                 html += `
                 <div class="kp-row flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5 hover:bg-gray-100 transition-colors"
                      draggable="true"
                      data-kp-id="${node.id}"
-                     data-kp-parent-id="${node.parentId || ''}"
-                     style="margin-left: ${depth * 20}px;">
+                     data-kp-parent-id="${node.parentId || ''}">
                     <div class="flex items-center space-x-2">
+                        ${treeGuide ? `<span class="kp-tree-guide inline-flex items-center" style="font-family:monospace;color:#b0b7c3;font-size:13px;line-height:1;white-space:pre;flex-shrink:0;">${treeGuide}</span>` : ''}
                         <span class="kp-drag-handle" title="拖拽排序"><i class="fa fa-grip-vertical"></i></span>
                         ${hasChildren
                             ? `<span class="kp-toggle" data-kp-id="${node.id}" onclick="toggleKpChildren('${node.id}')" title="展开/收起"><i class="fa fa-chevron-down"></i></span>`
@@ -3211,7 +3227,9 @@
                     </div>
                 </div>`;
                 if (hasChildren) {
-                    html += `<div class="kp-children" id="kp-children-${node.id}">${renderTreeHTML(node.children, depth + 1)}</div>`;
+                    // 子节点的 parentLines：当前是否还有后续兄弟（!isLast）
+                    var childLines = parentLines.concat([!isLast]);
+                    html += `<div class="kp-children" id="kp-children-${node.id}">${renderTreeHTML(node.children, depth + 1, childLines)}</div>`;
                 }
             });
             html += '</div>';
