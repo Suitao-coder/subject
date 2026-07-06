@@ -3949,31 +3949,19 @@
 
                 var createdCount = 0;
                 var skippedCount = 0;     // 名称完全相同的重复
-                var replacedCount = 0;    // 路径一致且相似度>80%的替换
                 var newSubjects = 0;
 
-                // 字符串相似度计算（基于 bigram Dice 系数，对中文友好）
-                function stringSimilarity(a, b) {
-                    if (a === b) return 1.0;
-                    var aLen = a.length, bLen = b.length;
-                    if (aLen < 2 || bLen < 2) return 0;
-                    var bigramsA = new Set();
-                    var bigramsB = new Set();
-                    for (var i = 0; i < aLen - 1; i++) bigramsA.add(a.substring(i, i + 2));
-                    for (var i = 0; i < bLen - 1; i++) bigramsB.add(b.substring(i, i + 2));
-                    var intersection = 0;
-                    bigramsA.forEach(function(bg) { if (bigramsB.has(bg)) intersection++; });
-                    var total = bigramsA.size + bigramsB.size;
-                    return total === 0 ? 0 : (2 * intersection) / total;
-                }
-
-                // 添加知识点的工具函数（含相似度替换逻辑）
+                // 添加知识点的工具函数（只有完全相同才视为重复，忽略多余空格）
                 function addKp(name, subjectId, parentId) {
-                    var nameLower = name.toLowerCase();
+                    // 标准化：去首尾空格 + 合并连续空格 + 转小写
+                    function normalize(str) {
+                        return str.trim().replace(/\s+/g, ' ').toLowerCase();
+                    }
+                    var nameNormalized = normalize(name);
 
-                    // 第一步：精确匹配（名称完全相同）
+                    // 第一步：精确匹配（名称完全相同，忽略多余空格）
                     var exactMatch = knowledgePoints.find(function(kp) {
-                        return kp.name.toLowerCase() === nameLower &&
+                        return normalize(kp.name) === nameNormalized &&
                             kp.subjectId === subjectId &&
                             (kp.parentId === parentId || (!kp.parentId && !parentId));
                     });
@@ -3982,21 +3970,11 @@
                         return exactMatch.id;
                     }
 
-                    // 第二步：同路径下相似度 > 80% 的匹配，直接替换名称
+                    // 没有精确匹配，创建新知识点
                     var samePositionKps = knowledgePoints.filter(function(kp) {
                         return kp.subjectId === subjectId &&
                             (kp.parentId === parentId || (!kp.parentId && !parentId));
                     });
-                    for (var j = 0; j < samePositionKps.length; j++) {
-                        var sim = stringSimilarity(nameLower, samePositionKps[j].name.toLowerCase());
-                        if (sim > 0.8) {
-                            samePositionKps[j].name = name; // 替换为新名称
-                            replacedCount++;
-                            return samePositionKps[j].id;
-                        }
-                    }
-
-                    // 第三步：没有匹配，创建新知识点
                     var maxOrd = samePositionKps.reduce(function(m, kp) { return Math.max(m, kp.sortOrder || 0); }, -1);
                     var newKp = {
                         id: generateId(),
@@ -4070,7 +4048,6 @@
                 renderKnowledgePointTree();
 
                 var msg = '导入完成：新增 ' + createdCount + ' 个知识点';
-                if (replacedCount > 0) msg += '，替换 ' + replacedCount + ' 个相似';
                 if (newSubjects > 0) msg += '，' + newSubjects + ' 个学科';
                 if (skippedCount > 0) msg += '，跳过 ' + skippedCount + ' 个重复';
                 if (detectedVersion === '2') msg += '（XMind 2026 格式）';
