@@ -793,6 +793,9 @@
                 <button id="goPracticeBtn" class="flex items-center bg-secondary text-white px-6 py-3 rounded-lg shadow-sm btn-effect cursor-pointer">
                     <i class="fa fa-pencil-square-o mr-2"></i> 开始做题
                 </button>
+                <button id="refreshDashboardBtn" class="flex items-center bg-white text-gray-500 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                    <i class="fa fa-refresh mr-2"></i> 刷新
+                </button>
             </div>
             
             <!-- 统计卡片 -->
@@ -911,6 +914,9 @@
                     </button>
                     <button id="batchImportQuestionsBtn" class="flex items-center bg-white text-gray-700 px-5 py-2.5 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
                         <i class="fa fa-file-excel-o mr-2"></i> 批量导入
+                    </button>
+                    <button id="refreshQuestionsBtn" class="flex items-center bg-white text-gray-500 px-5 py-2.5 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                        <i class="fa fa-refresh mr-2"></i> 刷新
                     </button>
                 </div>
             </div>
@@ -1070,6 +1076,9 @@
                     <button id="mistakeClearAllBtn" class="flex items-center bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 cursor-pointer text-sm border border-red-200">
                         <i class="fa fa-trash mr-1"></i> 清空全部
                     </button>
+                    <button id="refreshMistakeBtn" class="flex items-center border border-gray-300 text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-sm">
+                        <i class="fa fa-refresh mr-1"></i> 刷新
+                    </button>
                 </div>
             </div>
 
@@ -1159,6 +1168,9 @@
                 <button id="exportPaperBtn" class="flex items-center bg-white text-gray-700 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
                     <i class="fa fa-download mr-2"></i> 导出试卷
                 </button>
+                <button id="refreshPapersBtn" class="flex items-center bg-white text-gray-500 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                    <i class="fa fa-refresh mr-2"></i> 刷新
+                </button>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="papersList">
@@ -1183,6 +1195,9 @@
                         <button id="backToPapersBtn" class="inline-flex items-center bg-white text-gray-700 px-5 py-2.5 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
                             <i class="fa fa-arrow-left mr-2"></i> 返回试卷
                         </button>
+                        <button id="refreshPaperDetailBtn" class="inline-flex items-center bg-white text-gray-500 px-5 py-2.5 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                            <i class="fa fa-refresh mr-2"></i> 刷新
+                        </button>
                     </div>
                 </div>
                 <div class="bg-white rounded-xl p-6 shadow-sm">
@@ -1203,9 +1218,14 @@
 
         <!-- 统计分析页面 -->
         <section id="statisticsPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
-            <div class="mb-8">
-                <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">学习分析</h1>
-                <p class="text-gray-600 mt-1">了解您的学习情况和题目分布，针对性提升</p>
+            <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">学习分析</h1>
+                    <p class="text-gray-600 mt-1">了解您的学习情况和题目分布，针对性提升</p>
+                </div>
+                <button id="refreshStatisticsBtn" class="flex items-center bg-white text-gray-500 px-5 py-2.5 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                    <i class="fa fa-refresh mr-2"></i> 刷新
+                </button>
             </div>
             
             <!-- 做题趋势图 -->
@@ -1295,6 +1315,15 @@
                     <button id="importMindBtn" class="flex items-center bg-pink-500 text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
                         <i class="fa fa-sitemap mr-1"></i> 导入 .xmind
                     </button>
+                    <button id="expandAllKpBtn" class="flex items-center bg-white text-gray-500 px-3 py-2 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer text-sm" title="展开所有知识点分支">
+                        <i class="fa fa-plus-square-o mr-1"></i> 全部展开
+                    </button>
+                    <button id="collapseAllKpBtn" class="flex items-center bg-white text-gray-500 px-3 py-2 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer text-sm" title="收起所有知识点分支">
+                        <i class="fa fa-minus-square-o mr-1"></i> 全部收起
+                    </button>
+                    <button id="refreshKnowledgePointsBtn" class="flex items-center bg-white text-gray-500 px-4 py-2 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer text-sm">
+                        <i class="fa fa-refresh mr-1"></i> 刷新
+                    </button>
                 </div>
             </div>
             <div id="knowledgePointTree" class="bg-white rounded-xl p-6 shadow-sm card-shadow min-h-[200px] show-drag-hint">
@@ -1307,9 +1336,14 @@
         <section id="practicePage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
             <!-- 做题配置界面 -->
             <div id="practice-config" class="max-w-2xl mx-auto">
-                <div class="mb-8">
-                    <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">做题练习</h1>
-                    <p class="text-gray-600 mt-1">选择题目开始练习，巩固知识点</p>
+                <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">做题练习</h1>
+                        <p class="text-gray-600 mt-1">选择题目开始练习，巩固知识点</p>
+                    </div>
+                    <button id="refreshPracticeBtn" class="flex items-center bg-white text-gray-500 px-5 py-2.5 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                        <i class="fa fa-refresh mr-2"></i> 刷新
+                    </button>
                 </div>
                 <div class="bg-white rounded-xl p-6 shadow-sm card-shadow">
                     <!-- 出题模式切换 -->
@@ -2935,6 +2969,12 @@
                 renderKnowledgePointTree();
             });
 
+            // 全部展开/收起按钮
+            var expandAllBtn = document.getElementById('expandAllKpBtn');
+            if (expandAllBtn) expandAllBtn.addEventListener('click', expandAllKnowledgePoints);
+            var collapseAllBtn = document.getElementById('collapseAllKpBtn');
+            if (collapseAllBtn) collapseAllBtn.addEventListener('click', collapseAllKnowledgePoints);
+
             // 知识点模态框
             document.getElementById('closeKnowledgePointModal').addEventListener('click', closeKnowledgePointModal);
             document.getElementById('cancelKnowledgePointBtn').addEventListener('click', closeKnowledgePointModal);
@@ -2958,6 +2998,16 @@
         function renderKnowledgePointTree() {
             const container = document.getElementById('knowledgePointTree');
             const filterSubject = document.getElementById('kpFilterSubject').value;
+
+            // 保存当前折叠状态（重建 HTML 后会丢失）
+            const collapsedChildren = new Set();
+            const collapsedSubjects = new Set();
+            container.querySelectorAll('.kp-children.collapsed').forEach(el => {
+                collapsedChildren.add(el.id.replace('kp-children-', ''));
+            });
+            container.querySelectorAll('.kp-subject-body.collapsed').forEach(el => {
+                collapsedSubjects.add(el.id.replace('kp-subject-body-', ''));
+            });
 
             // 更新筛选下拉
             const filterSelect = document.getElementById('kpFilterSubject');
@@ -3005,6 +3055,20 @@
                 });
                 container.innerHTML = html;
             }
+
+            // 恢复折叠状态
+            collapsedChildren.forEach(id => {
+                const childEl = document.getElementById('kp-children-' + id);
+                const toggleEl = container.querySelector(`.kp-toggle[data-kp-id="${id}"]`);
+                if (childEl) childEl.classList.add('collapsed');
+                if (toggleEl) toggleEl.classList.add('collapsed');
+            });
+            collapsedSubjects.forEach(id => {
+                const bodyEl = document.getElementById('kp-subject-body-' + id);
+                const headerEl = document.getElementById('kp-subject-header-' + id);
+                if (bodyEl) bodyEl.classList.add('collapsed');
+                if (headerEl) headerEl.classList.add('collapsed');
+            });
 
             // 绑定操作按钮事件
             container.querySelectorAll('.edit-kp-btn').forEach(btn => {
@@ -3185,6 +3249,56 @@
                     header.classList.add('collapsed');
                 }
             }
+        }
+
+        // 全部收起所有知识点分支（每一层）
+        function collapseAllKnowledgePoints() {
+            const container = document.getElementById('knowledgePointTree');
+            if (!container) return;
+
+            // 收起所有子节点
+            container.querySelectorAll('.kp-children').forEach(el => {
+                el.classList.add('collapsed');
+            });
+            // 旋转所有展开箭头
+            container.querySelectorAll('.kp-toggle').forEach(el => {
+                el.classList.add('collapsed');
+            });
+            // 收起所有科目分组
+            container.querySelectorAll('.kp-subject-body').forEach(el => {
+                el.classList.add('collapsed');
+            });
+            // 旋转所有科目标题箭头
+            container.querySelectorAll('.kp-subject-toggle').forEach(el => {
+                el.classList.add('collapsed');
+            });
+
+            showNotification('已收起所有知识点分支', 'success');
+        }
+
+        // 全部展开所有知识点分支（每一层）
+        function expandAllKnowledgePoints() {
+            const container = document.getElementById('knowledgePointTree');
+            if (!container) return;
+
+            // 展开所有子节点
+            container.querySelectorAll('.kp-children').forEach(el => {
+                el.classList.remove('collapsed');
+            });
+            // 恢复所有展开箭头
+            container.querySelectorAll('.kp-toggle').forEach(el => {
+                el.classList.remove('collapsed');
+            });
+            // 展开所有科目分组
+            container.querySelectorAll('.kp-subject-body').forEach(el => {
+                el.classList.remove('collapsed');
+            });
+            // 恢复所有科目标题箭头
+            container.querySelectorAll('.kp-subject-toggle').forEach(el => {
+                el.classList.remove('collapsed');
+            });
+
+            showNotification('已展开所有知识点分支', 'success');
         }
 
         // 统计所有后代数量
@@ -4500,6 +4614,67 @@
             document.getElementById('refreshSubjectsBtn').addEventListener('click', function() {
                 renderSubjects();
                 showNotification('科目列表已刷新', 'success');
+            });
+
+            // 刷新仪表盘
+            let btn = document.getElementById('refreshDashboardBtn');
+            if (btn) btn.addEventListener('click', function() {
+                renderDashboard();
+                showNotification('仪表盘已刷新', 'success');
+            });
+
+            // 刷新题库
+            btn = document.getElementById('refreshQuestionsBtn');
+            if (btn) btn.addEventListener('click', function() {
+                renderQuestions();
+                showNotification('题库已刷新', 'success');
+            });
+
+            // 刷新错题本
+            btn = document.getElementById('refreshMistakeBtn');
+            if (btn) btn.addEventListener('click', function() {
+                renderMistakePage();
+                showNotification('错题本已刷新', 'success');
+            });
+
+            // 刷新试卷列表
+            btn = document.getElementById('refreshPapersBtn');
+            if (btn) btn.addEventListener('click', function() {
+                renderPaperList();
+                showNotification('试卷列表已刷新', 'success');
+            });
+
+            // 刷新试卷详情
+            btn = document.getElementById('refreshPaperDetailBtn');
+            if (btn) btn.addEventListener('click', function() {
+                if (currentPaperDetailId) {
+                    const paper = papers.find(p => p.id === currentPaperDetailId);
+                    if (paper) {
+                        renderPaperDetailPage(paper);
+                        showNotification('试卷详情已刷新', 'success');
+                    }
+                }
+            });
+
+            // 刷新统计分析
+            btn = document.getElementById('refreshStatisticsBtn');
+            if (btn) btn.addEventListener('click', function() {
+                updateCharts();
+                showNotification('统计分析已刷新', 'success');
+            });
+
+            // 刷新知识点
+            btn = document.getElementById('refreshKnowledgePointsBtn');
+            if (btn) btn.addEventListener('click', function() {
+                renderKnowledgePointTree();
+                showNotification('知识点已刷新', 'success');
+            });
+
+            // 刷新做题页面
+            btn = document.getElementById('refreshPracticeBtn');
+            if (btn) btn.addEventListener('click', function() {
+                initPracticePage();
+                showNotification('做题页面已刷新', 'success');
             });
             
             // 关闭科目模态框
