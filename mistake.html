@@ -733,6 +733,34 @@
             color: #3B82F6;
         }
         #floatingStopwatch { transition: none; }
+        #floatingPrintBtn, #floatingGoQuizBtn {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #floatingPrintBtn:hover, #floatingGoQuizBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        /* 锁定答题区域 */
+        .practice-answer-area.locked {
+            pointer-events: none;
+            opacity: 0.5;
+            position: relative;
+        }
+        .practice-answer-area.locked::after {
+            content: '请先点击秒表开始计时后再作答';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 500;
+            color: #f59e0b;
+            background: rgba(255,255,255,0.55);
+            pointer-events: none;
+            z-index: 1;
+        }
     </style>
 </head>
 
@@ -896,6 +924,9 @@
                 </button>
                 <button id="goPracticeBtn" class="flex items-center bg-secondary text-white px-6 py-3 rounded-lg shadow-sm btn-effect cursor-pointer">
                     <i class="fa fa-pencil-square-o mr-2"></i> 开始练习
+                </button>
+                <button id="goPracticeLibraryBtn" class="flex items-center bg-white text-gray-700 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
+                    <i class="fa fa-folder-open-o mr-2"></i> 练习库
                 </button>
                 <button id="refreshDashboardBtn" class="flex items-center bg-white text-gray-500 px-6 py-3 rounded-lg shadow-sm border border-gray-200 btn-effect cursor-pointer">
                     <i class="fa fa-refresh mr-2"></i> 刷新
@@ -1446,7 +1477,7 @@
             </button>
         </div>
         <div class="text-center">
-            <div id="stopwatchDisplay" class="text-[clamp(3rem,10vw,8rem)] font-mono font-bold text-gray-900 tracking-wider select-none">00:00.0</div>
+            <div id="stopwatchDisplay" class="text-[clamp(3rem,10vw,8rem)] font-mono font-bold text-gray-900 tracking-wider select-none">00:00:00.0</div>
             <p id="stopwatchHint" class="text-gray-400 mt-4 text-lg">点击下方按钮开始计时</p>
             <!-- 开始/暂停按钮 -->
             <button id="timerToggleBtn" onclick="event.stopPropagation();toggleGlobalStopwatch(event)" class="mt-8 inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full shadow-lg shadow-primary/30 transition-all cursor-pointer text-lg font-medium">
@@ -1465,13 +1496,25 @@
     <div id="floatingStopwatch" class="fixed z-50 hidden" style="right:20px;bottom:80px;">
         <div id="floatingStopwatchHandle" class="bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-lg card-shadow cursor-move flex items-center gap-2 select-none" style="user-select:none;-webkit-user-select:none;">
             <i class="fa fa-clock-o text-primary text-base"></i>
-            <span id="floatingStopwatchTime" class="font-mono font-bold text-base tracking-wider text-gray-800">00:00.0</span>
+            <span id="floatingStopwatchTime" class="font-mono font-bold text-base tracking-wider text-gray-800">00:00:00.0</span>
             <div class="w-px h-5 bg-gray-200 mx-1"></div>
             <button id="floatingStopwatchToggleBtn" onclick="event.stopPropagation();toggleGlobalStopwatch(event)" class="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer" title="开始/暂停">
                 <i class="fa fa-play text-xs"></i>
             </button>
         </div>
     </div>
+
+    <!-- 打印题目浮窗按钮（秒表页面/答题页面中使用） -->
+    <button id="floatingPrintBtn" class="fixed z-50 hidden flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 cursor-pointer" style="right:20px;bottom:140px;" title="打印当前练习题目为PDF">
+        <i class="fa fa-print text-primary"></i>
+        <span class="text-sm font-medium text-gray-700">打印题目</span>
+    </button>
+
+    <!-- 开始做题浮窗按钮（秒表页面中使用） -->
+    <button id="floatingGoQuizBtn" class="fixed z-50 hidden flex items-center gap-2 bg-primary text-white rounded-full px-5 py-2.5 cursor-pointer" style="right:20px;bottom:80px;" title="进入答题页面">
+        <i class="fa fa-pencil"></i>
+        <span class="text-sm font-medium">开始做题</span>
+    </button>
 
         <!-- 练习页面 -->
     <section id="practicePage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
@@ -1528,7 +1571,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">
                                 <i class="fa fa-list-ul mr-2 text-primary"></i>多选题数量
                             </label>
-                            <input type="number" id="practiceMultiCount" min="0" value="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                            <input type="number" id="practiceMultiCount" min="0" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">
@@ -1607,6 +1650,9 @@
                         <button id="practiceStartBtn" class="flex-1 bg-primary text-white font-medium py-2.5 px-4 rounded-lg btn-effect cursor-pointer">
                             <i class="fa fa-play mr-2"></i>开始练习
                         </button>
+                        <button id="practiceLibraryBtn" class="flex items-center bg-white text-gray-700 font-medium py-2.5 px-4 rounded-lg border border-gray-200 btn-effect cursor-pointer">
+                            <i class="fa fa-folder-open-o mr-2"></i>练习库
+                        </button>
 
                     </div>
                 </div>
@@ -1617,10 +1663,6 @@
                 <!-- 顶部工具栏 -->
                 <div class="bg-white rounded-xl p-4 shadow-sm card-shadow mb-4 sticky top-16 z-50">
                     <div id="practice-header" class="flex justify-between items-center pb-3 border-b border-gray-200">
-                        <div class="flex items-center text-gray-600">
-                            <i class="fa fa-clock-o mr-2"></i>
-                            <span id="practice-timer" class="font-medium">00:00</span>
-                        </div>
                         <div class="flex items-center text-gray-600">
                             <i class="fa fa-file-text-o mr-2"></i>
                             <span id="practice-progress" class="font-medium">共 0 题</span>
@@ -1659,6 +1701,28 @@
             <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-6" id="practice-result-content"></div>
             </div>
+        </section>
+
+        <!-- 练习库页面 -->
+        <section id="practiceLibraryPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="practice-library-back"><i class="fa fa-arrow-left"></i> 返回</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">练习库</h1>
+            </div>
+            <div id="practiceLibraryContent" class="bg-white rounded-xl shadow-sm">
+                <div class="p-6">
+                    <p class="text-gray-400 text-center py-8">暂无保存的练习，开始练习后会自动存入练习库</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 练习历史记录列表页 -->
+        <section id="libHistoryListPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="lib-history-back"><i class="fa fa-arrow-left"></i> 返回练习库</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900" id="lib-history-title">练习历史记录</h1>
+            </div>
+            <div id="libHistoryListContent" class="space-y-3"></div>
         </section>
 
     <!-- 添加/编辑题目页面 -->
@@ -2391,6 +2455,32 @@
 
     <div id="exportPrintArea" class="hidden"></div>
 
+    <!-- 练习库打印模式选择浮窗 -->
+    <div id="libPrintModalOverlay" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center" onclick="event.target === this && closeLibPrintModal()">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-[90vw] max-w-sm" onclick="event.stopPropagation()">
+            <h3 class="text-lg font-bold text-gray-900 mb-1">打印练习</h3>
+            <p class="text-sm text-gray-500 mb-4" id="libPrintModalInfo"></p>
+            <div class="space-y-3 mb-5">
+                <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition">
+                    <input type="radio" name="libPrintMode" value="question" checked class="w-4 h-4 text-primary">
+                    <span class="text-sm font-medium text-gray-700">纯题目</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition">
+                    <input type="radio" name="libPrintMode" value="answer" class="w-4 h-4 text-primary">
+                    <span class="text-sm font-medium text-gray-700">纯答案解析</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition">
+                    <input type="radio" name="libPrintMode" value="both" class="w-4 h-4 text-primary">
+                    <span class="text-sm font-medium text-gray-700">题目加答案</span>
+                </label>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeLibPrintModal()" class="flex-1 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-medium cursor-pointer hover:bg-gray-200 transition">取消</button>
+                <button onclick="confirmLibPrint()" class="flex-1 py-2.5 rounded-lg bg-primary text-white font-medium cursor-pointer hover:bg-primary/90 transition">确认打印</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 图片放大查看页面 -->
     <section id="imageZoomPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
         <div class="sub-page-header">
@@ -2449,7 +2539,8 @@
                 papers: papers,
                 knowledgePoints: knowledgePoints,
                 mistakeQuestionIds: mistakeQuestionIds,
-                practiceHistory: practiceHistory
+                practiceHistory: practiceHistory,
+                practiceLibrary: practiceLibrary
             }));
         }
 
@@ -2464,6 +2555,7 @@
                 knowledgePoints = data.knowledgePoints || [];
                 mistakeQuestionIds = data.mistakeQuestionIds || [];
                 practiceHistory = data.practiceHistory || [];
+                practiceLibrary = data.practiceLibrary || [];
                 // 数据迁移：旧数据 knowledgePoint(string) → knowledgePointIds(array)
                 let migrated = false;
                 questions.forEach(q => {
@@ -2482,6 +2574,7 @@
                 knowledgePoints = [];
                 mistakeQuestionIds = [];
                 practiceHistory = [];
+                practiceLibrary = [];
             }
         }
 
@@ -2546,6 +2639,7 @@
         let knowledgePoints = [];
         let mistakeQuestionIds = []; // 错题本（题目ID数组）
         let practiceHistory = [];    // 练习历史：[{date, totalQuestions, correctCount, accuracy}]
+        let practiceLibrary = [];    // 练习库：[{id, name, date, questionIds, questionCount}]
 
         let currentQuestionId = null;
         let currentSubjectId = null;
@@ -8334,23 +8428,25 @@
             switchPage('practice');
         });
 
+        // 练习库按钮事件
+        document.getElementById('goPracticeLibraryBtn').addEventListener('click', function() {
+            renderPracticeLibrary();
+            switchPage('practiceLibrary');
+        });
+        document.getElementById('practiceLibraryBtn').addEventListener('click', function() {
+            renderPracticeLibrary();
+            switchPage('practiceLibrary');
+        });
+        document.getElementById('practice-library-back').addEventListener('click', function() {
+            switchPage('practice');
+        });
+        document.getElementById('lib-history-back').addEventListener('click', function() {
+            switchPage('practiceLibrary');
+        });
+
         // 秒表页面：跳转到答题
         document.getElementById('timerGoQuizBtn').addEventListener('click', function() {
-            // 使用 switchPage 确保 currentPage 和 pageHistory 正确更新
-            switchPage('practice');
-            // switchPage 会调用 initPracticePage() 显示配置界面，这里覆盖为答题界面
-            document.getElementById('practice-config').classList.add('hidden');
-            document.getElementById('practice-quiz').classList.remove('hidden');
-            clearInterval(practiceTimerInterval);
-            practiceTimerInterval = setInterval(updatePracticeTimer, 1000);
-            document.getElementById('practice-progress').textContent = '共 ' + practiceQuestions.length + ' 题';
-            showAllPracticeQuestions();
-            window.scrollTo(0, 0);
-            // 显示浮窗秒表并自动开始计时
-            document.getElementById('floatingStopwatch').classList.remove('hidden');
-            toggleGlobalStopwatch();
-            // 标记当前答题状态，供 closeTimerPage 恢复使用
-            practiceQuizActive = true;
+            goToPracticeQuizFromTimer();
         });
 
         // 显示通知
@@ -8436,8 +8532,6 @@
         let practiceQuestions = [];
         let practiceUserAnswers = [];
         let practiceCurrentIndex = 0;
-        let practiceTimerInterval = null;
-        let practiceSecondsElapsed = 0;
         let practiceQuizActive = false; // 标记是否正在答题中
 
         // ========== 全局秒表 ==========
@@ -8461,6 +8555,8 @@
                 const hint = document.getElementById('stopwatchHint');
                 if (hint) hint.textContent = '计时已暂停';
                 updateTimerToggleBtn(false);
+                // 暂停时锁定答题区域
+                lockPracticeAnswers();
             } else {
                 // 开始/继续
                 globalStopwatchRunning = true;
@@ -8474,7 +8570,20 @@
                 // 显示"开始答题"按钮
                 const btn = document.getElementById('timerGoQuizBtn');
                 if (btn) btn.style.display = 'flex';
+                // 解锁答题区域
+                unlockPracticeAnswers();
             }
+        }
+
+        function lockPracticeAnswers() {
+            document.querySelectorAll('.practice-answer-area').forEach(function(area) {
+                area.classList.add('locked');
+            });
+        }
+        function unlockPracticeAnswers() {
+            document.querySelectorAll('.practice-answer-area.locked').forEach(function(area) {
+                area.classList.remove('locked');
+            });
         }
 
         function updateTimerToggleBtn(running) {
@@ -8502,9 +8611,15 @@
 
         function closeTimerPage() {
             document.getElementById('timerPage').classList.add('hidden');
-            // 如果在答题中，保持浮窗秒表可见
-            if (!practiceQuizActive) {
+            // 如果在答题中，恢复秒表浮窗和打印浮窗，隐藏开始做题浮窗
+            if (practiceQuizActive) {
+                document.getElementById('floatingStopwatch').classList.remove('hidden');
+                document.getElementById('floatingPrintBtn').classList.remove('hidden');
+                document.getElementById('floatingGoQuizBtn').classList.add('hidden');
+            } else {
                 document.getElementById('floatingStopwatch').classList.add('hidden');
+                document.getElementById('floatingPrintBtn').classList.add('hidden');
+                document.getElementById('floatingGoQuizBtn').classList.add('hidden');
             }
             // 直接显示 practicePage，保留之前的答题/配置状态
             document.getElementById('practicePage').classList.remove('hidden');
@@ -8515,10 +8630,11 @@
         function updateGlobalStopwatchDisplay() {
             const total = globalStopwatchElapsed + (globalStopwatchRunning ? Date.now() - globalStopwatchStartTime : 0);
             const sec = total / 1000;
-            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const h = Math.floor(sec / 3600).toString().padStart(2, '0');
+            const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
             const s = Math.floor(sec % 60).toString().padStart(2, '0');
             const ds = Math.floor((sec % 1) * 10);
-            const timeStr = m + ':' + s + '.' + ds;
+            const timeStr = h + ':' + m + ':' + s + '.' + ds;
 
             const d1 = document.getElementById('stopwatchDisplay');
             if (d1) d1.textContent = timeStr;
@@ -8534,15 +8650,16 @@
             clearInterval(globalStopwatchInterval);
             globalStopwatchInterval = null;
             const d1 = document.getElementById('stopwatchDisplay');
-            if (d1) { d1.textContent = '00:00.0'; d1.classList.remove('running'); }
+            if (d1) { d1.textContent = '00:00:00.0'; d1.classList.remove('running'); }
             const d2 = document.getElementById('floatingStopwatchTime');
-            if (d2) d2.textContent = '00:00.0';
+            if (d2) d2.textContent = '00:00:00.0';
             const hint = document.getElementById('stopwatchHint');
             if (hint) hint.textContent = '点击下方按钮开始计时';
             const btn = document.getElementById('timerGoQuizBtn');
             if (btn) btn.style.display = 'none';
             updateTimerToggleBtn(false);
             document.getElementById('floatingStopwatch').classList.add('hidden');
+            document.getElementById('floatingPrintBtn').classList.add('hidden');
         }
 
         // ========== 浮窗秒表拖拽 ==========
@@ -8585,10 +8702,19 @@
                     isDragging = false;
                     el.style.cursor = '';
                     handle.style.cursor = 'move';
-                    // 如果没有移动（纯点击），返回秒表页面
+                    // 如果没有移动（纯点击）
                     if (!hasMoved) {
-                        switchPage('timer');
-                        updateGlobalStopwatchDisplay();
+                        // 在秒表页面点击浮窗 → 进入答题页面（不应该到这里，因为秒表页面无此浮窗）
+                        if (currentPage === 'timer') {
+                            goToPracticeQuizFromTimer();
+                        } else {
+                            // 在答题页面点击浮窗 → 回到秒表页面：显示打印+开始做题，隐藏秒表浮窗
+                            document.getElementById('floatingStopwatch').classList.add('hidden');
+                            document.getElementById('floatingGoQuizBtn').classList.remove('hidden');
+                            document.getElementById('floatingPrintBtn').classList.remove('hidden');
+                            switchPage('timer');
+                            updateGlobalStopwatchDisplay();
+                        }
                     }
                 }
             });
@@ -8622,12 +8748,238 @@
                 if (isDragging) {
                     isDragging = false;
                     if (!hasMoved) {
-                        switchPage('timer');
-                        updateGlobalStopwatchDisplay();
+                        // 在秒表页面点击浮窗 → 进入答题页面（不应该到这里，因为秒表页面无此浮窗）
+                        if (currentPage === 'timer') {
+                            goToPracticeQuizFromTimer();
+                        } else {
+                            // 在答题页面点击浮窗 → 回到秒表页面：显示打印+开始做题，隐藏秒表浮窗
+                            document.getElementById('floatingStopwatch').classList.add('hidden');
+                            document.getElementById('floatingGoQuizBtn').classList.remove('hidden');
+                            document.getElementById('floatingPrintBtn').classList.remove('hidden');
+                            switchPage('timer');
+                            updateGlobalStopwatchDisplay();
+                        }
                     }
                 }
             });
         })();
+
+        // ========== 打印练习题目为PDF ==========
+        document.getElementById('floatingPrintBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            printPracticeAsPdf();
+        });
+
+        // ========== 开始做题浮窗按钮（秒表页面专用）==========
+        document.getElementById('floatingGoQuizBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            goToPracticeQuizFromTimer();
+        });
+
+        function printPracticeAsPdf() {
+            if (!practiceQuestions || practiceQuestions.length === 0) {
+                showNotification('没有可打印的题目', 'warning');
+                return;
+            }
+
+            function renderTextWithMath(text) {
+                return String(text || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\n/g, '<br>');
+            }
+
+            function renderQuestionBlock(q, index) {
+                const contentHtml = q.content ? renderTextWithMath(q.content) : '';
+                const photoHtml = q.photos && q.photos.length ? `<img src="${q.photos[0]}" alt="题目图片">` : '';
+                const optionsHtml = (q.type === 'choice' || q.type === 'multi') && q.options && q.options.length
+                    ? `<div class="print-options">${q.options.map(option => `
+                            <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
+                        `).join('')}</div>`
+                    : '';
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                return `
+                    <div class="print-section">
+                        <div class="print-title">第 ${index} 题（${typeLabel}）</div>
+                        ${contentHtml ? `<div class="print-subtitle math-content">${contentHtml}</div>` : ''}
+                        ${photoHtml}
+                        ${optionsHtml}
+                    </div>
+                `;
+            }
+
+            const questionBlocks = practiceQuestions.map((q, i) => renderQuestionBlock(q, i + 1));
+
+            const printArea = document.getElementById('exportPrintArea');
+            printArea.innerHTML = `
+                <div class="print-root">
+                    <div class="print-section">
+                        <div class="print-title">练习题目</div>
+                        <div class="print-meta">共 ${practiceQuestions.length} 题 · 导出时间：${formatDate(new Date().toISOString())}</div>
+                    </div>
+                    ${questionBlocks.join('')}
+                </div>
+            `;
+
+            const beforePrint = () => {
+                printArea.classList.remove('hidden');
+            };
+            const afterPrint = () => {
+                printArea.classList.add('hidden');
+                window.removeEventListener('afterprint', afterPrint);
+            };
+
+            beforePrint();
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                try {
+                    MathJax.typesetPromise(printArea.querySelectorAll('.math-content')).catch(function() {});
+                } catch (e) {
+                    console.warn('MathJax typeset failed for practice print:', e);
+                }
+            }
+            window.addEventListener('afterprint', afterPrint);
+            window.print();
+            showNotification('已打开打印窗口，可直接保存为PDF', 'success');
+        }
+
+        // ========== 练习库条目打印 ==========
+        let libPrintPendingIndex = -1;
+
+        function openLibPrintModal(idx) {
+            const entry = practiceLibrary[idx];
+            if (!entry) return;
+            const qList = (entry.questionIds || []).map(id => questions.find(q => q.id === id)).filter(Boolean);
+            if (qList.length === 0) {
+                showNotification('练习库中的题目已被删除', 'error');
+                return;
+            }
+            libPrintPendingIndex = idx;
+            document.getElementById('libPrintModalInfo').textContent = '共 ' + qList.length + ' 题 · ' + (entry.name || '');
+            document.getElementById('libPrintModalOverlay').classList.remove('hidden');
+            // 重置为纯题目
+            document.querySelector('input[name="libPrintMode"][value="question"]').checked = true;
+        }
+
+        function closeLibPrintModal() {
+            document.getElementById('libPrintModalOverlay').classList.add('hidden');
+            libPrintPendingIndex = -1;
+        }
+
+        function confirmLibPrint() {
+            const modeRadio = document.querySelector('input[name="libPrintMode"]:checked');
+            const mode = modeRadio ? modeRadio.value : 'question';
+            closeLibPrintModal();
+            printPracticeLibraryEntry(libPrintPendingIndex, mode);
+        }
+
+        async function printPracticeLibraryEntry(idx, mode) {
+            const entry = practiceLibrary[idx];
+            if (!entry) return;
+            const qList = (entry.questionIds || []).map(id => questions.find(q => q.id === id)).filter(Boolean);
+            if (qList.length === 0) {
+                showNotification('练习库中的题目已被删除', 'error');
+                return;
+            }
+
+            function renderTextWithMath(text) {
+                return String(text || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\n/g, '<br>');
+            }
+
+            function renderQuestionBlock(q, index) {
+                const contentHtml = q.content ? renderTextWithMath(q.content) : '';
+                const photoHtml = q.photos && q.photos.length ? q.photos.map(p => `<img src="${p}" alt="题目图片">`).join('') : '';
+                const optionsHtml = (q.type === 'choice' || q.type === 'multi') && q.options && q.options.length
+                    ? `<div class="print-options">${q.options.map(option => `
+                            <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
+                        `).join('')}</div>`
+                    : '';
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                return `
+                    <div class="print-section">
+                        <div class="print-title">第 ${index} 题（${typeLabel}）</div>
+                        ${contentHtml ? `<div class="print-subtitle math-content">${contentHtml}</div>` : ''}
+                        ${photoHtml}
+                        ${optionsHtml}
+                    </div>
+                `;
+            }
+
+            function renderAnswerBlock(q, index) {
+                const answerHtml = q.answer ? `<div class="math-content">${renderTextWithMath(q.answer)}</div>` : '<div>（无标准答案）</div>';
+                const explanationHtml = q.explanation ? `<div class="print-subtitle math-content">解析：${renderTextWithMath(q.explanation)}</div>` : '';
+                const photosHtml = q.explanationPhotos && q.explanationPhotos.length
+                    ? `<div>${q.explanationPhotos.map(photo => `<img src="${photo}" alt="解析图片">`).join('')}</div>`
+                    : '';
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                return `
+                    <div class="print-section">
+                        <div class="print-title">第 ${index} 题 答案（${typeLabel}）</div>
+                        ${answerHtml}
+                        ${explanationHtml}
+                        ${photosHtml}
+                    </div>
+                `;
+            }
+
+            const questionBlocks = [];
+            const answerBlocks = [];
+            qList.forEach((q, i) => {
+                if (mode === 'question' || mode === 'both') {
+                    questionBlocks.push(renderQuestionBlock(q, i + 1));
+                }
+                if (mode === 'answer' || mode === 'both') {
+                    answerBlocks.push(renderAnswerBlock(q, i + 1));
+                }
+            });
+
+            let contentHtml = '';
+            if (mode === 'question') {
+                contentHtml = questionBlocks.join('');
+            } else if (mode === 'answer') {
+                contentHtml = `<div class="print-section"><div class="print-title">答案解析</div></div>${answerBlocks.join('')}`;
+            } else {
+                contentHtml = questionBlocks.join('') +
+                    '<div class="print-page-break"></div>' +
+                    `<div class="print-section"><div class="print-title">答案解析</div></div>${answerBlocks.join('')}`;
+            }
+
+            const modeLabel = { question: '纯题目', answer: '纯答案解析', both: '题目加答案' }[mode];
+            const printArea = document.getElementById('exportPrintArea');
+            printArea.innerHTML = `
+                <div class="print-root">
+                    <div class="print-section">
+                        <div class="print-title">练习：${pracLibEsc(entry.name)}</div>
+                        <div class="print-meta">共 ${qList.length} 题 · ${modeLabel} · 导出时间：${formatDate(new Date().toISOString())}</div>
+                    </div>
+                    ${contentHtml}
+                </div>
+            `;
+
+            const beforePrint = () => {
+                printArea.classList.remove('hidden');
+            };
+            const afterPrint = () => {
+                printArea.classList.add('hidden');
+                window.removeEventListener('afterprint', afterPrint);
+            };
+
+            beforePrint();
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                try {
+                    await MathJax.typesetPromise(printArea.querySelectorAll('.math-content'));
+                } catch (e) {
+                    console.warn('MathJax typeset failed for lib print:', e);
+                }
+            }
+            window.addEventListener('afterprint', afterPrint);
+            window.print();
+            showNotification('已打开打印窗口，可直接保存为PDF', 'success');
+        }
 
         // 初始化练习页面
         function initPracticePage() {
@@ -8638,9 +8990,6 @@
             document.getElementById('practice-config').classList.remove('hidden');
             document.getElementById('practice-quiz').classList.add('hidden');
             document.getElementById('practiceResultPage').classList.add('hidden');
-            clearInterval(practiceTimerInterval);
-            practiceSecondsElapsed = 0;
-            document.getElementById('practice-timer').textContent = '00:00';
 
             // 模式默认：随机出题
             document.getElementById('practiceModeRandom').classList.add('bg-white', 'shadow-sm', 'text-gray-800');
@@ -8893,11 +9242,11 @@
                 });
                 practiceQuestions = shuffle(processed);
                 practiceUserAnswers = practiceQuestions.map(() => ({}));
-                practiceCurrentIndex = 0; practiceSecondsElapsed = 0;
-                document.getElementById('practice-timer').textContent = '00:00';
+                practiceCurrentIndex = 0;
                 const mainSubj2 = subjects.find(s => s.id === practiceQuestions[0]?.subjectId);
                 document.getElementById('practice-current-subject').textContent = mainSubj2 ? mainSubj2.name : '全部科目';
-                switchPage('timer');
+                autoSaveToPracticeLibrary(practiceQuestions.map(q => q.id));
+                startPracticeQuiz();
                 return;
             }
 
@@ -8947,10 +9296,11 @@
                 });
                 practiceQuestions = processed; // 保持试卷顺序
                 practiceUserAnswers = practiceQuestions.map(() => ({}));
-                practiceCurrentIndex = 0; practiceSecondsElapsed = 0;
+                practiceCurrentIndex = 0;
                 const mainSubj = subjects.find(s => s.id === practiceQuestions[0]?.subjectId);
                 document.getElementById('practice-current-subject').textContent = (mainSubj ? mainSubj.name : '未知') + ' · ' + paper.name;
-                switchPage('timer');
+                autoSaveToPracticeLibrary(practiceQuestions.map(q => q.id));
+                startPracticeQuiz();
                 return;
             }
 
@@ -9035,35 +9385,343 @@
             practiceQuestions = shuffle(selected);
             practiceUserAnswers = practiceQuestions.map(() => ({}));
             practiceCurrentIndex = 0;
-            practiceSecondsElapsed = 0;
-            document.getElementById('practice-timer').textContent = '00:00';
 
             // 显示科目
             const mainSubj = subjects.find(s => s.id === (subjId !== 'all' ? subjId : practiceQuestions[0]?.subjectId));
             document.getElementById('practice-current-subject').textContent = mainSubj ? mainSubj.name : '全部科目';
 
-            switchPage('timer');
+            autoSaveToPracticeLibrary(practiceQuestions.map(q => q.id));
+            startPracticeQuiz();
         });
 
         function startPracticeQuiz() {
+            // 跳转到秒表页面：显示打印浮窗 + 开始做题浮窗，不显示秒表浮窗
             practiceQuizActive = true;
+            switchPage('timer');
+            document.getElementById('floatingStopwatch').classList.add('hidden');
+            document.getElementById('floatingGoQuizBtn').classList.remove('hidden');
+            document.getElementById('floatingPrintBtn').classList.remove('hidden');
+        }
+
+        // 从秒表页面跳转到答题界面（共用函数）
+        function goToPracticeQuizFromTimer() {
+            document.getElementById('timerPage').classList.add('hidden');
+            document.getElementById('practicePage').classList.remove('hidden');
+            currentPage = 'practice';
+            pageHistory = [];
             document.getElementById('practice-config').classList.add('hidden');
             document.getElementById('practice-quiz').classList.remove('hidden');
-            clearInterval(practiceTimerInterval);
-            practiceTimerInterval = setInterval(updatePracticeTimer, 1000);
             document.getElementById('practice-progress').textContent = '共 ' + practiceQuestions.length + ' 题';
             showAllPracticeQuestions();
             window.scrollTo(0, 0);
-            // 显示浮窗秒表并自动开始计时
+            // 答题页面：显示打印浮窗 + 秒表浮窗，隐藏开始做题浮窗
             document.getElementById('floatingStopwatch').classList.remove('hidden');
-            toggleGlobalStopwatch();
+            document.getElementById('floatingPrintBtn').classList.remove('hidden');
+            document.getElementById('floatingGoQuizBtn').classList.add('hidden');
+            if (globalStopwatchRunning) unlockPracticeAnswers();
+            practiceQuizActive = true;
         }
 
-        function updatePracticeTimer() {
-            practiceSecondsElapsed++;
-            const m = Math.floor(practiceSecondsElapsed / 60).toString().padStart(2, '0');
-            const s = (practiceSecondsElapsed % 60).toString().padStart(2, '0');
-            document.getElementById('practice-timer').textContent = m + ':' + s;
+        // 自动保存练习到练习库（去重：题目ID完全一致则不新建）
+        function autoSaveToPracticeLibrary(qIds) {
+            if (!qIds || qIds.length === 0) return;
+            const sortedIds = [...qIds].sort();
+            const exists = practiceLibrary.some(entry => {
+                const entryIds = (entry.questionIds || []).slice().sort();
+                return entryIds.length === sortedIds.length && entryIds.every((id, i) => id === sortedIds[i]);
+            });
+            if (exists) return;
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' +
+                String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                String(now.getDate()).padStart(2, '0') + ' ' +
+                String(now.getHours()).padStart(2, '0') + ':' +
+                String(now.getMinutes()).padStart(2, '0');
+            practiceLibrary.unshift({
+                id: generateId(),
+                name: dateStr,
+                date: now.toISOString(),
+                questionIds: sortedIds,
+                questionCount: sortedIds.length
+            });
+            saveGradeData();
+        }
+
+        // 渲染练习库页面
+        function renderPracticeLibrary() {
+            const container = document.getElementById('practiceLibraryContent');
+            if (!container) return;
+            if (practiceLibrary.length === 0) {
+                container.innerHTML = '<div class="p-6"><p class="text-gray-400 text-center py-8">暂无保存的练习，开始练习后会自动存入练习库</p></div>';
+                return;
+            }
+            let html = '<div class="divide-y divide-gray-100">';
+            practiceLibrary.forEach((entry, idx) => {
+                const d = new Date(entry.date);
+                const timeStr = d.getFullYear() + '-' +
+                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(d.getDate()).padStart(2, '0') + ' ' +
+                    String(d.getHours()).padStart(2, '0') + ':' +
+                    String(d.getMinutes()).padStart(2, '0');
+                // 统计各题型数量
+                const qList = (entry.questionIds || []).map(id => questions.find(q => q.id === id)).filter(Boolean);
+                const choiceCount = qList.filter(q => q.type === 'choice').length;
+                const multiCount = qList.filter(q => q.type === 'multi').length;
+                const fillCount = qList.filter(q => q.type === 'fill').length;
+                const otherCount = qList.filter(q => q.type === 'other').length;
+                const typeStr = [];
+                if (choiceCount > 0) typeStr.push(choiceCount + '道选择');
+                if (multiCount > 0) typeStr.push(multiCount + '道多选');
+                if (fillCount > 0) typeStr.push(fillCount + '道填空');
+                if (otherCount > 0) typeStr.push(otherCount + '道问答');
+                html += `
+                <div class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-gray-900 flex items-center gap-1.5 group/libname">
+                            <span class="lib-name-text inline-block max-w-[200px] truncate">${pracLibEsc(entry.name)}</span>
+                            <button class="lib-edit-name-btn text-gray-300 hover:text-primary opacity-0 group-hover/libname:opacity-100 transition cursor-pointer flex-shrink-0" data-idx="${idx}" title="编辑名称"><i class="fa fa-pencil text-xs"></i></button>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">共 ${entry.questionCount || qList.length} 题${typeStr.length > 0 ? '（' + typeStr.join('、') + '）' : ''} · ${timeStr}</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-4 flex-shrink-0">
+                        <button class="lib-start-btn text-xs px-3 py-1.5 rounded bg-primary text-white hover:bg-primary/90 cursor-pointer transition" data-idx="${idx}">开始练习</button>
+                        <button class="lib-print-btn text-xs px-3 py-1.5 rounded border border-gray-200 text-gray-600 hover:text-primary hover:border-primary/50 cursor-pointer transition" data-idx="${idx}" title="打印"><i class="fa fa-print mr-1"></i>打印</button>
+                        <button class="lib-history-btn text-xs px-3 py-1.5 rounded border border-blue-200 text-blue-600 hover:bg-blue-50 cursor-pointer transition" data-idx="${idx}">历史记录</button>
+                        <button class="lib-delete-btn text-xs px-2 py-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer transition" data-idx="${idx}" title="删除"><i class="fa fa-trash-o"></i></button>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+
+            // 开始练习按钮
+            container.querySelectorAll('.lib-start-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.getAttribute('data-idx'));
+                    const entry = practiceLibrary[idx];
+                    if (!entry) return;
+                    const qList = (entry.questionIds || []).map(id => questions.find(q => q.id === id)).filter(Boolean);
+                    if (qList.length === 0) {
+                        showNotification('练习库中的题目已被删除', 'error');
+                        return;
+                    }
+                    // 深拷贝并处理选项
+                    const processed = qList.map(q => {
+                        const qCopy = JSON.parse(JSON.stringify(q));
+                        if ((qCopy.type === 'choice' || qCopy.type === 'multi') && qCopy.options) {
+                            const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
+                            qCopy._shuffledOptions = opts.map((opt, j) => ({ key: String.fromCharCode(65 + j), value: opt.text }));
+                            qCopy._correctLetter = qCopy.answer.toUpperCase();
+                        }
+                        return qCopy;
+                    });
+                    practiceQuestions = processed;
+                    practiceUserAnswers = practiceQuestions.map(() => ({}));
+                    practiceCurrentIndex = 0;
+                    const mainSubj = subjects.find(s => s.id === practiceQuestions[0]?.subjectId);
+                    document.getElementById('practice-current-subject').textContent = mainSubj ? mainSubj.name : '全部科目';
+                    startPracticeQuiz();
+                });
+            });
+
+            // 删除按钮
+            container.querySelectorAll('.lib-delete-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const idx = parseInt(this.getAttribute('data-idx'));
+                    openConfirmPage('确定要删除这个练习记录吗？', function() {
+                        practiceLibrary.splice(idx, 1);
+                        saveGradeData();
+                        renderPracticeLibrary();
+                        showNotification('练习记录已删除', 'success');
+                    });
+                });
+            });
+
+            // 打印按钮
+            container.querySelectorAll('.lib-print-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const idx = parseInt(this.getAttribute('data-idx'));
+                    openLibPrintModal(idx);
+                });
+            });
+
+            // 编辑名称按钮
+            container.querySelectorAll('.lib-edit-name-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const idx = parseInt(this.getAttribute('data-idx'));
+                    const entry = practiceLibrary[idx];
+                    if (!entry) return;
+                    const nameSpan = this.parentElement.querySelector('.lib-name-text');
+                    if (!nameSpan) return;
+                    const oldName = entry.name;
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = oldName;
+                    input.className = 'text-sm font-medium text-gray-900 border border-primary rounded px-2 py-0.5 w-full max-w-[200px] focus:outline-none focus:ring-1 focus:ring-primary';
+                    input.style.minWidth = '120px';
+                    nameSpan.replaceWith(input);
+                    input.focus();
+                    input.select();
+                    const saveName = function() {
+                        const newName = input.value.trim() || oldName;
+                        entry.name = newName;
+                        saveGradeData();
+                        const newSpan = document.createElement('span');
+                        newSpan.className = 'lib-name-text inline-block max-w-[200px] truncate';
+                        newSpan.textContent = newName;
+                        input.replaceWith(newSpan);
+                    };
+                    input.addEventListener('blur', saveName);
+                    input.addEventListener('keydown', function(ev) {
+                        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+                        if (ev.key === 'Escape') { input.value = oldName; input.blur(); }
+                    });
+                });
+            });
+
+            // 历史记录按钮
+            container.querySelectorAll('.lib-history-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const idx = parseInt(this.getAttribute('data-idx'));
+                    renderLibHistoryList(idx);
+                    switchPage('libHistoryList');
+                });
+            });
+        }
+
+        function pracLibEsc(s) {
+            return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // 渲染练习库某条目的历史记录列表
+        function renderLibHistoryList(libIdx) {
+            const entry = practiceLibrary[libIdx];
+            const container = document.getElementById('libHistoryListContent');
+            if (!container || !entry) return;
+
+            document.getElementById('lib-history-title').textContent = '练习历史记录';
+
+            // 匹配题目ID完全相同的所有历史记录（反向查找）
+            const sortedLibIds = [...(entry.questionIds || [])].sort().join(',');
+            const matches = practiceHistory
+                .map((h, hi) => ({ h, hi }))
+                .filter(({ h }) => {
+                    const hIds = (h.questionIds || []).slice().sort().join(',');
+                    return hIds === sortedLibIds;
+                })
+                .reverse(); // 最新在前
+
+            if (matches.length === 0) {
+                container.innerHTML = '<div class="bg-white rounded-xl shadow-sm p-6"><p class="text-gray-400 text-center py-8">暂无练习记录</p></div>';
+                return;
+            }
+
+            let html = '<div class="bg-white rounded-xl shadow-sm divide-y divide-gray-100">';
+            matches.forEach(({ h, hi }) => {
+                const d = new Date(h.date);
+                const timeStr = d.getFullYear() + '-' +
+                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(d.getDate()).padStart(2, '0') + ' ' +
+                    String(d.getHours()).padStart(2, '0') + ':' +
+                    String(d.getMinutes()).padStart(2, '0');
+                const correct = h.correctCount || 0;
+                const scored = h.scoredQuestions || h.totalQuestions || 0;
+                const accuracy = h.accuracy || 0;
+                const duration = h.duration || '--:--:--';
+                // 颜色标识
+                let accColor = 'text-green-600';
+                if (accuracy < 60) accColor = 'text-red-500';
+                else if (accuracy < 85) accColor = 'text-orange-500';
+
+                html += `
+                <div class="p-4 hover:bg-gray-50 transition-colors cursor-pointer lib-hist-entry" data-hi="${hi}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-gray-900">${timeStr}</div>
+                            <div class="text-xs text-gray-500 mt-1">共 ${h.totalQuestions || scored} 题 · 用时 ${duration}</div>
+                        </div>
+                        <div class="text-right ml-4 flex-shrink-0">
+                            <div class="text-lg font-bold ${accColor}">${accuracy}%</div>
+                            <div class="text-xs text-gray-500">${correct}/${scored} 正确</div>
+                        </div>
+                        <div class="ml-3 text-gray-300"><i class="fa fa-chevron-right"></i></div>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+
+            // 点击某条历史记录 → 查看详情
+            container.querySelectorAll('.lib-hist-entry').forEach(el => {
+                el.addEventListener('click', function() {
+                    const hi = parseInt(this.getAttribute('data-hi'));
+                    renderHistoryDetail(hi, libIdx);
+                    switchPage('practiceResult');
+                });
+            });
+        }
+
+        // 渲染历史记录详情（复用练习结果页面的格式）
+        function renderHistoryDetail(histIdx, libIdx) {
+            const h = practiceHistory[histIdx];
+            if (!h) return;
+
+            const resultContainer = document.getElementById('practice-result-content');
+            resultContainer.innerHTML = '';
+
+            const correct = h.correctCount || 0;
+            const scored = h.scoredQuestions || h.totalQuestions || 0;
+            const accuracy = h.accuracy || 0;
+            const duration = h.duration || '--:--:--';
+
+            // 得分摘要（与 submitPractice 相同格式）
+            const scoreDiv = document.createElement('div');
+            scoreDiv.className = 'p-3 bg-primary/5 rounded-lg text-center mb-4';
+            scoreDiv.id = 'practice-score-summary';
+            scoreDiv.setAttribute('data-correct-count', correct);
+            scoreDiv.setAttribute('data-total-count', scored);
+            scoreDiv.innerHTML = `
+                <div class="text-lg font-bold text-primary">得分：${correct}/${scored}</div>
+                <div class="text-sm text-gray-600">正确率：${scored > 0 ? ((correct / scored) * 100).toFixed(1) : '0'}% | 用时：${duration}</div>
+                <div class="text-xs text-gray-500 mt-1">历史练习记录回顾</div>
+            `;
+            resultContainer.appendChild(scoreDiv);
+
+            // 每题卡片（与 submitPractice 完全一致）
+            const typeMap = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' };
+            const qResults = h.questionResults || [];
+            qResults.forEach((r, i) => {
+                const escC = (r.content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const escU = (r.userAnswer || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const escD = (r.correctAnswer || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-lg mb-3 ' + (r.isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100');
+                item.setAttribute('data-q-index', i);
+                item.setAttribute('data-q-type', r.type);
+                item.innerHTML = `
+                    <div class="font-medium mb-1">题目 ${i + 1} (${typeMap[r.type] || r.type})</div>
+                    <div class="text-sm text-gray-600 mb-2">${practiceTextToHtml(escC).substring(0, 200)}</div>
+                    <div class="text-sm mb-1"><span class="text-gray-500">你的答案：</span>${practiceTextToHtml(escU) || '<span class="text-gray-400">未作答</span>'}</div>
+                    <div class="text-sm"><span class="text-gray-500">参考答案：</span>${practiceTextToHtml(escD) || '<span class="text-gray-400">无</span>'}</div>
+                    <div class="text-sm font-medium mt-1 ${r.isCorrect ? 'text-green-600' : 'text-red-600'}">${r.isCorrect ? '✓ 正确' : '✗ 错误'}</div>
+                `;
+                resultContainer.appendChild(item);
+            });
+
+            // 渲染 KaTeX
+            renderPracticeMath(resultContainer);
+
+            // 修改返回按钮：从历史详情返回历史列表
+            const backBtn = document.getElementById('practice-result-back');
+            backBtn._isHistDetail = true;
+            backBtn.querySelector('i').nextSibling.textContent = ' 返回历史记录';
+
+            // 切换到练习结果页
+            switchPage('practiceResult');
         }
 
         // 收集所有答案（在提交前调用，确保 textarea 最新值被收集）
@@ -9117,9 +9775,9 @@
                     card.appendChild(photoWrap);
                 }
 
-                // 选项/答案区域
+                // 选项/答案区域（默认锁定，开始计时后解锁）
                 const answerArea = document.createElement('div');
-                answerArea.className = 'practice-answer-area';
+                answerArea.className = 'practice-answer-area locked';
 
                 if (q.type === 'choice') {
                     const choicesDiv = document.createElement('div');
@@ -9437,13 +10095,25 @@
             }, { returnPage: 'practice' });
         });
         document.getElementById('practice-result-back').addEventListener('click', function() {
-            initPracticePage();
-            switchPage('practice');
+            if (this._isHistDetail) {
+                this._isHistDetail = false;
+                this.querySelector('i').nextSibling.textContent = ' 返回练习';
+                switchPage('libHistoryList');
+            } else {
+                initPracticePage();
+                switchPage('practice');
+            }
         });
 
         function submitPractice() {
             practiceQuizActive = false;
-            clearInterval(practiceTimerInterval);
+            // 保存秒表用时
+            const totalMs = globalStopwatchElapsed + (globalStopwatchRunning ? Date.now() - globalStopwatchStartTime : 0);
+            const totalSec = Math.floor(totalMs / 1000);
+            const h = Math.floor(totalSec / 3600).toString().padStart(2, '0');
+            const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
+            const s = (totalSec % 60).toString().padStart(2, '0');
+            const stopwatchTimeStr = h + ':' + m + ':' + s;
             // 离开答题界面，结束秒表
             resetGlobalStopwatch();
             const resultContainer = document.getElementById('practice-result-content');
@@ -9452,6 +10122,7 @@
             let totalScoreQuestions = 0;
             let wrongQuestionIds = []; // 本轮做错的题目ID
 
+            const questionResults = []; // 每题判分结果快照
             practiceQuestions.forEach((q, i) => {
                 const ua = practiceUserAnswers[i] || {};
                 let isCorrect = false;
@@ -9484,38 +10155,64 @@
                     userDisplay = userSorted || '未作答';
                     if (!isCorrect && q.id) wrongQuestionIds.push(q.id);
                 } else if (q.type === 'fill') {
+                    totalScoreQuestions++;
                     correctDisplay = q.answer || '（无标准答案）';
                     userDisplay = ua[1] || '未作答';
+                    const userAns = (ua[1] || '').replace(/\s+/g, '');
+                    const correctAns = (q.answer || '').replace(/\s+/g, '');
+                    isCorrect = userAns === correctAns;
+                    if (!isCorrect && q.id) wrongQuestionIds.push(q.id);
                 } else {
+                    totalScoreQuestions++;
                     correctDisplay = q.answer || '（无标准答案）';
                     userDisplay = ua[1] || '未作答';
+                    isCorrect = false; // 问答题默认错误，用户自行判断
                 }
 
                 if (isCorrect) correctCount++;
+
+                // 记录每题判分快照（用于历史详情）
+                questionResults.push({
+                    questionId: q.id,
+                    type: q.type,
+                    content: (q.content || '').substring(0, 200),
+                    isCorrect: isCorrect,
+                    userAnswer: userDisplay,
+                    correctAnswer: correctDisplay,
+                    isOther: q.type === 'other'
+                });
 
                 const escC = (q.content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const escU = (userDisplay || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const escD = (correctDisplay || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const item = document.createElement('div');
-                item.className = 'p-3 rounded-lg mb-3 ' + ((q.type === 'choice' || q.type === 'multi') ? (isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100') : 'bg-gray-50 border border-gray-200');
+                item.className = 'p-3 rounded-lg mb-3 ' + (q.type === 'other' ? 'bg-gray-50 border border-gray-200' : (isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'));
+                item.setAttribute('data-q-index', i);
+                item.setAttribute('data-q-type', q.type);
                 item.innerHTML = `
                     <div class="font-medium mb-1">题目 ${i + 1} (${({choice:'选择题',multi:'多选题',fill:'填空题',other:'问答题'})[q.type] || q.type})</div>
                     <div class="text-sm text-gray-600 mb-2">${practiceTextToHtml(escC).substring(0, 200)}</div>
                     <div class="text-sm mb-1"><span class="text-gray-500">你的答案：</span>${practiceTextToHtml(escU)}</div>
                     <div class="text-sm"><span class="text-gray-500">参考答案：</span>${practiceTextToHtml(escD)}</div>
-                    ${(q.type === 'choice' || q.type === 'multi') ? `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">${isCorrect ? '✓ 正确' : '✗ 错误'}</div>` : ''}
+                    ${q.type === 'other' ? `
+                    <div class="mt-2 flex items-center gap-2" data-self-assess="${i}">
+                        <span class="text-xs text-gray-400">请自行判断对错：</span>
+                        <button class="self-correct-btn text-xs px-3 py-1 rounded border border-green-300 text-green-600 hover:bg-green-50 cursor-pointer transition" data-q="${i}">✓ 正确</button>
+                        <button class="self-wrong-btn text-xs px-3 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50 cursor-pointer transition" data-q="${i}">✗ 错误</button>
+                    </div>` : `<div class="text-sm font-medium mt-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">${isCorrect ? '✓ 正确' : '✗ 错误'}</div>`}
                 `;
                 resultContainer.appendChild(item);
             });
 
             const scoreDiv = document.createElement('div');
             scoreDiv.className = 'p-3 bg-primary/5 rounded-lg text-center mb-4';
-            const m = Math.floor(practiceSecondsElapsed / 60).toString().padStart(2, '0');
-            const s = (practiceSecondsElapsed % 60).toString().padStart(2, '0');
+            scoreDiv.id = 'practice-score-summary';
+            scoreDiv.setAttribute('data-correct-count', correctCount);
+            scoreDiv.setAttribute('data-total-count', totalScoreQuestions);
             scoreDiv.innerHTML = `
                 <div class="text-lg font-bold text-primary">得分：${correctCount}/${totalScoreQuestions}</div>
-                <div class="text-sm text-gray-600">正确率：${totalScoreQuestions > 0 ? ((correctCount/totalScoreQuestions)*100).toFixed(1) : '0'}% | 用时：${m}:${s}</div>
-                <div class="text-xs text-gray-500 mt-1">仅选择题和多选题计分，填空题和问答题不计分</div>
+                <div class="text-sm text-gray-600">正确率：${totalScoreQuestions > 0 ? ((correctCount/totalScoreQuestions)*100).toFixed(1) : '0'}% | 用时：${stopwatchTimeStr}</div>
+                <div class="text-xs text-gray-500 mt-1">选择题、多选题、填空题自动判分；问答题请自行判断对错</div>
             `;
             resultContainer.insertBefore(scoreDiv, resultContainer.firstChild);
 
@@ -9535,7 +10232,11 @@
                 totalQuestions: practiceQuestions.length,
                 scoredQuestions: totalScoreQuestions,
                 correctCount: correctCount,
-                accuracy: accuracy
+                accuracy: accuracy,
+                duration: stopwatchTimeStr,
+                questionIds: practiceQuestions.map(q => q.id),
+                userAnswers: JSON.parse(JSON.stringify(practiceUserAnswers)),
+                questionResults: questionResults
             });
             // 只保留最近365条记录
             if (practiceHistory.length > 365) {
@@ -9550,8 +10251,71 @@
             // 渲染结果页中的 KaTeX 公式
             renderPracticeMath(resultContainer);
 
+            // 问答题自查：点击"正确/错误"按钮后更新得分（先移除旧监听器避免重复加分）
+            if (resultContainer._selfAssessHandler) {
+                resultContainer.removeEventListener('click', resultContainer._selfAssessHandler);
+            }
+            resultContainer._selfAssessHandler = function(e) {
+                const correctBtn = e.target.closest('.self-correct-btn');
+                const wrongBtn = e.target.closest('.self-wrong-btn');
+                const btn = correctBtn || wrongBtn;
+                if (!btn || btn.disabled) return;
+                const qIndex = parseInt(btn.getAttribute('data-q'));
+                const isCorrect = !!correctBtn;
+                const item = resultContainer.querySelector(`[data-q-index="${qIndex}"]`);
+                if (!item) return;
+                // 更新题目背景
+                if (isCorrect) {
+                    item.classList.remove('bg-gray-50', 'border-gray-200');
+                    item.classList.add('bg-green-50', 'border', 'border-green-100');
+                } else {
+                    item.classList.remove('bg-gray-50', 'border-gray-200');
+                    item.classList.add('bg-red-50', 'border', 'border-red-100');
+                    // 标记为错误，加入错题本
+                    const q = practiceQuestions[qIndex];
+                    if (q && q.id && !mistakeQuestionIds.includes(q.id)) {
+                        mistakeQuestionIds.push(q.id);
+                    }
+                }
+                // 替换按钮区域为结果文字
+                const assessDiv = item.querySelector('[data-self-assess]') || btn.closest('.mt-2');
+                if (assessDiv) {
+                    assessDiv.innerHTML = `<span class="text-sm font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}">${isCorrect ? '✓ 已判断为正确' : '✗ 已判断为错误'}</span>`;
+                }
+                // 禁用该题所有按钮
+                const allBtns = item.querySelectorAll('.self-correct-btn, .self-wrong-btn');
+                allBtns.forEach(b => b.disabled = true);
+                // 更新得分
+                const summary = document.getElementById('practice-score-summary');
+                let correct = parseInt(summary.getAttribute('data-correct-count')) || 0;
+                const total = parseInt(summary.getAttribute('data-total-count')) || 0;
+                if (isCorrect) correct++;
+                summary.setAttribute('data-correct-count', correct);
+                const pct = total > 0 ? ((correct / total) * 100).toFixed(1) : '0';
+                summary.querySelector('div:first-child').textContent = '得分：' + correct + '/' + total;
+                summary.querySelector('div:nth-child(2)').textContent = '正确率：' + pct + '% | 用时：' + stopwatchTimeStr;
+                // 同步更新练习历史记录中的正确数和题目结果
+                if (practiceHistory.length > 0) {
+                    const lastEntry = practiceHistory[practiceHistory.length - 1];
+                    lastEntry.correctCount = correct;
+                    lastEntry.accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+                    // 同步 questionResults 中的问答题判分状态
+                    if (lastEntry.questionResults && lastEntry.questionResults[qIndex]) {
+                        lastEntry.questionResults[qIndex].isCorrect = isCorrect;
+                    }
+                }
+                saveGradeData();
+            };
+            resultContainer.addEventListener('click', resultContainer._selfAssessHandler);
+
             // 隐藏浮窗秒表
             document.getElementById('floatingStopwatch').classList.add('hidden');
+            document.getElementById('floatingPrintBtn').classList.add('hidden');
+
+            // 恢复返回按钮的默认行为
+            const backBtn = document.getElementById('practice-result-back');
+            backBtn._isHistDetail = false;
+            backBtn.querySelector('i').nextSibling.textContent = ' 返回练习';
 
             switchPage('practiceResult');
         }
