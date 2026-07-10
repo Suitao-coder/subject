@@ -2028,8 +2028,8 @@
                             </select>
                         </div>
                         <div class="mb-4">
-                            <label for="kpName" class="block text-sm font-medium text-gray-700 mb-1">知识点名称 <span class="text-danger">*</span></label>
-                            <input type="text" id="kpName" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入知识点名称" required>
+                            <label for="kpName" class="block text-sm font-medium text-gray-700 mb-1">知识点内容 <span class="text-danger">*</span></label>
+                            <textarea id="kpName" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入知识点内容" required></textarea>
                         </div>
                         <div class="mt-6 flex items-center gap-3">
                             <button type="submit" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
@@ -3403,7 +3403,7 @@
                 const parentId = document.getElementById('kpParent').value || null;
 
                 if (!name) {
-                    showNotification('请输入知识点名称', 'error');
+                    showNotification('请输入知识点内容', 'error');
                     return;
                 }
                 if (!subjectId) {
