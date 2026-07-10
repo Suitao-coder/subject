@@ -1,3 +1,4 @@
+
     <!DOCTYPE html>
     <html lang="zh-CN">
     <head>
@@ -409,6 +410,100 @@
                     border-radius: 3px;
                     transition: width 0.3s;
                 }
+
+                /* ===== 子页面样式（正常页面设计） ===== */
+                .sub-page .bg-white {
+                    box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 1px 2px rgba(15,23,42,0.03);
+                    border: 1px solid #E2E8F0;
+                    border-radius: 0.75rem;
+                    overflow: hidden;
+                }
+                /* 头部：干净左对齐，返回链接为轻量面包屑风格 */
+                .sub-page-header {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    margin-bottom: 0;
+                }
+                .sub-page-header > h1,
+                .sub-page-header > div > h1 {
+                    color: #0F172A;
+                    font-weight: 700;
+                    font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+                    line-height: 1.35;
+                }
+                .sub-page-header p {
+                    color: #64748B;
+                    font-size: 0.875rem;
+                    margin-top: 2px;
+                }
+                .btn-back {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    font-size: 0.8125rem;
+                    font-weight: 500;
+                    color: #64748B;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    padding: 2px 0;
+                    transition: color 0.2s;
+                    margin-bottom: 6px;
+                }
+                .btn-back:hover {
+                    color: #3B82F6;
+                }
+                .btn-back i {
+                    font-size: 11px;
+                }
+
+                /* 表单相关 */
+                .sub-page label.block {
+                    margin-bottom: 6px;
+                    font-weight: 500;
+                    color: #374151;
+                }
+                .sub-page textarea { resize: vertical; }
+                .sub-page input[type="color"] { background: #fff; }
+
+                /* OCR / 上传等次级操作按钮 */
+                .sub-page .ocr-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 13px;
+                    padding: 7px 14px;
+                    border-radius: 9999px;
+                    border: 1px solid #CBD5E1;
+                    background: #fff;
+                    color: #475569;
+                    cursor: pointer;
+                    transition: all 0.18s ease;
+                }
+                .sub-page .ocr-btn:hover {
+                    border-color: #3B82F6;
+                    color: #2563EB;
+                    background: #EFF6FF;
+                }
+
+                /* 分组/板块 */
+                .sub-page .bg-gray-50 { border: 1px solid #EEF2F7; }
+
+                /* 按钮动效 */
+                .sub-page .bg-primary {
+                    transition: transform 0.15s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+                }
+                .sub-page .bg-primary:hover {
+                    box-shadow: 0 4px 14px rgba(59,130,246,0.3);
+                    transform: translateY(-1px);
+                }
+                .sub-page .bg-gray-200 {
+                    transition: background-color 0.18s ease;
+                }
+                .sub-page .bg-gray-200:hover {
+                    background: #E2E8F0;
+                }
             }
 
             /* ========== 移动端适配 ========== */
@@ -516,24 +611,21 @@
                 #practice-exit-btn, #practice-submit-top-btn { padding: 6px 10px !important; font-size: 12px !important; }
                 #practice-submit-btn { padding: 10px 20px !important; font-size: 15px !important; }
 
-                /* 题目表单模态框 */
-                #questionModal > div { margin: 8px !important; border-radius: 12px !important; max-height: 92vh !important; }
-                #questionModal .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
-                #questionModal .py-6, #questionModal .py-4 { padding-top: 10px !important; padding-bottom: 10px !important; }
-                #questionModal h3 { font-size: 1rem !important; }
+                /* 题目表单子页面 */
+                #questionFormPage .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
+                #questionFormPage .py-6, #questionFormPage .py-4 { padding-top: 10px !important; padding-bottom: 10px !important; }
+                #questionFormPage h1 { font-size: 1rem !important; }
                 #questionForm .mb-4 { margin-bottom: 10px !important; }
                 #questionForm label { font-size: 12px !important; }
                 #questionForm textarea, #questionForm select, #questionForm input[type="text"], #questionForm input[type="number"] { font-size: 13px !important; padding: 6px 10px !important; }
 
-                /* 科目/试卷模态框 */
-                #subjectModal > div, #paperModal > div, #createPaperModal > div, #exportPapersModal > div { margin: 8px !important; border-radius: 12px !important; max-height: 92vh !important; }
-                #subjectModal .px-6, #paperModal .px-6, #createPaperModal .px-6, #exportPapersModal .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
+                /* 科目/试卷子页面 */
+                #subjectFormPage .px-6, #createPaperPage .px-6, #exportPapersPage .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
 
-                /* 结果弹窗 */
-                #practice-result-modal > div { margin: 8px !important; border-radius: 12px !important; max-height: 90vh !important; }
-                #practice-result-modal .px-6 { padding-left: 10px !important; padding-right: 10px !important; }
-                #practice-result-modal .py-4 { padding-top: 8px !important; padding-bottom: 8px !important; }
-                #practice-result-modal h3 { font-size: 1rem !important; }
+                /* 做题结果子页面 */
+                #practiceResultPage .px-6 { padding-left: 10px !important; padding-right: 10px !important; }
+                #practiceResultPage .py-4 { padding-top: 8px !important; padding-bottom: 8px !important; }
+                #practiceResultPage h1 { font-size: 1rem !important; }
                 #practice-result-content .p-3 { padding: 6px 8px !important; font-size: 12px !important; }
                 #practice-result-back { padding: 8px 12px !important; font-size: 13px !important; }
 
@@ -573,14 +665,17 @@
                 .grid img.h-24 { height: 64px !important; }
 
                 /* 试卷创建中选择题目列表 */
-                #createPaperModal .max-h-96 { max-height: 200px !important; }
-                #createPaperModal .overflow-y-auto tbody tr td { padding: 2px 0 !important; font-size: 11px !important; }
+                #createPaperPage .max-h-96 { max-height: 200px !important; }
+                #createPaperPage .overflow-y-auto tbody tr td { padding: 2px 0 !important; font-size: 11px !important; }
 
-                /* 图片缩放弹窗 */
-                #imageZoomModal img { max-width: 95vw !important; max-height: 80vh !important; }
+                /* 图片缩放子页面 */
+                #imageZoomPage img { max-width: 95vw !important; max-height: 80vh !important; }
 
-                /* 题目梳理弹窗 */
-                #organizeModal > div { margin: 8px !important; max-height: 92vh !important; }
+                /* 子页面移动端回落 */
+                .sub-page .sub-page-header h1 { font-size: 1.15rem !important; }
+                .sub-page .sub-page-header p { font-size: 0.8125rem !important; }
+                .sub-page label.block { font-size: 0.875rem !important; }
+                .sub-page input, .sub-page select, .sub-page textarea { font-size: 0.9rem !important; padding: 0.5rem 0.75rem !important; }
             }
 
             /* ========== 移动端底部导航栏 ========== */
@@ -768,7 +863,7 @@
         </nav>
 
         <!-- 主内容区 -->
-        <main class="pt-20 pb-16 min-h-screen">
+        <main class="pt-20 pb-16 min-h-[calc(100vh-5rem)]">
             <!-- 仪表盘页面 -->
             <section id="dashboardPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div class="mb-8">
@@ -1511,58 +1606,24 @@
                 </div>
             </section>
 
-            <!-- 做题结果弹窗 -->
-            <div id="practice-result-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-                <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
-                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
-                        <h3 class="text-lg font-medium text-gray-900">做题结果</h3>
-                        <button id="practice-result-close" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                            <i class="fa fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="px-6 py-4 overflow-y-auto flex-1" id="practice-result-content"></div>
-                    <div class="px-6 py-4 border-t border-gray-200 flex gap-3 shrink-0">
-                        <button id="practice-result-back" class="flex-1 bg-gray-600 text-white font-medium py-2 rounded-lg btn-effect cursor-pointer">
-                            <i class="fa fa-home mr-1"></i>返回配置
-                        </button>
-                    </div>
+            <!-- 做题结果页面 -->
+            <section id="practiceResultPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+                <div class="sub-page-header">
+                    <button class="btn-back" id="practice-result-back"><i class="fa fa-arrow-left"></i> 返回练习</button>
+                    <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">做题结果</h1>
                 </div>
+                <div class="bg-white rounded-xl shadow-sm">
+                    <div class="px-6 py-6" id="practice-result-content"></div>
+                </div>
+            </section>
+
+        <!-- 添加/编辑题目页面 -->
+        <section id="questionFormPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeQuestionForm"><i class="fa fa-arrow-left"></i> 返回题库</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900" id="questionFormTitle">添加新题目</h1>
             </div>
-        </main>
-
-        <!-- 移动端底部导航栏 -->
-        <nav id="mobile-bottom-nav">
-            <a class="nav-item active" data-page="dashboard">
-                <i class="fa fa-tachometer"></i>
-                <span>仪表盘</span>
-            </a>
-            <a class="nav-item" data-page="questions">
-                <i class="fa fa-list-alt"></i>
-                <span>题库</span>
-            </a>
-            <a class="nav-item" data-page="practice">
-                <i class="fa fa-pencil-square-o"></i>
-                <span>做题</span>
-            </a>
-            <a class="nav-item" data-page="mistake">
-                <i class="fa fa-exclamation-triangle"></i>
-                <span>错题</span>
-            </a>
-            <a class="nav-item" data-page="statistics">
-                <i class="fa fa-bar-chart"></i>
-                <span>分析</span>
-            </a>
-        </nav>
-
-        <!-- 添加/编辑题目模态框 -->
-        <div id="questionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg font-medium text-gray-900" id="questionModalTitle">添加新题目</h3>
-                    <button id="closeQuestionModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-6">
                     <form id="questionForm">
                         <input type="hidden" id="questionId">
@@ -1602,94 +1663,71 @@
                             </div>
                             <div id="questionPhotoPreview" class="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3"></div>
                         </div>
-                        
+
                         <div class="mb-4">
                             <label for="questionAnswer" class="block text-sm font-medium text-gray-700 mb-1">正确答案 <span class="text-danger">*</span></label>
-                            <textarea id="questionAnswer" rows="2" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入正确答案" required></textarea>
-                            <div class="flex gap-2 mt-1.5">
-                                <button type="button" class="ocr-btn" onclick="triggerOcrCamera('questionAnswer')"><i class="fa fa-camera"></i> 拍照</button>
-                                <button type="button" class="ocr-btn" onclick="triggerOcrUpload('questionAnswer')"><i class="fa fa-image"></i> 上传</button>
-                            </div>
+                            <textarea id="questionAnswer" rows="2" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入正确答案"></textarea>
                         </div>
-                        
+
                         <div class="mb-4">
                             <label for="questionExplanation" class="block text-sm font-medium text-gray-700 mb-1">解析</label>
-                            <textarea id="questionExplanation" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入解析或错误原因，若只有图片可不填写"></textarea>
+                            <textarea id="questionExplanation" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入解析内容（可选）"></textarea>
                             <div class="flex gap-2 mt-1.5">
-                                <button type="button" class="ocr-btn" onclick="triggerOcrCamera('questionExplanation')"><i class="fa fa-camera"></i> 拍照</button>
-                                <button type="button" class="ocr-btn" onclick="triggerOcrUpload('questionExplanation')"><i class="fa fa-image"></i> 上传</button>
+                                <button type="button" class="ocr-btn" onclick="document.getElementById('questionExplanationPhotoInput').click()"><i class="fa fa-camera"></i> 拍照</button>
+                                <button type="button" class="ocr-btn" id="selectExplanationPhotosBtn"><i class="fa fa-image"></i> 上传</button>
+                                <input type="file" id="questionExplanationPhotoInput" accept="image/*" multiple class="hidden">
+                            </div>
+                            <div id="questionExplanationPhotoPreview" class="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="questionSubject" class="block text-sm font-medium text-gray-700 mb-1">科目</label>
+                                <select id="questionSubject" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white">
+                                    <option value="">-- 选择科目 --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="questionDifficulty" class="block text-sm font-medium text-gray-700 mb-1">难度</label>
+                                <input type="text" id="questionDifficulty" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="如：简单、中等、困难">
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">解析照片</label>
-                            <div class="border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
-                                <input type="file" id="questionExplanationPhotoInput" accept="image/*" multiple class="hidden">
-                                <button type="button" id="selectExplanationPhotosBtn" class="inline-flex items-center px-3 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
-                                    <i class="fa fa-upload mr-2"></i> 选择照片
-                                </button>
-                                <p class="text-xs text-gray-500 mt-2">最多上传 10 张照片，每张不超过 50MB</p>
-                            </div>
-                            <div id="questionExplanationPhotoPreview" class="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3"></div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label for="questionSubject" class="block text-sm font-medium text-gray-700 mb-1">科目 <span class="text-danger">*</span></label>
-                                <select id="questionSubject" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus bg-white" required>
-                                    <option value="">请选择科目</option>
-                                    <!-- 科目选项将通过JS动态生成 -->
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label for="questionDifficulty" class="block text-sm font-medium text-gray-700 mb-1">难度</label>
-                                <input type="text" id="questionDifficulty" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入难度，例如：简单、中等、困难">
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label for="questionKnowledgePoint" class="block text-sm font-medium text-gray-700 mb-1">知识点</label>
-                                <div class="relative" id="kpMultiSelectContainer">
-                                    <input type="hidden" id="questionKnowledgePoint" value="">
-                                    <div id="kpSelectedTags" class="flex flex-wrap gap-1 min-h-[38px] px-2 py-1.5 border border-gray-300 rounded-lg cursor-pointer bg-white text-sm" onclick="toggleKpDropdown()" title="点击选择知识点">
-                                        <span class="text-gray-400 text-sm py-0.5" id="kpPlaceholder">点击选择知识点（可多选）</span>
-                                    </div>
-                                    <div id="kpDropdown" class="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden" style="max-height:280px;overflow-y:auto;">
-                                        <div class="p-2 text-xs text-gray-400" id="kpDropdownMsg">请先选择科目</div>
-                                    </div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">知识点</label>
+                            <div class="border border-gray-300 rounded-lg p-3 bg-white">
+                                <div id="kpSelectedTags" class="flex flex-wrap gap-1 mb-2">
+                                    <span class="text-gray-400 text-sm py-0.5" id="kpPlaceholder">点击选择知识点（可多选）</span>
                                 </div>
-                            </div>
-                            
-                            <div>
-                                <label for="questionSource" class="block text-sm font-medium text-gray-700 mb-1">题目来源</label>
-                                <input type="text" id="questionSource" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入题目来源，例如：课堂作业、考试卷">
+                                <button type="button" class="text-sm text-primary hover:underline" onclick="toggleKpDropdown()"><i class="fa fa-plus-circle mr-1"></i>选择知识点</button>
+                                <input type="hidden" id="questionKnowledgePoint" value="">
+                                <div id="kpDropdown" class="hidden mt-2 border border-gray-200 rounded-lg bg-white shadow-lg max-h-48 overflow-y-auto p-2"></div>
                             </div>
                         </div>
-                        
-                        <div class="mt-6">
+
+                        <div class="mb-4">
+                            <label for="questionSource" class="block text-sm font-medium text-gray-700 mb-1">来源</label>
+                            <input type="text" id="questionSource" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="如：课本P123、试卷名称等（可选）">
+                        </div>
+
+                        <div class="mt-6 flex items-center gap-3">
                             <button type="submit" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
                                 <i class="fa fa-save mr-2"></i> 保存
                             </button>
-                            <button type="button" id="cancelQuestionBtn" class="ml-3 inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
-                                取消
-                            </button>
+                            <button type="button" id="cancelQuestionBtn" class="inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">取消</button>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 添加/编辑科目模态框 -->
-        <div id="subjectModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg font-medium text-gray-900" id="subjectModalTitle">添加新科目</h3>
-                    <button id="closeSubjectModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+        <!-- 添加/编辑科目页面 -->
+        <section id="subjectFormPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeSubjectForm"><i class="fa fa-arrow-left"></i> 返回科目</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900" id="subjectFormTitle">添加新科目</h1>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-6">
                     <form id="subjectForm">
                         <input type="hidden" id="subjectId">
@@ -1720,17 +1758,15 @@
                     </form>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 个人资料/设置模态框 -->
-        <div id="profileSettingsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-lg">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg font-medium text-gray-900">个人资料与设置</h3>
-                    <button id="closeProfileSettingsModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+        <!-- 个人资料/设置页面 -->
+        <section id="profileSettingsPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeProfileSettings"><i class="fa fa-arrow-left"></i> 返回</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">个人资料与设置</h1>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-6">
                     <form id="profileSettingsForm">
                         <!-- 头像设置 -->
@@ -1802,17 +1838,15 @@
                     </form>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 设置模态框 -->
-        <div id="appSettingsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-                    <h3 class="text-lg font-medium text-gray-900"><i class="fa fa-cog mr-2 text-gray-400"></i>设置</h3>
-                    <button id="closeAppSettingsModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+        <!-- 设置页面 -->
+        <section id="appSettingsPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeAppSettings"><i class="fa fa-arrow-left"></i> 返回</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900"><i class="fa fa-cog mr-2 text-gray-400"></i>设置</h1>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-6">
                     <form id="appSettingsForm">
                         <!-- 页面开关 -->
@@ -1940,17 +1974,15 @@
                     </form>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 年级管理模态框 -->
-        <div id="gradeManageModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[85vh] overflow-y-auto">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-                    <h3 class="text-lg font-medium text-gray-900"><i class="fa fa-graduation-cap mr-2 text-primary"></i>管理年级</h3>
-                    <button id="closeGradeManageModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+        <!-- 年级管理页面 -->
+        <section id="gradeManagePage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeGradeManage"><i class="fa fa-arrow-left"></i> 返回</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900"><i class="fa fa-graduation-cap mr-2 text-primary"></i>管理年级</h1>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-6">
                     <div class="mb-5">
                         <h4 class="text-sm font-semibold text-gray-700 mb-3">当前年级列表</h4>
@@ -1971,17 +2003,15 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 知识点编辑模态框 -->
-        <div id="knowledgePointModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg font-medium text-gray-900" id="kpModalTitle">添加知识点</h3>
-                    <button id="closeKnowledgePointModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+        <!-- 知识点编辑页面 -->
+        <section id="knowledgePointFormPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeKnowledgePointForm"><i class="fa fa-arrow-left"></i> 返回知识点</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900" id="kpFormTitle">添加知识点</h1>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-6">
                     <form id="knowledgePointForm">
                         <input type="hidden" id="kpId">
@@ -2012,18 +2042,16 @@
                     </form>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 批量导入知识点模态框 -->
-        <div id="importKnowledgePointModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
-                    <h3 class="text-lg font-medium text-gray-900">批量导入知识点</h3>
-                    <button id="closeImportKpModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
-                <div class="px-6 py-4 overflow-y-auto">
+        <!-- 批量导入知识点页面 -->
+        <section id="importKpPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeImportKp"><i class="fa fa-arrow-left"></i> 返回知识点</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">批量导入知识点</h1>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
+                <div class="px-6 pb-6 overflow-y-auto">
                     <div class="mb-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
                         <p class="font-medium mb-1"><i class="fa fa-info-circle mr-1"></i> 格式说明：</p>
                         <ul class="list-disc list-inside space-y-1 text-xs">
@@ -2062,55 +2090,30 @@
                     <div id="importKpStatus" class="text-sm text-gray-500 ml-auto hidden"></div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 确认删除模态框 -->
-        <div id="confirmDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">确认删除</h3>
-                </div>
-                <div class="px-6 py-6">
-                    <p id="deleteConfirmMessage" class="text-gray-700">您确定要删除这项内容吗？此操作不可撤销。</p>
-                </div>
-                <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
-                    <button id="cancelDeleteBtn" class="mr-3 inline-flex items-center bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer">
-                        取消
-                    </button>
-                    <button id="confirmDeleteBtn" class="inline-flex items-center bg-danger text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer">
-                        <i class="fa fa-trash mr-2"></i> 确认删除
-                    </button>
-                </div>
+        <!-- 确认删除页面 -->
+        <!-- 题目详情页面 -->
+        <section id="questionDetailPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeQuestionDetail"><i class="fa fa-arrow-left"></i> 返回</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">题目详情</h1>
             </div>
-        </div>
-
-        <!-- 题目详情弹窗 -->
-        <div id="questionDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg font-medium text-gray-900">题目详情</h3>
-                    <button id="closeQuestionDetailModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-6" id="questionDetailContent">
                     <!-- 题目详情内容将通过JS动态填充 -->
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 导出题目弹窗 -->
-        <div id="exportQuestionsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900">导出题目</h3>
-                        <p class="text-sm text-gray-500 mt-1">可按科目筛选、按题面检索后勾选题目，并选择导出内容与题号顺序</p>
-                    </div>
-                    <button id="closeExportModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+        <!-- 导出题目页面 -->
+        <section id="exportQuestionsPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeExportQuestions"><i class="fa fa-arrow-left"></i> 返回题库</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">导出题目</h1>
+                <p class="text-sm text-gray-500 mt-1">可按科目筛选、按题面检索后勾选题目，并选择导出内容与题号顺序</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <input type="text" id="exportSearch" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="搜索题面或答案">
@@ -2143,20 +2146,15 @@
                     </button>
                 </div>
             </div>
-        </div>
-
-        <!-- 创建试卷弹窗 -->
-        <div id="createPaperModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900">创建试卷</h3>
-                        <p class="text-sm text-gray-500 mt-1">请输入试卷名称并从已有题目中选择加入试卷</p>
-                    </div>
-                    <button id="closeCreatePaperModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+        </section>
+        <!-- 创建试卷页面 -->
+        <section id="createPaperPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeCreatePaper"><i class="fa fa-arrow-left"></i> 返回试卷</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900" id="createPaperFormTitle">创建试卷</h1>
+                <p class="text-sm text-gray-500 mt-1">请输入试卷名称并从已有题目中选择加入试卷</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <input type="text" id="paperNameInput" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="试卷名称">
@@ -2187,21 +2185,17 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 导入试卷弹窗 -->
-        <div id="importPaperModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900">导入试卷</h3>
-                        <p class="text-sm text-gray-500 mt-1">请填写试卷名称、科目，并上传符合格式的 XLSX 文件</p>
-                    </div>
-                    <button id="closeImportPaperModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
-                <div class="px-6 py-6 overflow-y-auto">
+        <!-- 导入试卷页面 -->
+        <section id="importPaperPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeImportPaper"><i class="fa fa-arrow-left"></i> 返回试卷</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">导入试卷</h1>
+                <p class="text-sm text-gray-500 mt-1">请填写试卷名称、科目，并上传符合格式的 XLSX 文件</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
+                <div class="px-6 pb-6 overflow-y-auto">
                     <div class="grid grid-cols-1 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">试卷名称 <span class="text-danger">*</span></label>
@@ -2242,21 +2236,55 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 批量导入题目弹窗 -->
-        <div id="batchImportModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900">批量导入题目</h3>
-                        <p class="text-sm text-gray-500 mt-1">上传 XLSX 文件批量添加题目，科目列不存在时将自动创建</p>
+        <!-- 确认 / 提示页面 -->
+        <section id="confirmPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="confirmBackBtn"><i class="fa fa-arrow-left"></i> 返回</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900" id="confirmTitle">确认操作</h1>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
+                <div class="px-6 py-6">
+                    <p id="confirmMessage" class="text-gray-700 whitespace-pre-line leading-relaxed"></p>
+                    <div class="mt-6 flex items-center gap-3 justify-end" id="confirmButtons">
+                        <button type="button" id="confirmCancelBtn" class="inline-flex items-center bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">取消</button>
+                        <button type="button" id="confirmOkBtn" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">确认</button>
                     </div>
-                    <button id="closeBatchImportModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
                 </div>
-                <div class="px-6 py-6 overflow-y-auto">
+            </div>
+        </section>
+
+        <!-- 选择题目加入错题本页面 -->
+        <section id="mistakePickerPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="mistakePickerBackBtn"><i class="fa fa-arrow-left"></i> 返回错题本</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">选择题目加入错题本</h1>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <select id="pickerSubjectFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm input-focus mb-3">
+                        <option value="all">全部科目</option>
+                    </select>
+                    <input type="text" id="pickerSearch" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm input-focus" placeholder="搜索题目...">
+                </div>
+                <div id="pickerList" class="max-h-[60vh] overflow-y-auto p-4"></div>
+                <div class="px-6 py-3 border-t border-gray-200 flex justify-between items-center">
+                    <span class="text-xs text-gray-500">已选 <b id="pickerSelectedCount" class="text-primary">0</b> 题</span>
+                    <button id="pickerAddBtn" class="bg-primary text-white px-4 py-2 rounded-lg btn-effect cursor-pointer text-sm">加入错题本</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 批量导入题目页面 -->
+        <section id="batchImportPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeBatchImport"><i class="fa fa-arrow-left"></i> 返回题库</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">批量导入题目</h1>
+                <p class="text-sm text-gray-500 mt-1">上传 XLSX 文件批量添加题目，科目列不存在时将自动创建</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
+                <div class="px-6 py-6">
                     <div class="border border-dashed border-gray-300 rounded-lg p-5 bg-gray-50">
                         <div class="flex items-center justify-between">
                             <div>
@@ -2278,20 +2306,17 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 导出试卷弹窗 -->
-        <div id="exportPapersModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center fade-in">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900">导出试卷</h3>
-                        <p class="text-sm text-gray-500 mt-1">可搜索试卷后勾选导出，并设置打印顺序</p>
-                    </div>
-                    <button id="closeExportPapersModal" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
+        <!-- 导出试卷页面 -->
+        <!-- 导出试卷页面 -->
+        <section id="exportPapersPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeExportPapers"><i class="fa fa-arrow-left"></i> 返回试卷</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">导出试卷</h1>
+                <p class="text-sm text-gray-500 mt-1">可搜索试卷后勾选导出，并设置打印顺序</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <input type="text" id="exportPaperSearch" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="搜索试卷名称或描述">
@@ -2308,7 +2333,7 @@
                         <label class="text-sm text-gray-700"><input type="radio" name="exportPaperContentMode" value="both"> 题目加答案</label>
                     </div>
                 </div>
-                <div class="flex-1 overflow-y-auto p-6">
+                <div class="flex-1 overflow-y-auto p-6" style="max-height:60vh">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" id="exportPapersList"></div>
                 </div>
                 <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
@@ -2318,19 +2343,20 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
 
         <div id="exportPrintArea" class="hidden"></div>
 
-        <!-- 图片放大查看层 -->
-        <div id="imageZoomModal" class="fixed inset-0 bg-black/80 z-[60] hidden items-center justify-center p-4">
-            <div class="relative max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center">
-                <button type="button" id="closeImageZoomModal" class="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer">
-                    <i class="fa fa-times"></i>
-                </button>
-                <img id="imageZoomModalImage" src="" alt="放大图片" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+        <!-- 图片放大查看页面 -->
+        <section id="imageZoomPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="closeImageZoom"><i class="fa fa-arrow-left"></i> 返回</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900">图片查看</h1>
             </div>
-        </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 flex items-center justify-center">
+                <img id="imageZoomImage" src="" alt="放大图片" class="max-w-full max-h-[80vh] object-contain rounded-lg">
+            </div>
+        </section>
 
         <!-- 通知提示框 -->
         <div id="notification" class="fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center">
@@ -2339,7 +2365,7 @@
         </div>
 
         <!-- 页脚 -->
-        <footer class="bg-white border-t border-gray-200 py-6">
+        <footer class="bg-white border-t border-gray-200 py-6 fixed bottom-0 left-0 right-0 z-30">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex flex-col md:flex-row justify-between items-center">
                     <div class="flex items-center mb-4 md:mb-0">
@@ -2557,8 +2583,8 @@
                 // 初始化用户菜单
                 initUserMenu();
                 
-                // 初始化模态框
-                initModals();
+                // 初始化子页面事件
+                initSubPages();
                 initImageZoom();
                 
                 // 初始化页面数据和图表
@@ -2625,11 +2651,11 @@
                 // 管理年级按钮
                 document.getElementById('manageGradeBtn').addEventListener('click', function() {
                     document.getElementById('gradeDropdown').classList.add('hidden');
-                    openGradeManageModal();
+                    openGradeManagePage();
                 });
 
-                // 年级管理模态框事件
-                document.getElementById('closeGradeManageModal').addEventListener('click', closeGradeManageModal);
+                // 年级管理页面事件
+                document.getElementById('closeGradeManage').addEventListener('click', closeGradeManagePage);
                 document.getElementById('addGradeForm').addEventListener('submit', function(e) {
                     e.preventDefault();
                     addGrade();
@@ -2705,18 +2731,16 @@
                 showNotification(`已切换到"${grades.find(g => g.id === gradeId)?.name || '未知年级'}"`, 'success');
             }
 
-            // 打开年级管理模态框
-            function openGradeManageModal() {
+            // 打开年级管理页面
+            function openGradeManagePage() {
                 renderGradeManageList();
                 document.getElementById('newGradeName').value = '';
-                document.getElementById('gradeManageModal').classList.remove('hidden');
-                document.getElementById('gradeManageModal').classList.add('flex');
+                switchPage('gradeManage');
             }
 
-            // 关闭年级管理模态框
-            function closeGradeManageModal() {
-                document.getElementById('gradeManageModal').classList.add('hidden');
-                document.getElementById('gradeManageModal').classList.remove('flex');
+            // 关闭年级管理页面
+            function closeGradeManagePage() {
+                goBack('dashboard');
             }
 
             // 渲染年级管理列表
@@ -2762,7 +2786,7 @@
             // 确认删除年级（供onclick调用）
             function confirmDeleteGrade(id) {
                 currentGradeDeleteId = id;
-                openConfirmDeleteModal('grade', id);
+                openConfirmDelete('grade', id);
             }
 
             // 添加/编辑年级
@@ -2803,7 +2827,7 @@
                 renderGradeSelector();
             }
 
-            // 删除年级（确认已由 confirmDelete 模态框完成）
+            // 删除年级（确认已由 confirmDelete 完成）
             function deleteGrade(gradeId) {
                 const grade = grades.find(g => g.id === gradeId);
                 if (!grade) return;
@@ -2963,7 +2987,7 @@
 
             // 初始化知识点管理页面
             function initKnowledgePointsPage() {
-                document.getElementById('addKnowledgePointBtn').addEventListener('click', openKnowledgePointModal);
+                document.getElementById('addKnowledgePointBtn').addEventListener('click', openKnowledgePointFormPage);
 
                 document.getElementById('kpFilterSubject').addEventListener('change', function() {
                     renderKnowledgePointTree();
@@ -2975,9 +2999,9 @@
                 var collapseAllBtn = document.getElementById('collapseAllKpBtn');
                 if (collapseAllBtn) collapseAllBtn.addEventListener('click', collapseAllKnowledgePoints);
 
-                // 知识点模态框
-                document.getElementById('closeKnowledgePointModal').addEventListener('click', closeKnowledgePointModal);
-                document.getElementById('cancelKnowledgePointBtn').addEventListener('click', closeKnowledgePointModal);
+                // 知识点页面事件
+                document.getElementById('closeKnowledgePointForm').addEventListener('click', closeKnowledgePointFormPage);
+                document.getElementById('cancelKnowledgePointBtn').addEventListener('click', closeKnowledgePointFormPage);
                 document.getElementById('knowledgePointForm').addEventListener('submit', function(e) {
                     e.preventDefault();
                     saveKnowledgePoint();
@@ -3073,27 +3097,25 @@
                 // 绑定操作按钮事件
                 container.querySelectorAll('.edit-kp-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
-                        openKnowledgePointModal(this.getAttribute('data-id'));
+                        openKnowledgePointFormPage(this.getAttribute('data-id'));
                     });
                 });
                 container.querySelectorAll('.add-child-kp-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
-                        openKnowledgePointModal(null, this.getAttribute('data-id'));
+                        openKnowledgePointFormPage(null, this.getAttribute('data-id'));
                     });
                 });
                 container.querySelectorAll('.delete-kp-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const id = this.getAttribute('data-id');
-                        currentGradeDeleteId = id;
                         const kp = knowledgePoints.find(k => k.id === id);
                         const hasChildren = knowledgePoints.some(k => k.parentId === id);
                         let msg = `确定要删除知识点"${kp ? kp.name : ''}"吗？`;
                         if (hasChildren) msg += '其下所有子知识点也会被一并删除。';
                         msg += '此操作不可撤销。';
-                        document.getElementById('deleteConfirmMessage').textContent = msg;
                         deleteType = 'knowledgePoint';
-                        document.getElementById('confirmDeleteModal').classList.remove('hidden');
-                        document.getElementById('confirmDeleteModal').classList.add('flex');
+                        currentGradeDeleteId = id;
+                        openConfirmPage(msg, confirmDelete, { returnPage: 'knowledgePoints', confirmText: '确认删除', cancelText: '取消' });
                     });
                 });
 
@@ -3312,11 +3334,11 @@
                 return count;
             }
 
-            // 打开知识点模态框
-            function openKnowledgePointModal(editId, parentId) {
+            // 打开知识点编辑页面
+            function openKnowledgePointFormPage(editId, parentId) {
                 document.getElementById('kpId').value = '';
                 document.getElementById('kpName').value = '';
-                document.getElementById('kpModalTitle').textContent = '添加知识点';
+                document.getElementById('kpFormTitle').textContent = '添加知识点';
 
                 // 加载科目选项
                 loadSubjectOptions('kpSubject');
@@ -3335,7 +3357,7 @@
                         document.getElementById('kpId').value = kp.id;
                         document.getElementById('kpName').value = kp.name;
                         document.getElementById('kpSubject').value = kp.subjectId;
-                        document.getElementById('kpModalTitle').textContent = '编辑知识点';
+                        document.getElementById('kpFormTitle').textContent = '编辑知识点';
                         populateKnowledgePointParentOptions(kp.subjectId, kp.parentId);
                     }
                 } else {
@@ -3344,16 +3366,14 @@
                     populateKnowledgePointParentOptions(currentSubject, parentId);
                 }
 
-                document.getElementById('knowledgePointModal').classList.remove('hidden');
-                document.getElementById('knowledgePointModal').classList.add('flex');
+                switchPage('knowledgePointForm');
             }
 
-            // 关闭知识点模态框
-            function closeKnowledgePointModal() {
-                document.getElementById('knowledgePointModal').classList.add('hidden');
-                document.getElementById('knowledgePointModal').classList.remove('flex');
+            // 关闭知识点编辑页面
+            function closeKnowledgePointFormPage() {
                 document.getElementById('kpId').value = '';
                 document.getElementById('kpName').value = '';
+                goBack('knowledgePoints');
             }
 
             // 填充父知识点下拉选项
@@ -3423,7 +3443,7 @@
                 }
 
                 saveGradeData();
-                closeKnowledgePointModal();
+                closeKnowledgePointFormPage();
                 renderKnowledgePointTree();
             }
 
@@ -3581,26 +3601,21 @@
 
             // ==================== 批量导入知识点 ====================
             function initImportKnowledgePoints() {
-                document.getElementById('importKnowledgePointsBtn').addEventListener('click', openImportKpModal);
-                document.getElementById('closeImportKpModal').addEventListener('click', closeImportKpModal);
-                document.getElementById('cancelImportKpBtn').addEventListener('click', closeImportKpModal);
+                document.getElementById('importKnowledgePointsBtn').addEventListener('click', openImportKpPage);
+                document.getElementById('closeImportKp').addEventListener('click', closeImportKpPage);
+                document.getElementById('cancelImportKpBtn').addEventListener('click', closeImportKpPage);
                 document.getElementById('doImportKpBtn').addEventListener('click', doImportKnowledgePoints);
-                document.getElementById('importKnowledgePointModal').addEventListener('click', function(e) {
-                    if (e.target === this) closeImportKpModal();
-                });
             }
 
-            function openImportKpModal() {
+            function openImportKpPage() {
                 document.getElementById('importKpText').value = '';
                 document.getElementById('importKpStatus').classList.add('hidden');
                 document.getElementById('importKpText').style.borderColor = '';
-                document.getElementById('importKnowledgePointModal').classList.remove('hidden');
-                document.getElementById('importKnowledgePointModal').classList.add('flex');
+                switchPage('importKp');
             }
 
-            function closeImportKpModal() {
-                document.getElementById('importKnowledgePointModal').classList.add('hidden');
-                document.getElementById('importKnowledgePointModal').classList.remove('flex');
+            function closeImportKpPage() {
+                goBack('knowledgePoints');
             }
 
             function doImportKnowledgePoints() {
@@ -4192,9 +4207,13 @@
             }
 
             // 切换页面
+            const mainPages = ['dashboard','questions','subjects','papers','statistics','knowledgePoints','practice','mistake'];
+            let pageHistory = [];
+
             function switchPage(page) {
-                // 检查页面是否已启用（dashboard 始终可用）
-                if (page !== 'dashboard' && !appSettings.enabledPages[page]) {
+                const isMainPage = mainPages.includes(page);
+                // 仅主页面受启用开关限制，子页面无需检查
+                if (isMainPage && page !== 'dashboard' && !appSettings.enabledPages[page]) {
                     showNotification('该页面已在设置中关闭，请先开启后再访问', 'error');
                     return;
                 }
@@ -4202,14 +4221,23 @@
                 if (currentPage === page) return;
                 
                 // 隐藏当前页面
-                document.getElementById(`${currentPage}Page`).classList.add('hidden');
+                const currentEl = document.getElementById(`${currentPage}Page`) || document.getElementById(currentPage);
+                if (currentEl) currentEl.classList.add('hidden');
+                
+                // 子页面进入时记录来源，便于返回
+                if (!isMainPage) {
+                    pageHistory.push(currentPage);
+                } else {
+                    pageHistory = [];
+                }
                 
                 // 显示目标页面
-                document.getElementById(`${page}Page`).classList.remove('hidden');
+                const targetEl = document.getElementById(`${page}Page`) || document.getElementById(page);
+                if (targetEl) targetEl.classList.remove('hidden');
                 currentPage = page;
                 
-                // 更新导航链接样式
-                updateNavStyles();
+                // 更新导航链接样式（仅主页面）
+                if (isMainPage) updateNavStyles();
 
                 // 更新移动端底部导航栏高亮
                 document.querySelectorAll('#mobile-bottom-nav .nav-item').forEach(item => {
@@ -4231,6 +4259,53 @@
                     renderMistakePage();
                 }
             }
+
+            // 返回上一页
+            function goBack(fallbackPage) {
+                if (pageHistory.length > 0) {
+                    const prevPage = pageHistory.pop();
+                    switchPage(prevPage);
+                } else if (fallbackPage) {
+                    switchPage(fallbackPage);
+                }
+            }
+
+            // ==================== 确认 / 提示页面 ====================
+            let pendingConfirmAction = null;
+            let pendingConfirmReturnPage = 'dashboard';
+            function openConfirmPage(message, onConfirm, opts = {}) {
+                pendingConfirmReturnPage = opts.returnPage || currentPage || 'dashboard';
+                pendingConfirmAction = (typeof onConfirm === 'function') ? onConfirm : null;
+                document.getElementById('confirmMessage').textContent = message;
+                document.getElementById('confirmTitle').textContent = opts.title || '确认操作';
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+                okBtn.textContent = opts.confirmText || '确认';
+                if (opts.showCancel === false) {
+                    cancelBtn.classList.add('hidden');
+                    if (!opts.confirmText) okBtn.textContent = '我知道了';
+                } else {
+                    cancelBtn.classList.remove('hidden');
+                    cancelBtn.textContent = opts.cancelText || '取消';
+                }
+                switchPage('confirm');
+            }
+            function confirmPageOk() {
+                const action = pendingConfirmAction;
+                pendingConfirmAction = null;
+                if (action) action();
+                if (currentPage === 'confirm') {
+                    goBack(pendingConfirmReturnPage);
+                }
+            }
+            function confirmPageCancel() {
+                pendingConfirmAction = null;
+                goBack(pendingConfirmReturnPage);
+            }
+            document.getElementById('confirmOkBtn').addEventListener('click', confirmPageOk);
+            document.getElementById('confirmCancelBtn').addEventListener('click', confirmPageCancel);
+            document.getElementById('confirmBackBtn').addEventListener('click', confirmPageCancel);
+            document.getElementById('mistakePickerBackBtn').addEventListener('click', function() { goBack('mistake'); });
 
             // 更新导航样式
             function updateNavStyles() {
@@ -4278,21 +4353,21 @@
                 // 个人资料
                 document.getElementById('openProfileBtn').addEventListener('click', function(e) {
                     e.preventDefault();
-                    openProfileSettingsModal();
+                    openProfileSettingsPage();
                     userMenu.classList.add('hidden');
                 });
                 
-                // 设置（打开独立的设置模态框）
+                // 设置（打开独立的设置页面）
                 document.getElementById('openSettingsBtn').addEventListener('click', function(e) {
                     e.preventDefault();
-                    openAppSettingsModal();
+                    openAppSettingsPage();
                     userMenu.classList.add('hidden');
                 });
                 
                 // 退出登录
                 document.getElementById('logoutBtn').addEventListener('click', function(e) {
                     e.preventDefault();
-                    openConfirmDeleteModal('logout');
+                    openConfirmDelete('logout');
                     userMenu.classList.add('hidden');
                 });
                 
@@ -4323,10 +4398,8 @@
                 }
             }
 
-            // 打开个人资料/设置模态框
-            function openProfileSettingsModal() {
-                const modal = document.getElementById('profileSettingsModal');
-                
+            // 打开个人资料/设置页面
+            function openProfileSettingsPage() {
                 // 填充当前值
                 document.getElementById('profileDisplayName').value = userProfile.displayName;
                 // 重置文件上传状态
@@ -4351,15 +4424,12 @@
                 document.getElementById('profileStatSubjects').textContent = subjects.length;
                 document.getElementById('profileStatPapers').textContent = papers.length;
                 
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                switchPage('profileSettings');
             }
 
-            // 关闭个人资料/设置模态框
-            function closeProfileSettingsModal() {
-                const modal = document.getElementById('profileSettingsModal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+            // 关闭个人资料/设置页面
+            function closeProfileSettingsPage() {
+                goBack('dashboard');
             }
 
             // 更新头像预览
@@ -4427,16 +4497,14 @@
                 updateUserUI();
                 updateProfileAvatarPreview();
                 
-                closeProfileSettingsModal();
+                closeProfileSettingsPage();
                 showNotification('个人资料已保存', 'success');
             }
 
             // ==================== 应用设置相关函数 ====================
 
-            // 打开设置模态框
-            function openAppSettingsModal() {
-                const modal = document.getElementById('appSettingsModal');
-                
+            // 打开设置页面
+            function openAppSettingsPage() {
                 // 填充页面开关
                 document.getElementById('settingPageQuestions').checked = appSettings.enabledPages.questions;
                 document.getElementById('settingPageSubjects').checked = appSettings.enabledPages.subjects;
@@ -4461,15 +4529,12 @@
                 rebuildStatCardOrderList();
                 initStatCardDragSort();
                 
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                switchPage('appSettings');
             }
 
-            // 关闭设置模态框
-            function closeAppSettingsModal() {
-                const modal = document.getElementById('appSettingsModal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+            // 关闭设置页面
+            function closeAppSettingsPage() {
+                goBack('dashboard');
             }
 
             // 根据已启用的页面更新默认首页下拉选项
@@ -4606,7 +4671,7 @@
                 // 应用设置
                 applySettings();
                 
-                closeAppSettingsModal();
+                closeAppSettingsPage();
                 showNotification('设置已保存', 'success');
             }
 
@@ -4632,7 +4697,7 @@
                 };
                 localStorage.setItem('appSettings', JSON.stringify(appSettings));
                 applySettings();
-                closeAppSettingsModal();
+                closeAppSettingsPage();
                 showNotification('已恢复默认设置', 'success');
                 switchPage('dashboard');
             }
@@ -4730,16 +4795,16 @@
 
             // ==================== 设置相关函数结束 ====================
 
-            // 初始化模态框
-            function initModals() {
+            // 初始化子页面事件
+            function initSubPages() {
                 // 添加题目按钮
                 document.getElementById('addQuestionBtn').addEventListener('click', function() {
-                    openQuestionModal();
+                    openQuestionFormPage();
                 });
                 
-                // 关闭题目模态框
-                document.getElementById('closeQuestionModal').addEventListener('click', closeQuestionModal);
-                document.getElementById('cancelQuestionBtn').addEventListener('click', closeQuestionModal);
+                // 关闭题目编辑页面
+                document.getElementById('closeQuestionForm').addEventListener('click', closeQuestionFormPage);
+                document.getElementById('cancelQuestionBtn').addEventListener('click', closeQuestionFormPage);
 
                 // 题目照片上传
                 document.getElementById('selectQuestionPhotosBtn').addEventListener('click', function() {
@@ -4766,7 +4831,7 @@
                 
                 // 添加科目按钮
                 document.getElementById('addSubjectBtn').addEventListener('click', function() {
-                    openSubjectModal();
+                    openSubjectFormPage();
                 });
 
                 document.getElementById('refreshSubjectsBtn').addEventListener('click', function() {
@@ -4835,19 +4900,15 @@
                     showNotification('做题页面已刷新', 'success');
                 });
                 
-                // 关闭科目模态框
-                document.getElementById('closeSubjectModal').addEventListener('click', closeSubjectModal);
-                document.getElementById('cancelSubjectBtn').addEventListener('click', closeSubjectModal);
+                // 关闭科目编辑页面
+                document.getElementById('closeSubjectForm').addEventListener('click', closeSubjectFormPage);
+                document.getElementById('cancelSubjectBtn').addEventListener('click', closeSubjectFormPage);
                 
                 // 科目表单提交
                 document.getElementById('subjectForm').addEventListener('submit', function(e) {
                     e.preventDefault();
                     saveSubject();
                 });
-                
-                // 确认删除模态框
-                document.getElementById('cancelDeleteBtn').addEventListener('click', closeConfirmDeleteModal);
-                document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
                 
                 // 批量操作工具栏
                 document.getElementById('selectAllQuestions').addEventListener('change', function() {
@@ -4861,27 +4922,26 @@
                 
                 // 题库页面按钮
                 document.getElementById('addQuestionFromPageBtn').addEventListener('click', function() {
-                    openQuestionModal();
+                    openQuestionFormPage();
                 });
-                document.getElementById('batchImportQuestionsBtn').addEventListener('click', openBatchImportModal);
-                // 批量导入题目弹窗
-                document.getElementById('closeBatchImportModal').addEventListener('click', closeBatchImportModal);
-                document.getElementById('cancelBatchImportBtn').addEventListener('click', closeBatchImportModal);
+                document.getElementById('batchImportQuestionsBtn').addEventListener('click', openBatchImportPage);
+                // 批量导入题目页面
+                document.getElementById('closeBatchImport').addEventListener('click', closeBatchImportPage);
+                document.getElementById('cancelBatchImportBtn').addEventListener('click', closeBatchImportPage);
                 document.getElementById('confirmBatchImportBtn').addEventListener('click', confirmBatchImport);
                 document.getElementById('selectBatchImportFileBtn').addEventListener('click', function() {
                     document.getElementById('batchImportFileInput').click();
                 });
                 document.getElementById('batchImportFileInput').addEventListener('change', handleBatchImportFileSelection);
                 
-                // 题目详情弹窗关闭按钮
-                document.getElementById('closeQuestionDetailModal').addEventListener('click', function() {
-                    document.getElementById('questionDetailModal').classList.add('hidden');
-                    document.getElementById('questionDetailModal').classList.remove('flex');
+                // 题目详情页面关闭按钮
+                document.getElementById('closeQuestionDetail').addEventListener('click', function() {
+                    goBack();
                 });
                 
-                // 个人资料/设置模态框
-                document.getElementById('closeProfileSettingsModal').addEventListener('click', closeProfileSettingsModal);
-                document.getElementById('cancelProfileSettingsBtn').addEventListener('click', closeProfileSettingsModal);
+                // 个人资料/设置页面
+                document.getElementById('closeProfileSettings').addEventListener('click', closeProfileSettingsPage);
+                document.getElementById('cancelProfileSettingsBtn').addEventListener('click', closeProfileSettingsPage);
                 document.getElementById('profileSettingsForm').addEventListener('submit', function(e) {
                     e.preventDefault();
                     saveProfile();
@@ -4958,16 +5018,16 @@
                     updateProfileAvatarPreview();
                 });
                 
-                // 设置模态框
-                document.getElementById('closeAppSettingsModal').addEventListener('click', closeAppSettingsModal);
-                document.getElementById('cancelAppSettingsBtn').addEventListener('click', closeAppSettingsModal);
+                // 设置页面
+                document.getElementById('closeAppSettings').addEventListener('click', closeAppSettingsPage);
+                document.getElementById('cancelAppSettingsBtn').addEventListener('click', closeAppSettingsPage);
                 document.getElementById('resetAppSettingsBtn').addEventListener('click', resetAppSettings);
                 document.getElementById('appSettingsForm').addEventListener('submit', function(e) {
                     e.preventDefault();
                     saveAppSettings();
                 });
                 
-                // 设置模态框 - 页面开关联动默认首页下拉
+                // 设置页面 - 页面开关联动默认首页下拉
                 document.querySelectorAll('.settings-page-toggle').forEach(toggle => {
                     toggle.addEventListener('change', function() {
                         const page = this.getAttribute('data-page');
@@ -4980,39 +5040,32 @@
             }
 
             function initImageZoom() {
-                const modal = document.getElementById('imageZoomModal');
-                const modalImage = document.getElementById('imageZoomModalImage');
-                const closeBtn = document.getElementById('closeImageZoomModal');
+                const page = document.getElementById('imageZoomPage');
+                const zoomImage = document.getElementById('imageZoomImage');
+                const closeBtn = document.getElementById('closeImageZoom');
 
-                const closeModal = () => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    modalImage.removeAttribute('src');
-                    modalImage.removeAttribute('alt');
+                const closePage = () => {
+                    zoomImage.removeAttribute('src');
+                    zoomImage.removeAttribute('alt');
+                    goBack();
                 };
 
-                closeBtn.addEventListener('click', closeModal);
-                modal.addEventListener('click', function(e) {
-                    if (e.target === modal) closeModal();
+                closeBtn.addEventListener('click', closePage);
+                page.addEventListener('click', function(e) {
+                    if (e.target === page) closePage();
                 });
-
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape') closeModal();
-                });
-
                 document.addEventListener('dblclick', function(e) {
                     const target = e.target;
                     if (!(target instanceof HTMLElement)) return;
-                    if (target.id === 'imageZoomModalImage') {
-                        closeModal();
+                    if (target.id === 'imageZoomImage') {
+                        closePage();
                         return;
                     }
                     if (!target.matches('img.zoomable-image')) return;
 
-                    modalImage.src = target.src;
-                    modalImage.alt = target.alt || '放大图片';
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
+                    zoomImage.src = target.src;
+                    zoomImage.alt = target.alt || '放大图片';
+                    switchPage('imageZoom');
                 });
             }
 
@@ -5193,11 +5246,10 @@
                 });
             }
 
-            // 打开题目模态框
-            function openQuestionModal(id = null) {
+            // 打开题目编辑页面
+            function openQuestionFormPage(id = null) {
                 currentQuestionId = id;
-                const modal = document.getElementById('questionModal');
-                const title = document.getElementById('questionModalTitle');
+                const title = document.getElementById('questionFormTitle');
                 
                 // 重置表单
                 document.getElementById('questionForm').reset();
@@ -5247,15 +5299,11 @@
                     dropdown.classList.add('hidden');
                 }
                 
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                switchPage('questionForm');
             }
 
-            // 关闭题目模态框
-            function closeQuestionModal() {
-                const modal = document.getElementById('questionModal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+            // 关闭题目编辑页面
+            function closeQuestionFormPage() {
                 document.getElementById('questionPhotoInput').value = '';
                 document.getElementById('questionExplanationPhotoInput').value = '';
                 currentQuestionImages = [];
@@ -5264,6 +5312,7 @@
                 document.getElementById('questionOptionsSection').classList.add('hidden');
                 renderQuestionPhotoPreview();
                 currentQuestionId = null;
+                goBack('questions');
             }
 
             // 保存题目
@@ -5340,8 +5389,8 @@
                 // 保存到本地存储
                 saveGradeData();
                 
-                // 立即关闭模态框
-                closeQuestionModal();
+                // 立即返回页面
+                closeQuestionFormPage();
                 
                 // 更新页面显示
                 renderQuestions();
@@ -5349,11 +5398,10 @@
                 updateCharts();
             }
 
-            // 打开科目模态框
-            function openSubjectModal(id = null) {
+            // 打开科目编辑页面
+            function openSubjectFormPage(id = null) {
                 currentSubjectId = id;
-                const modal = document.getElementById('subjectModal');
-                const title = document.getElementById('subjectModalTitle');
+                const title = document.getElementById('subjectFormTitle');
                 
                 // 重置表单
                 document.getElementById('subjectForm').reset();
@@ -5375,16 +5423,13 @@
                     title.textContent = '添加新科目';
                 }
                 
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                switchPage('subjectForm');
             }
 
-            // 关闭科目模态框
-            function closeSubjectModal() {
-                const modal = document.getElementById('subjectModal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+            // 关闭科目编辑页面
+            function closeSubjectFormPage() {
                 currentSubjectId = null;
+                goBack('subjects');
             }
 
             // 保存科目
@@ -5418,8 +5463,8 @@
                 // 保存到本地存储
                 saveGradeData();
                 
-                // 立即关闭模态框
-                closeSubjectModal();
+                // 立即返回页面
+                closeSubjectFormPage();
                 
                 // 更新页面显示
                 renderSubjects();
@@ -5428,44 +5473,28 @@
                 updateCharts();
             }
 
-            // 打开确认删除模态框
-            function openConfirmDeleteModal(type, id) {
+            // 打开确认删除
+            function openConfirmDelete(type, id) {
                 deleteType = type;
+                let message = '';
                 if (type === 'question') {
                     currentQuestionId = id;
-                    document.getElementById('deleteConfirmMessage').textContent = '您确定要删除这道题目吗？此操作不可撤销。';
+                    message = '您确定要删除这道题目吗？此操作不可撤销。';
                 } else if (type === 'subject') {
                     currentSubjectId = id;
-                    // 检查是否有关联的题目
                     const hasQuestions = questions.some(q => q.subjectId === id);
-                    if (hasQuestions) {
-                        document.getElementById('deleteConfirmMessage').textContent = '此科目下有关联的题目，删除后相关题目也会被移除。您确定要删除吗？此操作不可撤销。';
-                    } else {
-                        document.getElementById('deleteConfirmMessage').textContent = '您确定要删除这个科目吗？此操作不可撤销。';
-                    }
+                    message = hasQuestions ? '此科目下有关联的题目，删除后相关题目也会被移除。您确定要删除吗？此操作不可撤销。' : '您确定要删除这个科目吗？此操作不可撤销。';
                 } else if (type === 'paper') {
                     currentPaperId = id;
-                    document.getElementById('deleteConfirmMessage').textContent = '您确定要删除该试卷吗？删除试卷不会删除其中的题目。此操作不可撤销。';
+                    message = '您确定要删除该试卷吗？删除试卷不会删除其中的题目。此操作不可撤销。';
                 } else if (type === 'logout') {
-                    document.getElementById('deleteConfirmMessage').textContent = '确定要退出登录吗？退出后不会丢失数据，所有数据仍然保存在浏览器本地。';
+                    message = '确定要退出登录吗？退出后不会丢失数据，所有数据仍然保存在浏览器本地。';
                 } else if (type === 'grade') {
+                    currentGradeDeleteId = id;
                     const grade = grades.find(g => g.id === id);
-                    document.getElementById('deleteConfirmMessage').textContent = `确定要删除年级"${grade ? grade.name : ''}"吗？该年级下的所有题目、科目和试卷数据将被永久删除，且不可恢复。`;
+                    message = `确定要删除年级"${grade ? grade.name : ''}"吗？该年级下的所有题目、科目和试卷数据将被永久删除，且不可恢复。`;
                 }
-                
-                document.getElementById('confirmDeleteModal').classList.remove('hidden');
-                document.getElementById('confirmDeleteModal').classList.add('flex');
-            }
-
-            // 关闭确认删除模态框
-            function closeConfirmDeleteModal() {
-                document.getElementById('confirmDeleteModal').classList.add('hidden');
-                document.getElementById('confirmDeleteModal').classList.remove('flex');
-                deleteType = '';
-                currentQuestionId = null;
-                currentSubjectId = null;
-                currentPaperId = null;
-                currentGradeDeleteId = null;
+                openConfirmPage(message, confirmDelete, { returnPage: currentPage, confirmText: '确认删除', cancelText: '取消' });
             }
 
             // 确认删除
@@ -5499,17 +5528,14 @@
                     switchPage('dashboard');
                 } else if (type === 'grade' && gradeDeleteId) {
                     // 删除年级
-                    closeConfirmDeleteModal();
                     deleteGrade(gradeDeleteId);
                     return; // deleteGrade 内部会处理后续 UI 刷新
                 } else if (type === 'knowledgePoint' && gradeDeleteId) {
                     // 删除知识点
-                    closeConfirmDeleteModal();
                     deleteKnowledgePoint(gradeDeleteId);
                     return;
                 }
                 
-                closeConfirmDeleteModal();
                 if (type === 'question' && questionId) {
                     renderQuestions();
                     renderDashboard();
@@ -5619,8 +5645,7 @@
                 
                 document.getElementById('questionDetailContent').innerHTML = detailContent;
                 renderMathJaxContent(document.getElementById('questionDetailContent'));
-                document.getElementById('questionDetailModal').classList.remove('hidden');
-                document.getElementById('questionDetailModal').classList.add('flex');
+                switchPage('questionDetail');
             }
 
             // 渲染仪表盘
@@ -5762,19 +5787,18 @@
                     showNotification('请先选择要删除的题目', 'warning');
                     return;
                 }
-                if (!confirm(`确定要删除选中的 ${selectedIds.length} 道题目吗？删除后不可恢复。`)) {
-                    return;
-                }
-                questions = questions.filter(q => !selectedIds.includes(q.id));
-                // 同时从试卷中移除
-                papers.forEach(paper => {
-                    paper.questionIds = paper.questionIds.filter(qid => !selectedIds.includes(qid));
-                });
-                saveGradeData();
-                renderQuestions();
-                renderDashboard();
-                updateCharts();
-                showNotification(`已删除 ${selectedIds.length} 道题目`, 'success');
+                openConfirmPage(`确定要删除选中的 ${selectedIds.length} 道题目吗？删除后不可恢复。`, () => {
+                    questions = questions.filter(q => !selectedIds.includes(q.id));
+                    // 同时从试卷中移除
+                    papers.forEach(paper => {
+                        paper.questionIds = paper.questionIds.filter(qid => !selectedIds.includes(qid));
+                    });
+                    saveGradeData();
+                    renderQuestions();
+                    renderDashboard();
+                    updateCharts();
+                    showNotification(`已删除 ${selectedIds.length} 道题目`, 'success');
+                }, { returnPage: 'questions' });
             }
 
             // ==================== 错题本功能 ====================
@@ -5815,11 +5839,12 @@
                 // 清空全部
                 document.getElementById('mistakeClearAllBtn').onclick = function() {
                     if (mistakeQuestionIds.length === 0) return;
-                    if (!confirm('确定要清空错题本中的所有题目吗？')) return;
-                    mistakeQuestionIds = [];
-                    saveGradeData();
-                    renderMistakeTable();
-                    showNotification('错题本已清空', 'success');
+                    openConfirmPage('确定要清空错题本中的所有题目吗？', () => {
+                        mistakeQuestionIds = [];
+                        saveGradeData();
+                        renderMistakeTable();
+                        showNotification('错题本已清空', 'success');
+                    }, { returnPage: 'mistake' });
                 };
 
                 // 筛选变化
@@ -5937,36 +5962,12 @@
 
             // 手动选择题目添加到错题本
             function showQuestionPickerForMistake() {
-                // 创建可搜索的题目选择器弹窗
-                let modalHtml = `
-                    <div id="mistakePickerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center fade-in">
-                        <div class="bg-white rounded-xl shadow-xl w-full max-w-xl max-h-[80vh] flex flex-col">
-                            <div class="px-6 py-4 border-b flex items-center justify-between">
-                                <h3 class="text-lg font-bold">选择题目加入错题本</h3>
-                                <button onclick="document.getElementById('mistakePickerModal').remove()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
-                            </div>
-                            <div class="p-4 border-b">
-                                <select id="pickerSubjectFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm input-focus mb-3">
-                                    <option value="all">全部科目</option>
-                                    ${subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                                </select>
-                                <input type="text" id="pickerSearch" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm input-focus" placeholder="搜索题目...">
-                            </div>
-                            <div id="pickerList" class="flex-1 overflow-y-auto p-4">
-                                <div class="text-center py-4 text-gray-500 text-sm">加载中...</div>
-                            </div>
-                            <div class="px-6 py-3 border-t flex justify-between items-center">
-                                <span class="text-xs text-gray-500">已选 <b id="pickerSelectedCount" class="text-primary">0</b> 题</span>
-                                <button id="pickerAddBtn" class="bg-primary text-white px-4 py-2 rounded-lg btn-effect cursor-pointer text-sm">加入错题本</button>
-                            </div>
-                        </div>
-                    </div>`;
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-
                 const selQids = new Set();
+                const subjFilter = document.getElementById('pickerSubjectFilter');
+                subjFilter.innerHTML = '<option value="all">全部科目</option>' + subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
                 function renderPickerList() {
-                    const subjF = document.getElementById('pickerSubjectFilter').value;
+                    const subjF = subjFilter.value;
                     const search = (document.getElementById('pickerSearch').value || '').toLowerCase().trim();
                     let filtered = [...questions];
                     if (subjF !== 'all') filtered = filtered.filter(q => q.subjectId === subjF);
@@ -5984,7 +5985,7 @@
                             const subj = subjects.find(s => s.id === q.subjectId);
                             const alreadyIn = mistakeQuestionIds.includes(q.id);
                             return `<label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer text-sm">
-                                <input type="checkbox" value="${q.id}" class="picker-cb w-3.5 h-3.5 text-primary rounded" ${selQids.has(q.id) ? 'checked' : ''} ${alreadyIn && !selQids.has(q.id) ? '' : ''}>
+                                <input type="checkbox" value="${q.id}" class="picker-cb w-3.5 h-3.5 text-primary rounded" ${selQids.has(q.id) ? 'checked' : ''}>
                                 <span class="text-xs px-1 py-0.5 bg-gray-100 rounded">${subj ? subj.name : '未知'}</span>
                                 <span class="flex-1 truncate">${escHtml(q.content || '无内容').substring(0, 50)}</span>
                                 ${alreadyIn ? '<span class="text-xs text-gray-400">已在错题本</span>' : ''}
@@ -6003,23 +6004,20 @@
 
                 renderPickerList();
 
-                document.getElementById('pickerSubjectFilter').onchange = function() { selQids.clear(); renderPickerList(); };
-                document.getElementById('pickerSearch').oninput = function() { renderPickerList(); };
+                subjFilter.onchange = function() { selQids.clear(); renderPickerList(); document.getElementById('pickerSelectedCount').textContent = '0'; };
+                document.getElementById('pickerSearch').oninput = renderPickerList;
                 document.getElementById('pickerAddBtn').onclick = function() {
                     if (selQids.size === 0) {
                         showNotification('请至少选择一道题目', 'warning');
                         return;
                     }
                     selQids.forEach(id => addToMistake(id));
-                    document.getElementById('mistakePickerModal').remove();
                     renderMistakeTable();
                     showNotification(`已添加 ${selQids.size} 道题目到错题本`, 'success');
+                    goBack('mistake');
                 };
 
-                // 点击遮罩关闭
-                document.getElementById('mistakePickerModal').onclick = function(e) {
-                    if (e.target === this) this.remove();
-                };
+                switchPage('mistakePicker');
             }
 
             // 练习错题（跳转到做题页面并筛选题为本）
@@ -6192,14 +6190,14 @@
                 document.querySelectorAll('.edit-question').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const id = this.getAttribute('data-id');
-                        openQuestionModal(id);
+                        openQuestionFormPage(id);
                     });
                 });
                 
                 document.querySelectorAll('.delete-question').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const id = this.getAttribute('data-id');
-                        openConfirmDeleteModal('question', id);
+                        openConfirmDelete('question', id);
                     });
                 });
 
@@ -6281,21 +6279,21 @@
                 document.querySelectorAll('.edit-subject').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const id = this.getAttribute('data-id');
-                        openSubjectModal(id);
+                        openSubjectFormPage(id);
                     });
                 });
                 
                 document.querySelectorAll('.delete-subject').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const id = this.getAttribute('data-id');
-                        openConfirmDeleteModal('subject', id);
+                        openConfirmDelete('subject', id);
                     });
                 });
                 
                 document.querySelectorAll('.add-question-to-subject').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const subjectId = this.getAttribute('data-id');
-                        openQuestionModal();
+                        openQuestionFormPage();
                         // 预设科目
                         setTimeout(() => {
                             document.getElementById('questionSubject').value = subjectId;
@@ -6892,7 +6890,7 @@
             let exportSelection = [];
             let exportOrder = [];
 
-            function openExportModal() {
+            function openExportQuestionsPage() {
                 if (questions.length === 0) {
                     showNotification('没有可导出的题目', 'warning');
                     return;
@@ -6906,13 +6904,11 @@
                 document.getElementById('exportMasteryFilter').value = '';
                 document.querySelector('input[name="exportContentMode"][value="question"]').checked = true;
                 renderExportQuestionsList();
-                document.getElementById('exportQuestionsModal').classList.remove('hidden');
-                document.getElementById('exportQuestionsModal').classList.add('flex');
+                switchPage('exportQuestions');
             }
 
-            function closeExportModal() {
-                document.getElementById('exportQuestionsModal').classList.add('hidden');
-                document.getElementById('exportQuestionsModal').classList.remove('flex');
+            function closeExportQuestionsPage() {
+                goBack('questions');
             }
 
             function renderExportQuestionsList() {
@@ -7044,7 +7040,7 @@
                 }
             }
 
-            function openCreatePaperModal(paperId = null) {
+            function openCreatePaperPage(paperId = null) {
                 if (questions.length === 0) {
                     showNotification('请先添加题目后再创建试卷', 'warning');
                     return;
@@ -7059,9 +7055,7 @@
                         document.getElementById('paperNameInput').value = paper.name || '';
                         document.getElementById('paperDescriptionInput').value = paper.description || '';
                         // 更新标题为编辑
-                        const modal = document.getElementById('createPaperModal');
-                        const h3 = modal.querySelector('h3');
-                        if (h3) h3.textContent = '编辑试卷';
+                        document.getElementById('createPaperFormTitle').textContent = '编辑试卷';
                     } else {
                         currentPaperSelection = [];
                         currentPaperOrder = [];
@@ -7071,9 +7065,7 @@
                     currentPaperOrder = [];
                     document.getElementById('paperNameInput').value = '';
                     document.getElementById('paperDescriptionInput').value = '';
-                    const modal = document.getElementById('createPaperModal');
-                    const h3 = modal.querySelector('h3');
-                    if (h3) h3.textContent = '创建试卷';
+                    document.getElementById('createPaperFormTitle').textContent = '创建试卷';
                 }
 
                 document.getElementById('paperExportSearch').value = '';
@@ -7082,15 +7074,11 @@
                 loadSubjectOptions('paperSubjectFilter');
                 renderPaperQuestionsList();
                 updatePaperSelectionSummary();
-                const modal = document.getElementById('createPaperModal');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                switchPage('createPaper');
             }
 
-            function closeCreatePaperModal() {
-                const modal = document.getElementById('createPaperModal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+            function closeCreatePaperPage() {
+                goBack('papers');
             }
 
             function renderPaperQuestionsList() {
@@ -7257,7 +7245,7 @@
                     showNotification('试卷已创建', 'success');
                 }
 
-                closeCreatePaperModal();
+                closeCreatePaperPage();
                 renderPaperList();
             }
 
@@ -7303,7 +7291,7 @@
                 document.querySelectorAll('.delete-paper').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const id = this.getAttribute('data-id');
-                        openConfirmDeleteModal('paper', id);
+                        openConfirmDelete('paper', id);
                     });
                 });
                 document.querySelectorAll('.view-paper').forEach(btn => {
@@ -7316,7 +7304,7 @@
                 document.querySelectorAll('.edit-paper').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const id = this.getAttribute('data-id');
-                        openCreatePaperModal(id);
+                        openCreatePaperPage(id);
                     });
                 });
                 // 练习试卷按钮
@@ -7415,11 +7403,11 @@
                         showQuestionDetail(id);
                     });
                 });
-                // 允许编辑试卷中的题（打开题目编辑模态框）
+                // 允许编辑试卷中的题（打开题目编辑页面）
                 container.querySelectorAll('.edit-paper-question').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const id = this.getAttribute('data-id');
-                        openQuestionModal(id);
+                        openQuestionFormPage(id);
                     });
                 });
 
@@ -7497,7 +7485,7 @@
                 });
             }
 
-            function openImportPaperModal() {
+            function openImportPaperPage() {
                 document.getElementById('importPaperNameInput').value = '';
                 document.getElementById('importPaperDescriptionInput').value = '';
                 document.getElementById('importPaperFileInput').value = '';
@@ -7513,15 +7501,11 @@
                 const customInput = document.getElementById('importPaperSubjectCustomInput');
                 customInput.value = '';
                 customInput.classList.add('hidden');
-                const modal = document.getElementById('importPaperModal');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                switchPage('importPaper');
             }
 
-            function closeImportPaperModal() {
-                const modal = document.getElementById('importPaperModal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+            function closeImportPaperPage() {
+                goBack('papers');
             }
 
             function parseXlsxFile(file, callback, errorCallback) {
@@ -7709,7 +7693,7 @@
                     renderDashboard();
                     updateCharts();
                     renderPaperList();
-                    closeImportPaperModal();
+                    closeImportPaperPage();
                     let paperMsg = `已导入 ${addedQuestionIds.length} 道题并创建试卷"${paperName}"`;
                     if (newKpCount > 0) paperMsg += `，自动创建 ${newKpCount} 个新知识点`;
                     showNotification(paperMsg, 'success');
@@ -7719,18 +7703,14 @@
             }
 
             // ========== 批量导入题目 ==========
-            function openBatchImportModal() {
+            function openBatchImportPage() {
                 document.getElementById('batchImportFileInput').value = '';
                 document.getElementById('batchImportFileName').textContent = '未选择文件';
-                const modal = document.getElementById('batchImportModal');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                switchPage('batchImport');
             }
 
-            function closeBatchImportModal() {
-                const modal = document.getElementById('batchImportModal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+            function closeBatchImportPage() {
+                goBack('questions');
             }
 
             function handleBatchImportFileSelection(event) {
@@ -7830,7 +7810,7 @@
                     renderQuestions();
                     renderDashboard();
                     updateCharts();
-                    closeBatchImportModal();
+                    closeBatchImportPage();
                     let msg = `已导入 ${addedCount} 道题目`;
                     if (skippedCount > 0) msg += `，跳过 ${skippedCount} 条空行`;
                     if (newKpCount > 0) msg += `，自动创建 ${newKpCount} 个新知识点`;
@@ -7840,7 +7820,7 @@
                 });
             }
 
-            function openExportPapersModal() {
+            function openExportPapersPage() {
                 if (papers.length === 0) {
                     showNotification('没有可导出的试卷', 'warning');
                     return;
@@ -7851,15 +7831,11 @@
                 document.querySelector('input[name="exportPaperContentMode"][value="question"]').checked = true;
                 renderExportPapersList();
                 updateExportPaperSelectionSummary();
-                const modal = document.getElementById('exportPapersModal');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                switchPage('exportPapers');
             }
 
-            function closeExportPapersModal() {
-                const modal = document.getElementById('exportPapersModal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+            function closeExportPapersPage() {
+                goBack('papers');
             }
 
             function renderExportPapersList() {
@@ -8068,7 +8044,7 @@
                 }
                 window.addEventListener('afterprint', afterPrint);
                 window.print();
-                closeExportPapersModal();
+                closeExportPapersPage();
                 showNotification('已准备导出试卷 PDF，打印窗口已打开', 'success');
             }
 
@@ -8234,15 +8210,15 @@
                 }
                 window.addEventListener('afterprint', afterPrint);
                 window.print();
-                closeExportModal();
+                closeExportQuestionsPage();
                 showNotification('已准备导出 PDF，打印窗口已打开', 'success');
             }
 
             document.getElementById('organizeQuestionsBtn').addEventListener('click', exportQuestionsAsCsv);
 
-            document.getElementById('exportQuestionsBtn').addEventListener('click', openExportModal);
-            document.getElementById('closeExportModal').addEventListener('click', closeExportModal);
-            document.getElementById('cancelExportBtn').addEventListener('click', closeExportModal);
+            document.getElementById('exportQuestionsBtn').addEventListener('click', openExportQuestionsPage);
+            document.getElementById('closeExportQuestions').addEventListener('click', closeExportQuestionsPage);
+            document.getElementById('cancelExportBtn').addEventListener('click', closeExportQuestionsPage);
             document.getElementById('selectAllExportBtn').addEventListener('click', function() {
                 const checkboxes = document.querySelectorAll('.export-question-checkbox');
                 const ids = Array.from(checkboxes).map(cb => cb.getAttribute('data-id'));
@@ -8263,14 +8239,14 @@
             document.getElementById('exportSearch').addEventListener('input', renderExportQuestionsList);
             document.getElementById('exportSubjectFilter').addEventListener('change', renderExportQuestionsList);
             document.getElementById('exportMasteryFilter').addEventListener('change', renderExportQuestionsList);
-            document.getElementById('createPaperBtn').addEventListener('click', openCreatePaperModal);
-            document.getElementById('importPaperBtn').addEventListener('click', openImportPaperModal);
+            document.getElementById('createPaperBtn').addEventListener('click', openCreatePaperPage);
+            document.getElementById('importPaperBtn').addEventListener('click', openImportPaperPage);
             document.getElementById('selectImportPaperFileBtn').addEventListener('click', function() {
                 document.getElementById('importPaperFileInput').click();
             });
             document.getElementById('importPaperFileInput').addEventListener('change', handleImportPaperFileSelection);
-            document.getElementById('closeImportPaperModal').addEventListener('click', closeImportPaperModal);
-            document.getElementById('cancelImportPaperBtn').addEventListener('click', closeImportPaperModal);
+            document.getElementById('closeImportPaper').addEventListener('click', closeImportPaperPage);
+            document.getElementById('cancelImportPaperBtn').addEventListener('click', closeImportPaperPage);
             document.getElementById('confirmImportPaperBtn').addEventListener('click', confirmImportPaper);
             document.getElementById('importPaperSubjectSelect').addEventListener('change', function() {
                 const customInput = document.getElementById('importPaperSubjectCustomInput');
@@ -8282,16 +8258,16 @@
                     customInput.value = '';
                 }
             });
-            document.getElementById('exportPaperBtn').addEventListener('click', openExportPapersModal);
-            document.getElementById('closeCreatePaperModal').addEventListener('click', closeCreatePaperModal);
-            document.getElementById('cancelCreatePaperBtn').addEventListener('click', closeCreatePaperModal);
+            document.getElementById('exportPaperBtn').addEventListener('click', openExportPapersPage);
+            document.getElementById('closeCreatePaper').addEventListener('click', closeCreatePaperPage);
+            document.getElementById('cancelCreatePaperBtn').addEventListener('click', closeCreatePaperPage);
             document.getElementById('selectAllPaperQuestionsBtn').addEventListener('click', selectAllPaperQuestions);
             document.getElementById('savePaperBtn').addEventListener('click', savePaper);
             document.getElementById('paperExportSearch').addEventListener('input', renderPaperQuestionsList);
             document.getElementById('paperSubjectFilter').addEventListener('change', renderPaperQuestionsList);
             document.getElementById('paperMasteryFilter').addEventListener('change', renderPaperQuestionsList);
-            document.getElementById('closeExportPapersModal').addEventListener('click', closeExportPapersModal);
-            document.getElementById('cancelExportPapersBtn').addEventListener('click', closeExportPapersModal);
+            document.getElementById('closeExportPapers').addEventListener('click', closeExportPapersPage);
+            document.getElementById('cancelExportPapersBtn').addEventListener('click', closeExportPapersPage);
             document.getElementById('exportPaperWordBtn').addEventListener('click', generatePapersPdfDocument);
             document.getElementById('exportPaperSearch').addEventListener('input', renderExportPapersList);
             document.getElementById('selectAllExportPaperBtn').addEventListener('click', selectAllExportPapers);
@@ -8336,7 +8312,7 @@
                     message += `... 还有 ${sortedQuestions.length - 5} 道题需要复习`;
                 }
                 
-                alert(message);
+                openConfirmPage(message, null, { title: '推荐复习', confirmText: '我知道了', showCancel: false, returnPage: currentPage });
             });
 
             // 做题按钮事件
@@ -8435,8 +8411,7 @@
                 // 回到配置界面
                 document.getElementById('practice-config').classList.remove('hidden');
                 document.getElementById('practice-quiz').classList.add('hidden');
-                document.getElementById('practice-result-modal').classList.remove('flex');
-                document.getElementById('practice-result-modal').classList.add('hidden');
+                document.getElementById('practiceResultPage').classList.add('hidden');
                 clearInterval(practiceTimerInterval);
                 practiceSecondsElapsed = 0;
                 document.getElementById('practice-timer').textContent = '00:00';
@@ -9216,30 +9191,25 @@
             }
 
             document.getElementById('practice-submit-btn').addEventListener('click', function() {
-                if (confirm('确定要提交答案吗？提交后将无法修改。')) {
+                openConfirmPage('确定要提交答案吗？提交后将无法修改。', function() {
                     collectAllAnswers();
                     submitPractice();
-                }
+                }, { returnPage: 'practice' });
             });
             document.getElementById('practice-submit-top-btn').addEventListener('click', function() {
-                if (confirm('确定要提交答案吗？提交后将无法修改。')) {
+                openConfirmPage('确定要提交答案吗？提交后将无法修改。', function() {
                     collectAllAnswers();
                     submitPractice();
-                }
+                }, { returnPage: 'practice' });
             });
             document.getElementById('practice-exit-btn').addEventListener('click', function() {
-                if (confirm('确定要退出答题吗？当前进度将会丢失。')) {
+                openConfirmPage('确定要退出答题吗？当前进度将会丢失。', function() {
                     initPracticePage();
-                }
-            });
-            document.getElementById('practice-result-close').addEventListener('click', function() {
-                document.getElementById('practice-result-modal').classList.remove('flex');
-                document.getElementById('practice-result-modal').classList.add('hidden');
+                }, { returnPage: 'practice' });
             });
             document.getElementById('practice-result-back').addEventListener('click', function() {
-                document.getElementById('practice-result-modal').classList.remove('flex');
-                document.getElementById('practice-result-modal').classList.add('hidden');
                 initPracticePage();
+                goBack('practice');
             });
 
             function submitPractice() {
@@ -9348,9 +9318,7 @@
                 // 渲染结果页中的 KaTeX 公式
                 renderPracticeMath(resultContainer);
 
-                const modal = document.getElementById('practice-result-modal');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                switchPage('practiceResult');
             }
 
             // 在练习页打开 - 桥接到 problem.html
