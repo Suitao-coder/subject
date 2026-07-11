@@ -24,6 +24,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <!-- marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- html-docx-js to convert HTML to .docx -->
     <script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
     <!-- Tesseract.js for OCR handwritten text recognition -->
@@ -72,6 +74,24 @@
                 word-wrap: break-word;
                 line-height: 1.85;
             }
+            /* Markdown 渲染内容样式 */
+            .math-content p { margin: 0.4em 0; }
+            .math-content ul, .math-content ol { padding-left: 1.5em; margin: 0.4em 0; }
+            .math-content li { margin: 0.15em 0; }
+            .math-content h1, .math-content h2, .math-content h3, .math-content h4 { font-weight: 700; margin: 0.6em 0 0.3em; }
+            .math-content h1 { font-size: 1.3em; }
+            .math-content h2 { font-size: 1.15em; }
+            .math-content h3 { font-size: 1.05em; }
+            .math-content blockquote { border-left: 3px solid #d1d5db; padding-left: 12px; margin: 0.4em 0; color: #6b7280; }
+            .math-content code { background: #f3f4f6; padding: 1px 4px; border-radius: 3px; font-family: 'Consolas','Menlo',monospace; font-size: 0.92em; }
+            .math-content pre { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px 12px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; }
+            .math-content pre code { background: none; padding: 0; }
+            .math-content table { border-collapse: collapse; width: 100%; margin: 0.5em 0; font-size: 0.95em; }
+            .math-content th, .math-content td { border: 1px solid #d1d5db; padding: 4px 8px; text-align: left; }
+            .math-content th { background: #f9fafb; font-weight: 600; }
+            .math-content hr { border: none; border-top: 1px solid #e5e7eb; margin: 0.8em 0; }
+            .math-content a { color: #3b82f6; text-decoration: underline; }
+            .math-content img { max-width: 100%; height: auto; }
             .katex {
                 display: block;
                 max-width: 100%;
@@ -140,6 +160,42 @@
                 #exportPrintArea .print-subtitle {
                     font-size: 13pt !important;
                     margin-bottom: 0.4em !important;
+                }
+                /* Markdown 表格打印样式 */
+                #exportPrintArea table {
+                    border-collapse: collapse !important;
+                    width: 100% !important;
+                    margin: 0.5em 0 !important;
+                    font-size: 11pt !important;
+                }
+                #exportPrintArea th, #exportPrintArea td {
+                    border: 1px solid #ccc !important;
+                    padding: 4px 8px !important;
+                    text-align: left !important;
+                }
+                #exportPrintArea th {
+                    background: #f3f4f6 !important;
+                    font-weight: bold !important;
+                }
+                /* Markdown 代码块打印样式 */
+                #exportPrintArea code {
+                    background: #f3f4f6 !important;
+                    padding: 1px 4px !important;
+                    border-radius: 3px !important;
+                    font-family: 'Consolas', 'Menlo', monospace !important;
+                    font-size: 10.5pt !important;
+                }
+                #exportPrintArea pre {
+                    background: #f9fafb !important;
+                    border: 1px solid #e5e7eb !important;
+                    padding: 8px 12px !important;
+                    border-radius: 4px !important;
+                    white-space: pre-wrap !important;
+                    overflow-wrap: break-word !important;
+                }
+                #exportPrintArea pre code {
+                    background: none !important;
+                    padding: 0 !important;
                 }
                 #exportPrintArea img {
                     max-width: 100% !important;
@@ -1748,7 +1804,8 @@
 
                     <div class="mb-4">
                         <label for="questionContent" class="block text-sm font-medium text-gray-700 mb-1">题目内容</label>
-                        <textarea id="questionContent" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入题目内容，若只有图片可不填写"></textarea>
+                        <textarea id="questionContent" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入题目内容，支持 Markdown 格式和 $LaTeX$ 公式，若只有图片可不填写"></textarea>
+                        <p class="text-xs text-gray-400 mt-1">支持 **加粗**、`代码`、表格、列表等 Markdown 语法，数学公式用 $...$ 或 $$...$$</p>
                         <div class="flex gap-2 mt-1.5">
                             <button type="button" class="ocr-btn" onclick="triggerOcrCamera('questionContent')"><i class="fa fa-camera"></i> 拍照</button>
                             <button type="button" class="ocr-btn" onclick="triggerOcrUpload('questionContent')"><i class="fa fa-image"></i> 上传</button>
@@ -1774,12 +1831,12 @@
 
                     <div class="mb-4">
                         <label for="questionAnswer" class="block text-sm font-medium text-gray-700 mb-1">正确答案 <span class="text-danger">*</span></label>
-                        <textarea id="questionAnswer" rows="2" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入正确答案"></textarea>
+                        <textarea id="questionAnswer" rows="2" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入正确答案，支持 Markdown 格式和 $LaTeX$ 公式"></textarea>
                     </div>
 
                     <div class="mb-4">
                         <label for="questionExplanation" class="block text-sm font-medium text-gray-700 mb-1">解析</label>
-                        <textarea id="questionExplanation" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入解析内容（可选）"></textarea>
+                        <textarea id="questionExplanation" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入解析内容，支持 Markdown 格式和 $LaTeX$ 公式（可选）"></textarea>
                         <div class="flex gap-2 mt-1.5">
                             <button type="button" class="ocr-btn" onclick="document.getElementById('questionExplanationPhotoInput').click()"><i class="fa fa-camera"></i> 拍照</button>
                             <button type="button" class="ocr-btn" id="selectExplanationPhotosBtn"><i class="fa fa-image"></i> 上传</button>
@@ -5209,12 +5266,62 @@
             });
         }
 
+        // 配置 marked.js（用于 Markdown 渲染）
+        (function() {
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({
+                    breaks: true,      // 单换行 = <br>
+                    gfm: true,         // GitHub Flavored Markdown
+                    silent: true       // 出错不抛异常
+                });
+            }
+        })();
+
+        // 统一渲染：Markdown + KaTeX 数学公式
+        function renderMarkdownWithMath(text, options) {
+            if (!text && text !== 0) return '';
+            var str = String(text);
+            var opts = options || {};
+            // 1. 保护数学公式（放队列里，避免 Markdown 解析干扰）
+            var mathBlocks = [];
+            // 先保护 $$...$$（块级公式）
+            str = str.replace(/\$\$([\s\S]*?)\$\$/g, function(_, m) {
+                mathBlocks.push('$$' + m + '$$');
+                return '\u0000MB' + (mathBlocks.length - 1) + '\u0000';
+            });
+            // 再保护 $...$（行内公式）
+            str = str.replace(/\$([^$]+?)\$/g, function(_, m) {
+                mathBlocks.push('$' + m + '$');
+                return '\u0000MB' + (mathBlocks.length - 1) + '\u0000';
+            });
+            // 2. Markdown → HTML
+            var html;
+            if (typeof marked !== 'undefined' && !opts.plainText) {
+                try {
+                    html = marked.parse(str);
+                } catch(e) {
+                    // 回退：仅 HTML 转义 + 换行
+                    html = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+                }
+            } else {
+                // 纯文本模式（列表/导出等需要简短显示的场景）
+                html = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+            }
+            // 3. 还原数学公式
+            html = html.replace(/\u0000MB(\d+)\u0000/g, function(_, i) {
+                return mathBlocks[parseInt(i)];
+            });
+            return html;
+        }
+
+        // 保留旧函数名作为别名（兼容现有调用）
         function renderLatexContent(text) {
-            if (!text) return '';
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
+            return renderMarkdownWithMath(text);
+        }
+
+        // 打印/导出用的别名（兼容旧 renderTextWithMath 调用）
+        function renderTextWithMath(text) {
+            return renderMarkdownWithMath(text);
         }
 
         function renderMathJaxContent(root = document) {
@@ -8051,14 +8158,6 @@
             });
             const mode = document.querySelector('input[name="exportPaperContentMode"]:checked')?.value || 'question';
 
-            function renderTextWithMath(text) {
-                return String(text || '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/\n/g, '<br>');
-            }
-
             function renderQuestionBlock(q, index) {
                 const contentHtml = q.content ? renderTextWithMath(q.content) : '';
                 const photoHtml = q.photos && q.photos.length ? `<img src="${q.photos[0]}" alt="题目图片">` : '';
@@ -8226,14 +8325,6 @@
                 if (bi === -1) return -1;
                 return ai - bi;
             });
-
-            function renderTextWithMath(text) {
-                return String(text || '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/\n/g, '<br>');
-            }
 
             function renderQuestionBlock(q, index) {
                 const contentHtml = q.content ? renderTextWithMath(q.content) : '';
@@ -8506,9 +8597,15 @@
         }
 
         // ========== 练习功能 ==========
-        // KaTeX 公式预处理：$...$ → \(...\)，$$...$$ → \[...\]
+        // 预处理：Markdown + KaTeX → HTML（练习页专用）
         function practiceTextToHtml(text) {
             if (!text) return '';
+            // 复用全局渲染，数学公式会通过占位符保护后经 Markdown 渲染
+            // 但练习页需要公式保留 $...$ 格式以便 MathJax 后续渲染
+            if (typeof marked !== 'undefined') {
+                return renderMarkdownWithMath(text);
+            }
+            // 回退：仅转换公式格式
             let result = text;
             result = result.replace(/\$\$([\s\S]*?)\$\$/g, (m, f) => '\\[' + f + '\\]');
             result = result.replace(/\$([^$]+?)\$/g, (m, f) => '\\(' + f + '\\)');
@@ -8782,14 +8879,6 @@
                 return;
             }
 
-            function renderTextWithMath(text) {
-                return String(text || '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/\n/g, '<br>');
-            }
-
             function renderQuestionBlock(q, index) {
                 const contentHtml = q.content ? renderTextWithMath(q.content) : '';
                 const photoHtml = q.photos && q.photos.length ? `<img src="${q.photos[0]}" alt="题目图片">` : '';
@@ -8880,14 +8969,6 @@
             if (qList.length === 0) {
                 showNotification('练习库中的题目已被删除', 'error');
                 return;
-            }
-
-            function renderTextWithMath(text) {
-                return String(text || '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/\n/g, '<br>');
             }
 
             function renderQuestionBlock(q, index) {
