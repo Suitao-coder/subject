@@ -1637,6 +1637,12 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                <i class="fa fa-check-circle mr-2 text-primary"></i>判断题数量
+                            </label>
+                            <input type="number" id="practiceBoolCount" min="0" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
                                 <i class="fa fa-file-text mr-2 text-primary"></i>其他题型数量
                             </label>
                             <input type="number" id="practiceOtherCount" min="0" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
@@ -1657,6 +1663,7 @@
                                 <option value="choice">选择题</option>
                                 <option value="multi">多选题</option>
                                 <option value="fill">填空题</option>
+                                <option value="bool">判断题</option>
                                 <option value="other">问答题</option>
                             </select>
                         </div>
@@ -1798,6 +1805,7 @@
                             <option value="choice">选择题</option>
                             <option value="multi">多选题</option>
                             <option value="fill">填空题</option>
+                            <option value="bool">判断题</option>
                             <option value="other">其他</option>
                         </select>
                     </div>
@@ -1829,9 +1837,22 @@
                         <div id="questionPhotoPreview" class="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3"></div>
                     </div>
 
-                    <div class="mb-4">
-                        <label for="questionAnswer" class="block text-sm font-medium text-gray-700 mb-1">正确答案 <span class="text-danger">*</span></label>
+                    <div class="mb-4" id="questionAnswerWrapper">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">正确答案 <span class="text-danger">*</span></label>
                         <textarea id="questionAnswer" rows="2" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入正确答案，支持 Markdown 格式和 $LaTeX$ 公式"></textarea>
+                        <!-- 判断题答案选项（默认隐藏） -->
+                        <div id="questionBoolAnswer" class="hidden flex gap-4">
+                            <label class="flex items-center gap-2 px-6 py-3 border-2 border-gray-200 rounded-lg hover:border-green-300 transition-colors cursor-pointer flex-1 justify-center text-lg">
+                                <input type="radio" name="questionBoolAnswerRadio" value="对" class="w-4 h-4 text-primary focus:ring-primary">
+                                <i class="fa fa-check text-green-500"></i>
+                                <span>对</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-6 py-3 border-2 border-gray-200 rounded-lg hover:border-red-300 transition-colors cursor-pointer flex-1 justify-center text-lg">
+                                <input type="radio" name="questionBoolAnswerRadio" value="错" class="w-4 h-4 text-primary focus:ring-primary">
+                                <i class="fa fa-times text-red-500"></i>
+                                <span>错</span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -4443,8 +4464,16 @@
                 }
             });
             
-            // 特定页面初始化
-            if (page === 'statistics') {
+            // 特定页面初始化（切换时自动刷新数据）
+            if (page === 'dashboard') {
+                renderDashboard();
+            } else if (page === 'questions') {
+                renderQuestions();
+            } else if (page === 'subjects') {
+                renderSubjects();
+            } else if (page === 'papers') {
+                renderPaperList();
+            } else if (page === 'statistics') {
                 updateCharts();
             } else if (page === 'knowledgePoints') {
                 renderKnowledgePointTree();
@@ -5337,6 +5366,25 @@
         function renderQuestionOptionsSection() {
             const type = document.getElementById('questionType').value;
             const section = document.getElementById('questionOptionsSection');
+            // 根据题型切换答案输入方式
+            const answerEl = document.getElementById('questionAnswer');
+            const boolAnswerEl = document.getElementById('questionBoolAnswer');
+            if (type === 'bool') {
+                // 判断题：显示对/错选项框，隐藏文本输入
+                if (answerEl) answerEl.classList.add('hidden');
+                if (boolAnswerEl) boolAnswerEl.classList.remove('hidden');
+            } else {
+                // 其他题型：显示文本输入，隐藏对/错选项框
+                if (answerEl) answerEl.classList.remove('hidden');
+                if (boolAnswerEl) boolAnswerEl.classList.add('hidden');
+                if (type === 'choice') {
+                    answerEl.placeholder = '请输入选项字母，如：A';
+                } else if (type === 'multi') {
+                    answerEl.placeholder = '请输入选项字母组合，如：ABD';
+                } else {
+                    answerEl.placeholder = '请输入正确答案，支持 Markdown 格式和 $LaTeX$ 公式';
+                }
+            }
             if (type !== 'choice' && type !== 'multi') {
                 section.classList.add('hidden');
                 return;
@@ -5519,8 +5567,17 @@
                 if (question) {
                     document.getElementById('questionId').value = question.id;
                     document.getElementById('questionContent').value = question.content;
-                    document.getElementById('questionAnswer').value = question.answer;
                     document.getElementById('questionExplanation').value = question.explanation;
+                    // 判断题：回显对/错选项
+                    if (question.type === 'bool') {
+                        const boolVal = (question.answer || '').replace(/\s+/g, '');
+                        const isDui = /对|正确|是|yes|true|✓|✔|t/i.test(boolVal);
+                        const isCuo = /错|错误|否|no|false|✗|✘|f/i.test(boolVal);
+                        const boolRadios = document.getElementsByName('questionBoolAnswerRadio');
+                        if (isDui) boolRadios[0].checked = true;
+                        else if (isCuo) boolRadios[1].checked = true;
+                    }
+                    document.getElementById('questionAnswer').value = question.answer;
                     document.getElementById('questionSubject').value = question.subjectId;
                     document.getElementById('questionDifficulty').value = question.difficulty;
                     // 多选知识点：支持 knowledgePointIds（新）和 knowledgePoint（旧兼容）
@@ -5566,7 +5623,7 @@
         function saveQuestion() {
             const id = document.getElementById('questionId').value || generateId();
             const content = document.getElementById('questionContent').value.trim();
-            const answer = document.getElementById('questionAnswer').value.trim();
+            const type = document.getElementById('questionType').value;
             const explanation = document.getElementById('questionExplanation').value.trim();
             const subjectId = document.getElementById('questionSubject').value;
             const difficulty = document.getElementById('questionDifficulty').value.trim();
@@ -5577,8 +5634,16 @@
             // 兼容旧数据：保留 knowledgePoint 字段
             const knowledgePoint = knowledgePointIds.length > 0 ? knowledgePointIds[0] : '';
             const source = document.getElementById('questionSource').value.trim();
-            const type = document.getElementById('questionType').value;
             const date = new Date().toISOString();
+
+            // 判断题：从选项框读取答案；其他题型：从文本输入框读取
+            let answer;
+            if (type === 'bool') {
+                const boolRadio = document.querySelector('input[name="questionBoolAnswerRadio"]:checked');
+                answer = boolRadio ? boolRadio.value : '';
+            } else {
+                answer = document.getElementById('questionAnswer').value.trim();
+            }
 
             if (!answer) {
                 showNotification('正确答案不能为空', 'error');
@@ -5811,7 +5876,7 @@
                 <div class="space-y-6">
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">题型</h4>
-                        <div class="p-2 bg-gray-50 rounded-lg">${question.type === 'choice' ? '选择题' : question.type === 'multi' ? '多选题' : question.type === 'fill' ? '填空题' : '其他'}</div>
+                        <div class="p-2 bg-gray-50 rounded-lg">${question.type === 'choice' ? '选择题' : question.type === 'multi' ? '多选题' : question.type === 'fill' ? '填空题' : question.type === 'bool' ? '判断题' : '其他'}</div>
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">题目内容</h4>
@@ -6172,7 +6237,7 @@
             tbody.innerHTML = '';
             mistakeQuestions.forEach((q, i) => {
                 const subj = subjects.find(s => s.id === q.subjectId);
-                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题' }[q.type] || q.type;
                 const preview = (q.content || '无内容').replace(/<[^>]+>/g, '').substring(0, 60);
                 const kpText = getQuestionKnowledgePointPaths(q).join('|') || '-';
 
@@ -7193,10 +7258,11 @@
                 choice: filteredQuestions.filter(q => (q.type || 'other') === 'choice'),
                 multi: filteredQuestions.filter(q => (q.type || 'other') === 'multi'),
                 fill: filteredQuestions.filter(q => (q.type || 'other') === 'fill'),
-                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill'].includes(q.type || 'other'))
+                bool: filteredQuestions.filter(q => (q.type || 'other') === 'bool'),
+                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill', 'bool'].includes(q.type || 'other'))
             };
-            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', other: '其他' };
-            const sections = ['choice', 'multi', 'fill', 'other'];
+            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '其他' };
+            const sections = ['choice', 'multi', 'fill', 'bool', 'other'];
 
             container.innerHTML = sections.map(type => {
                 const items = grouped[type];
@@ -7364,10 +7430,11 @@
                 choice: filteredQuestions.filter(q => (q.type || 'other') === 'choice'),
                 multi: filteredQuestions.filter(q => (q.type || 'other') === 'multi'),
                 fill: filteredQuestions.filter(q => (q.type || 'other') === 'fill'),
-                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill'].includes(q.type || 'other'))
+                bool: filteredQuestions.filter(q => (q.type || 'other') === 'bool'),
+                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill', 'bool'].includes(q.type || 'other'))
             };
-            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', other: '其他' };
-            const sections = ['choice', 'multi', 'fill', 'other'];
+            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '其他' };
+            const sections = ['choice', 'multi', 'fill', 'bool', 'other'];
 
             container.innerHTML = sections.map(type => {
                 const items = grouped[type];
@@ -7599,7 +7666,7 @@
                         <div class="flex items-start gap-3 mb-3">
                             <div class="cursor-grab drag-handle p-2 rounded border border-dotted border-gray-200 mr-2" title="拖动以调整顺序">☰</div>
                             <div class="flex-1">
-                                <div class="text-sm text-gray-500 mb-2">第 ${index + 1} 题 · ${question.type === 'choice' ? '选择题' : question.type === 'multi' ? '多选题' : question.type === 'fill' ? '填空题' : '其他'}</div>
+                                <div class="text-sm text-gray-500 mb-2">第 ${index + 1} 题 · ${question.type === 'choice' ? '选择题' : question.type === 'multi' ? '多选题' : question.type === 'fill' ? '填空题' : question.type === 'bool' ? '判断题' : '其他'}</div>
                                 <div class="text-gray-900 font-medium line-clamp-2 mb-3"><span class="math-content">${renderLatexContent(question.content || '未填写题面')}</span></div>
                                 <div class="flex flex-wrap gap-3 text-xs">
                                     <span style="color: ${subject ? subject.color : '#6B7280'}">科目：${subjectName}</span>
@@ -7863,6 +7930,7 @@
                         id: generateId(),
                         type: /选择/.test(questionType) || /choice/i.test(questionType) ? 'choice'
                             : /填空/.test(questionType) || /fill/i.test(questionType) ? 'fill'
+                            : /判断/.test(questionType) || /bool/i.test(questionType) || /true/i.test(questionType) || /false/i.test(questionType) ? 'bool'
                             : 'other',
                         content: String(row[2] || '').trim(),
                         answer: String(row[7] || '').trim(),
@@ -7992,6 +8060,7 @@
                         id: generateId(),
                         type: /选择/.test(questionType) || /choice/i.test(questionType) ? 'choice'
                             : /填空/.test(questionType) || /fill/i.test(questionType) ? 'fill'
+                            : /判断/.test(questionType) || /bool/i.test(questionType) || /true/i.test(questionType) || /false/i.test(questionType) ? 'bool'
                             : 'other',
                         content: content,
                         answer: answer,
@@ -8277,7 +8346,7 @@
                 const explanationPhotos = Array.isArray(q.explanationPhotos) ? q.explanationPhotos.length : 0;
                 return [
                     index + 1,
-                    q.type === 'choice' ? '选择题' : q.type === 'fill' ? '填空题' : '其他',
+                    q.type === 'choice' ? '选择题' : q.type === 'multi' ? '多选题' : q.type === 'fill' ? '填空题' : q.type === 'bool' ? '判断题' : '其他',
                     q.content || '',
                     q.answer || '',
                     q.explanation || '',
@@ -8887,7 +8956,7 @@
                             <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
                         `).join('')}</div>`
                     : '';
-                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题' }[q.type] || q.type;
                 return `
                     <div class="print-section">
                         <div class="print-title">第 ${index} 题（${typeLabel}）</div>
@@ -8979,7 +9048,7 @@
                             <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
                         `).join('')}</div>`
                     : '';
-                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题' }[q.type] || q.type;
                 return `
                     <div class="print-section">
                         <div class="print-title">第 ${index} 题（${typeLabel}）</div>
@@ -8996,7 +9065,7 @@
                 const photosHtml = q.explanationPhotos && q.explanationPhotos.length
                     ? `<div>${q.explanationPhotos.map(photo => `<img src="${photo}" alt="解析图片">`).join('')}</div>`
                     : '';
-                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题' }[q.type] || q.type;
                 return `
                     <div class="print-section">
                         <div class="print-title">第 ${index} 题 答案（${typeLabel}）</div>
@@ -9095,6 +9164,7 @@
             document.getElementById('practiceChoiceCount').value = 0;
             document.getElementById('practiceMultiCount').value = 0;
             document.getElementById('practiceFillCount').value = 0;
+            document.getElementById('practiceBoolCount').value = 0;
             document.getElementById('practiceOtherCount').value = 0;
             updatePracticeAvailableCount();
 
@@ -9242,7 +9312,7 @@
             }
             filtered.forEach(q => {
                 const subj = subjects.find(s => s.id === q.subjectId);
-                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' }[q.type] || q.type;
+                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题' }[q.type] || q.type;
                 const preview = (q.content || '无内容').replace(/<[^>]+>/g, '').substring(0, 50);
                 const item = document.createElement('div');
                 item.className = 'flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm';
@@ -9311,17 +9381,19 @@
                     showNotification('请先选择题目', 'error');
                     return;
                 }
+                // 就地洗牌函数
+                const shuffleArr = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; };
                 // 深拷贝并保持选项原顺序
                 const processed = selected.map(q => {
                     const qCopy = JSON.parse(JSON.stringify(q));
                     if ((qCopy.type === 'choice' || qCopy.type === 'multi') && qCopy.options) {
                         const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
                         qCopy._shuffledOptions = opts.map((opt, i) => ({ key: String.fromCharCode(65+i), value: opt.text }));
-                        qCopy._correctLetter = qCopy.answer.toUpperCase();
+                        qCopy._correctLetter = (qCopy.answer || '').toUpperCase();
                     }
                     return qCopy;
                 });
-                practiceQuestions = shuffle(processed);
+                practiceQuestions = shuffleArr(processed);
                 practiceUserAnswers = practiceQuestions.map(() => ({}));
                 practiceCurrentIndex = 0;
                 const mainSubj2 = subjects.find(s => s.id === practiceQuestions[0]?.subjectId);
@@ -9368,8 +9440,9 @@
                             }).sort().join('');
                             qCopy._correctLetter = newCorrectLetters;
                         } else {
-                            const ci = labels.indexOf(qCopy.answer);
-                            qCopy._correctLetter = ci >= 0 ? String.fromCharCode(65+ci) : qCopy.answer;
+                            const ans = (qCopy.answer || '').toUpperCase();
+                            const ci = labels.indexOf(ans);
+                            qCopy._correctLetter = ci >= 0 ? String.fromCharCode(65+ci) : ans;
                         }
                         qCopy._shuffledOptions = labels.map((lbl, i) => ({ key: String.fromCharCode(65+i), value: (opts.find(o => o.label===lbl)||{}).text||'' }));
                     }
@@ -9391,9 +9464,10 @@
             const choiceCount = parseInt(document.getElementById('practiceChoiceCount').value) || 0;
             const multiCount = parseInt(document.getElementById('practiceMultiCount').value) || 0;
             const fillCount = parseInt(document.getElementById('practiceFillCount').value) || 0;
+            const boolCount = parseInt(document.getElementById('practiceBoolCount').value) || 0;
             const otherCount = parseInt(document.getElementById('practiceOtherCount').value) || 0;
 
-            if (choiceCount + multiCount + fillCount + otherCount === 0) {
+            if (choiceCount + multiCount + fillCount + boolCount + otherCount === 0) {
                 showNotification('请至少设置一种题型的数量', 'error');
                 return;
             }
@@ -9417,6 +9491,7 @@
             let choicePool = pool.filter(q => q.type === 'choice');
             let multiPool = pool.filter(q => q.type === 'multi');
             let fillPool = pool.filter(q => q.type === 'fill');
+            let boolPool = pool.filter(q => q.type === 'bool');
             let otherPool = pool.filter(q => q.type === 'other');
 
             // 随机洗牌
@@ -9426,15 +9501,25 @@
             const keepOptions = (qCopy) => {
                 const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
                 qCopy._shuffledOptions = opts.map((opt, i) => ({ key: String.fromCharCode(65 + i), value: opt.text }));
-                qCopy._correctLetter = qCopy.answer.toUpperCase();
+                qCopy._correctLetter = (qCopy.answer || '').toUpperCase();
             };
 
-            // 对于选择题和多选题，保持选项原顺序
+            // 选择题选项打乱：随机重排选项顺序，更新正确答案字母对应关系
             const selected = [];
             const takeChoice = shuffle([...choicePool]).slice(0, Math.min(choiceCount, choicePool.length));
             takeChoice.forEach(q => {
                 const qCopy = JSON.parse(JSON.stringify(q));
-                shuffleOptions(qCopy, 'choice');
+                const qOpts = Array.isArray(qCopy.options) ? qCopy.options : [];
+                if (qOpts.length > 0) {
+                    const labels = shuffle(qOpts.map(o => o.label));
+                    const ans = (qCopy.answer || '').toUpperCase();
+                    const ci = labels.indexOf(ans);
+                    qCopy._correctLetter = ci >= 0 ? String.fromCharCode(65 + ci) : ans;
+                    qCopy._shuffledOptions = labels.map((lbl, i) => ({ key: String.fromCharCode(65 + i), value: (qOpts.find(o => o.label === lbl) || {}).text || '' }));
+                } else {
+                    qCopy._correctLetter = (qCopy.answer || '').toUpperCase();
+                    qCopy._shuffledOptions = [];
+                }
                 selected.push(qCopy);
             });
 
@@ -9447,6 +9532,12 @@
 
             const takeFill = shuffle([...fillPool]).slice(0, Math.min(fillCount, fillPool.length));
             takeFill.forEach(q => {
+                const qCopy = JSON.parse(JSON.stringify(q));
+                selected.push(qCopy);
+            });
+
+            const takeBool = shuffle([...boolPool]).slice(0, Math.min(boolCount, boolPool.length));
+            takeBool.forEach(q => {
                 const qCopy = JSON.parse(JSON.stringify(q));
                 selected.push(qCopy);
             });
@@ -9549,11 +9640,13 @@
                 const choiceCount = qList.filter(q => q.type === 'choice').length;
                 const multiCount = qList.filter(q => q.type === 'multi').length;
                 const fillCount = qList.filter(q => q.type === 'fill').length;
+                const boolCount = qList.filter(q => q.type === 'bool').length;
                 const otherCount = qList.filter(q => q.type === 'other').length;
                 const typeStr = [];
                 if (choiceCount > 0) typeStr.push(choiceCount + '道选择');
                 if (multiCount > 0) typeStr.push(multiCount + '道多选');
                 if (fillCount > 0) typeStr.push(fillCount + '道填空');
+                if (boolCount > 0) typeStr.push(boolCount + '道判断');
                 if (otherCount > 0) typeStr.push(otherCount + '道问答');
                 html += `
                 <div class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
@@ -9592,7 +9685,7 @@
                         if ((qCopy.type === 'choice' || qCopy.type === 'multi') && qCopy.options) {
                             const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
                             qCopy._shuffledOptions = opts.map((opt, j) => ({ key: String.fromCharCode(65 + j), value: opt.text }));
-                            qCopy._correctLetter = qCopy.answer.toUpperCase();
+                            qCopy._correctLetter = (qCopy.answer || '').toUpperCase();
                         }
                         return qCopy;
                     });
@@ -9773,7 +9866,7 @@
             resultContainer.appendChild(scoreDiv);
 
             // 每题卡片（与 submitPractice 完全一致）
-            const typeMap = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' };
+            const typeMap = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题' };
             const qResults = h.questionResults || [];
             qResults.forEach((r, i) => {
                 const escC = (r.content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -9818,7 +9911,7 @@
         function showAllPracticeQuestions() {
             const container = document.getElementById('practice-all-questions');
             container.innerHTML = '';
-            const typeMap = { choice: '选择题', multi: '多选题', fill: '填空题', other: '问答题' };
+            const typeMap = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题' };
 
             practiceQuestions.forEach((q, idx) => {
                 const card = document.createElement('div');
@@ -9829,7 +9922,7 @@
                 let headerHtml = '<div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">';
                 headerHtml += '<div class="flex items-center gap-3">';
                 headerHtml += '<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-sm font-bold">' + (idx + 1) + '</span>';
-                headerHtml += '<span class="inline-block px-2 py-0.5 text-xs font-medium rounded ' + (q.type === 'multi' ? 'bg-orange-100 text-orange-700' : q.type === 'choice' ? 'bg-blue-100 text-blue-700' : q.type === 'fill' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700') + '">' + (typeMap[q.type] || q.type) + '</span>';
+                headerHtml += '<span class="inline-block px-2 py-0.5 text-xs font-medium rounded ' + (q.type === 'multi' ? 'bg-orange-100 text-orange-700' : q.type === 'choice' ? 'bg-blue-100 text-blue-700' : q.type === 'fill' ? 'bg-purple-100 text-purple-700' : q.type === 'bool' ? 'bg-amber-100 text-amber-700' : 'bg-teal-100 text-teal-700') + '">' + (typeMap[q.type] || q.type) + '</span>';
                 headerHtml += '</div></div>';
 
                 // 题目内容
@@ -9930,6 +10023,39 @@
                         choicesDiv.appendChild(div);
                     });
                     answerArea.appendChild(choicesDiv);
+                } else if (q.type === 'bool') {
+                    // 判断题 - 对/错 单选按钮
+                    const boolDiv = document.createElement('div');
+                    boolDiv.className = 'space-y-3';
+                    
+                    const hint = document.createElement('div');
+                    hint.className = 'text-xs text-gray-500 mb-1';
+                    hint.textContent = '请选择对或错';
+                    boolDiv.appendChild(hint);
+                    
+                    const radioGroup = document.createElement('div');
+                    radioGroup.className = 'flex gap-4';
+                    
+                    [{ value: '对', icon: 'fa-check', color: 'green' }, { value: '错', icon: 'fa-times', color: 'red' }].forEach(item => {
+                        const label = document.createElement('label');
+                        label.className = 'flex items-center gap-2 p-3 border-2 border-gray-200 rounded-lg hover:border-' + item.color + '-300 transition-colors cursor-pointer flex-1 justify-center text-lg';
+                        const radio = document.createElement('input');
+                        radio.type = 'radio';
+                        radio.name = 'practice-bool-' + idx;
+                        radio.value = item.value;
+                        radio.className = 'w-4 h-4 text-primary focus:ring-primary';
+                        if (practiceUserAnswers[idx][1] === item.value) radio.checked = true;
+                        radio.onchange = function() { practiceUserAnswers[idx][1] = this.value; };
+                        const icon = document.createElement('i');
+                        icon.className = 'fa ' + item.icon + ' text-' + item.color + '-500';
+                        const text = document.createTextNode(' ' + item.value);
+                        label.appendChild(radio);
+                        label.appendChild(icon);
+                        label.appendChild(text);
+                        radioGroup.appendChild(label);
+                    });
+                    boolDiv.appendChild(radioGroup);
+                    answerArea.appendChild(boolDiv);
                 } else {
                     // 填空题 / 问答题 - textarea + OCR拍照按钮
                     const textareaDiv = document.createElement('div');
@@ -10243,6 +10369,19 @@
                     const correctAns = (q.answer || '').replace(/\s+/g, '');
                     isCorrect = userAns === correctAns;
                     if (!isCorrect && q.id) wrongQuestionIds.push(q.id);
+                } else if (q.type === 'bool') {
+                    totalScoreQuestions++;
+                    correctDisplay = q.answer || '（无标准答案）';
+                    userDisplay = ua[1] || '未作答';
+                    // 对/正确/yes/true 都视为"对"，错/错误/no/false 都视为"错"
+                    const normalizeBool = (ans) => {
+                        ans = (ans || '').replace(/\s+/g, '');
+                        if (/对|正确|是|yes|true|✓|✔|t/i.test(ans)) return '对';
+                        if (/错|错误|否|no|false|✗|✘|f/i.test(ans)) return '错';
+                        return ans;
+                    };
+                    isCorrect = normalizeBool(userDisplay) === normalizeBool(correctDisplay);
+                    if (!isCorrect && q.id) wrongQuestionIds.push(q.id);
                 } else {
                     totalScoreQuestions++;
                     correctDisplay = q.answer || '（无标准答案）';
@@ -10271,7 +10410,7 @@
                 item.setAttribute('data-q-index', i);
                 item.setAttribute('data-q-type', q.type);
                 item.innerHTML = `
-                    <div class="font-medium mb-1">题目 ${i + 1} (${({choice:'选择题',multi:'多选题',fill:'填空题',other:'问答题'})[q.type] || q.type})</div>
+                    <div class="font-medium mb-1">题目 ${i + 1} (${({choice:'选择题',multi:'多选题',fill:'填空题',bool:'判断题',other:'问答题'})[q.type] || q.type})</div>
                     <div class="text-sm text-gray-600 mb-2">${practiceTextToHtml(escC).substring(0, 200)}</div>
                     <div class="text-sm mb-1"><span class="text-gray-500">你的答案：</span>${practiceTextToHtml(escU)}</div>
                     <div class="text-sm"><span class="text-gray-500">参考答案：</span>${practiceTextToHtml(escD)}</div>
