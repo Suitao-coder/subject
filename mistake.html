@@ -3358,14 +3358,14 @@
                         <span class="text-sm font-medium text-gray-700 math-content">${escName}</span>
                         ${hasChildren ? `<span class="text-xs text-gray-400">(${descCount}个子知识)</span>` : ''}
                     </div>
-                    <div class="flex items-center space-x-1">
-                        <button class="text-xs text-primary hover:text-primary/80 add-child-kp-btn cursor-pointer" data-id="${node.id}" title="添加子知识点">
+                    <div class="flex items-center space-x-2">
+                        <button class="w-11 h-11 inline-flex items-center justify-center text-xl rounded text-primary hover:bg-primary/10 add-child-kp-btn cursor-pointer transition" data-id="${node.id}" title="添加子知识点">
                             <i class="fa fa-plus-circle"></i>
                         </button>
-                        <button class="text-xs text-primary hover:text-primary/80 edit-kp-btn cursor-pointer" data-id="${node.id}" title="编辑">
+                        <button class="w-11 h-11 inline-flex items-center justify-center text-xl rounded text-primary hover:bg-primary/10 edit-kp-btn cursor-pointer transition" data-id="${node.id}" title="编辑">
                             <i class="fa fa-pencil"></i>
                         </button>
-                        <button class="text-xs text-danger hover:text-danger/80 delete-kp-btn cursor-pointer" data-id="${node.id}" title="删除">
+                        <button class="w-11 h-11 inline-flex items-center justify-center text-xl rounded text-danger hover:bg-danger/10 delete-kp-btn cursor-pointer transition" data-id="${node.id}" title="删除">
                             <i class="fa fa-trash"></i>
                         </button>
                     </div>
