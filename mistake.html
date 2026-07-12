@@ -2254,7 +2254,7 @@
                     </div>
                     <div class="mb-4">
                         <label for="kpName" class="block text-sm font-medium text-gray-700 mb-1">知识点内容 <span class="text-danger">*</span></label>
-                        <textarea id="kpName" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入知识点内容" required></textarea>
+                        <textarea id="kpName" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none input-focus" placeholder="请输入知识点内容，支持 Markdown 和 $KaTeX$ 公式" required></textarea>
                     </div>
                     <div class="mt-6 flex items-center gap-3">
                         <button type="submit" class="inline-flex items-center bg-primary text-white px-5 py-2.5 rounded-lg shadow-sm btn-effect cursor-pointer">
@@ -3461,7 +3461,7 @@
             nodes.forEach(node => {
                 const hasChildren = knowledgePoints.some(kp => kp.parentId === node.id);
                 const descCount = hasChildren ? countAllDescendants(node.id) : 0;
-                const escName = (node.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const renderedName = renderKpName(node.name || '');
                 html += `
                 <div class="kp-row flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5 hover:bg-gray-100 transition-colors"
                     draggable="true"
@@ -3473,7 +3473,7 @@
                         ${hasChildren
                             ? `<span class="kp-toggle" data-kp-id="${node.id}" onclick="toggleKpChildren('${node.id}')" title="展开/收起"><i class="fa fa-chevron-down"></i></span>`
                             : `<span class="inline-block" style="width:20px;"></span>`}
-                        <span class="text-sm font-medium text-gray-700 math-content">${escName}</span>
+                        <span class="text-sm font-medium text-gray-700 math-content">${renderedName}</span>
                         ${hasChildren ? `<span class="text-xs text-gray-400">(${descCount}个子知识)</span>` : ''}
                     </div>
                     <div class="flex items-center space-x-2">
@@ -3642,7 +3642,9 @@
             const addOptions = (nodes, depth) => {
                 nodes.forEach(node => {
                     const prefix = '　'.repeat(depth);
-                    select.innerHTML += `<option value="${node.id}" ${node.id === selectedParentId ? 'selected' : ''}>${prefix}${node.name}</option>`;
+                    // 知识点名称去除 Markdown/HTML 用于 \<option\> 显示
+                    const plainName = (node.name || '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/<[^>]+>/g, '').replace(/\$[^$]+\$/g, function(m) { return m.replace(/[\\{}_^]/g, '').replace(/\$/g, ''); });
+                    select.innerHTML += `<option value="${node.id}" ${node.id === selectedParentId ? 'selected' : ''}>${prefix}${escHtml(plainName)}</option>`;
                     if (node.children && node.children.length > 0) {
                         addOptions(node.children, depth + 1);
                     }
@@ -3742,10 +3744,11 @@
                 let tagsHtml = '';
                 selectedIds.forEach(kpId => {
                     const kp = knowledgePoints.find(k => k.id === kpId);
-                    const name = kp ? getKnowledgePointPath(kpId) : kpId;
-                    tagsHtml += `<span class="kp-tag">${escHtml(name)}<span class="kp-tag-remove" data-kp-id="${kpId}" onclick="event.stopPropagation();removeKpTag('${kpId}')">✕</span></span>`;
+                    const name = kp ? renderKpPath(kpId) : escHtml(kpId);
+                    tagsHtml += `<span class="kp-tag math-content">${name}<span class="kp-tag-remove" data-kp-id="${kpId}" onclick="event.stopPropagation();removeKpTag('${kpId}')">✕</span></span>`;
                 });
                 tagsContainer.innerHTML = tagsHtml;
+                renderMathJaxContent(tagsContainer);
             }
 
             // 渲染下拉选项
@@ -3760,10 +3763,10 @@
                     const addCheckboxes = (nodes, depth) => {
                         nodes.forEach(node => {
                             const isChecked = selectedIds.includes(node.id);
-                            const escN = (node.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            const renderedN = renderKpName(node.name || '');
                             checkHtml += `<label class="kp-checkbox-item" style="padding-left:${12 + depth * 18}px;" onclick="event.stopPropagation();">
                                 <input type="checkbox" value="${node.id}" ${isChecked ? 'checked' : ''} onchange="kpCheckboxChange()">
-                                <span class="kp-cb-label">${escN}</span>
+                                <span class="kp-cb-label math-content">${renderedN}</span>
                             </label>`;
                             if (node.children && node.children.length > 0) {
                                 addCheckboxes(node.children, depth + 1);
@@ -3778,6 +3781,7 @@
                     <div class="p-2 border-t text-center">
                         <button class="text-xs text-primary hover:text-primary/80 px-3 py-1 rounded border border-primary/30 hover:border-primary cursor-pointer" onclick="event.stopPropagation();closeKpDropdown()">完成选择</button>
                     </div>`;
+                    renderMathJaxContent(dropdown);
                 }
             }
         }
@@ -5391,6 +5395,37 @@
             return renderMarkdownWithMath(text);
         }
 
+        // 渲染单个知识点名称（支持 Markdown + KaTeX，去除块级标签用于行内显示）
+        function renderKpName(name) {
+            if (!name) return '';
+            var html = renderMarkdownWithMath(name);
+            // 去除 <p> 和 </p> 包裹标签，保留行内格式
+            html = html.replace(/^<p[^>]*>/i, '').replace(/<\/p>\s*$/i, '');
+            html = html.replace(/<\/p>\s*<p[^>]*>/gi, '<br>');
+            return html;
+        }
+
+        // 渲染完整知识点路径（逐级渲染名称，支持 Markdown + KaTeX）
+        function renderKpPath(kpId) {
+            var kp = knowledgePoints.find(function(k) { return k.id === kpId; });
+            if (!kp) return '';
+            var parts = [];
+            var current = kp;
+            while (current) {
+                parts.unshift(renderKpName(current.name));
+                current = knowledgePoints.find(function(k) { return k.id === current.parentId; });
+            }
+            return parts.join(' &gt; ');
+        }
+
+        // 渲染题目的知识点路径（支持多知识点）
+        function renderQuestionKpHtml(question) {
+            var ids = question.knowledgePointIds || (question.knowledgePoint ? [question.knowledgePoint] : []);
+            return ids.filter(function(id) { return knowledgePoints.some(function(k) { return k.id === id; }); })
+                .map(function(id) { return renderKpPath(id); })
+                .join('<br>');
+        }
+
         // 打印/导出用的别名（兼容旧 renderTextWithMath 调用）
         function renderTextWithMath(text) {
             return renderMarkdownWithMath(text);
@@ -6307,7 +6342,7 @@
                     ${getQuestionKnowledgePointPaths(question).length > 0 ? `
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-2">知识点</h4>
-                        <div class="p-2 bg-gray-50 rounded-lg">${getQuestionKnowledgePointPaths(question).map(p => escHtml(p)).join('<br>')}</div>
+                        <div class="p-2 bg-gray-50 rounded-lg math-content">${renderQuestionKpHtml(question)}</div>
                     </div>
                     ` : ''}
                 </div>
@@ -6597,7 +6632,7 @@
                 const subj = subjects.find(s => s.id === q.subjectId);
                 const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题', compound: '复合题' }[q.type] || q.type;
                 const preview = (q.content || '无内容').replace(/<[^>]+>/g, '').substring(0, 60);
-                const kpText = getQuestionKnowledgePointPaths(q).join('|') || '-';
+                const kpText = renderQuestionKpHtml(q).replace(/<br>/g, ' | ').replace(/<[^>]+>/g, '') || '-';
 
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors';
@@ -6606,7 +6641,7 @@
                     <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">${typeLabel}</span></td>
                     <td class="px-4 py-3"><span class="text-xs">${subj ? subj.name : '未知'}</span></td>
                     <td class="px-4 py-3 text-sm text-gray-700 max-w-[300px] truncate" title="${escHtml(q.content || '')}">${escHtml(preview)}</td>
-                    <td class="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate" title="${escHtml(kpText)}">${escHtml(kpText)}</td>
+                    <td class="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate math-content" title="${escHtml(kpText)}">${renderQuestionKpHtml(q).replace(/<br>/g, ' | ') || '-'}</td>
                     <td class="px-4 py-3 text-right">
                         <button class="text-xs text-danger hover:text-danger/80 remove-mistake-btn cursor-pointer px-2 py-1" data-id="${q.id}">
                             <i class="fa fa-trash mr-1"></i>移除
@@ -6825,7 +6860,7 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-600 max-w-[150px] truncate math-content" title="${escHtml(getQuestionKnowledgePointText(question))}">${getQuestionKnowledgePointPaths(question).join('|') || '-'}</div>
+                        <div class="text-sm text-gray-600 max-w-[150px] truncate math-content" title="${escHtml(getQuestionKnowledgePointText(question))}">${renderQuestionKpHtml(question).replace(/<br>/g, ' | ') || '-'}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm text-gray-500">${formatDate(question.date)}</div>
@@ -7454,12 +7489,12 @@
                     })
                     .join('、');
                 
-                const escKpName = (kp.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const renderedName = renderKpName(kp.name || '');
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors';
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900 math-content">${escKpName}</div>
+                        <div class="text-sm font-medium text-gray-900 math-content">${renderedName}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm text-gray-500">${subjectNames}</div>
