@@ -26,6 +26,8 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <!-- marked.js for Markdown rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- function-plot for dynamic function graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/function-plot@1.24.0/dist/function-plot.js"></script>
     <!-- html-docx-js to convert HTML to .docx -->
     <script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
     <!-- Tesseract.js for OCR handwritten text recognition -->
@@ -86,12 +88,128 @@
             .math-content code { background: #f3f4f6; padding: 1px 4px; border-radius: 3px; font-family: 'Consolas','Menlo',monospace; font-size: 0.92em; }
             .math-content pre { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px 12px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; }
             .math-content pre code { background: none; padding: 0; }
+            /* 帮助中心 KaTeX 语法高亮 */
+            .help-content code.help-code {
+                background: #fef9c3;
+                color: #854d0e;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-family: 'Consolas','Menlo','Courier New',monospace;
+                font-size: 0.95em;
+                font-weight: 500;
+                border: 1px solid #fde68a;
+                white-space: nowrap;
+            }
+            /* 帮助中心表格样式优化 */
+            .help-content table {
+                font-size: 0.93em;
+            }
+            .help-content th {
+                background: #f0f9ff;
+                color: #1e40af;
+            }
+            .help-content td:last-child {
+                text-align: center;
+                font-size: 1.1em;
+            }
             .math-content table { border-collapse: collapse; width: 100%; margin: 0.5em 0; font-size: 0.95em; }
             .math-content th, .math-content td { border: 1px solid #d1d5db; padding: 4px 8px; text-align: left; }
             .math-content th { background: #f9fafb; font-weight: 600; }
             .math-content hr { border: none; border-top: 1px solid #e5e7eb; margin: 0.8em 0; }
             .math-content a { color: #3b82f6; text-decoration: underline; }
             .math-content img { max-width: 100%; height: auto; }
+            /* 函数图像容器 */
+            .fn-graph-container {
+                margin: 1em 0;
+                padding: 12px;
+                background: #f9fafb;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .fn-graph-container .fn-graph-title {
+                font-size: 0.9em;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 8px;
+                text-align: center;
+            }
+            .fn-graph-container .fn-graph-canvas {
+                width: 100%;
+                min-height: 300px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: #fff;
+                border-radius: 4px;
+            }
+            .fn-graph-container .fn-graph-canvas svg {
+                max-width: 100%;
+                height: auto;
+            }
+            .fn-graph-empty {
+                color: #9ca3af;
+                font-size: 0.85em;
+                text-align: center;
+                padding: 20px;
+            }
+            .fn-graph-error {
+                color: #ef4444;
+                font-size: 0.85em;
+                text-align: center;
+                padding: 10px;
+                background: #fef2f2;
+                border-radius: 4px;
+            }
+            /* 表格内函数图像容器：更紧凑 */
+            .td-content-cell .fn-graph-container {
+                margin: 0.4em 0;
+                padding: 6px 8px;
+                background: #fafafa;
+            }
+            .td-content-cell .fn-graph-container .fn-graph-canvas {
+                min-height: 200px;
+            }
+            .td-content-cell .fn-graph-container .fn-graph-title {
+                font-size: 0.78em;
+                margin-bottom: 4px;
+            }
+            .td-content-cell {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            /* 知识点树/选择器中的函数图像：撑满整行 */
+            .kp-row .fn-graph-container {
+                flex-basis: 100%;
+                margin: 0.3em 0;
+                padding: 6px 10px;
+            }
+            .kp-row .fn-graph-container .fn-graph-canvas {
+                min-height: 180px;
+            }
+            .kp-row .fn-graph-container .fn-graph-title {
+                font-size: 0.78em;
+                margin-bottom: 3px;
+            }
+            .kp-cb-label .fn-graph-container {
+                display: block;
+                width: 100%;
+                margin: 0.3em 0;
+                padding: 6px 8px;
+            }
+            .kp-cb-label .fn-graph-container .fn-graph-canvas {
+                min-height: 180px;
+            }
+            .kp-tag .fn-graph-container {
+                display: block;
+                width: 100%;
+                margin: 0.3em 0;
+                padding: 6px 8px;
+            }
+            .kp-tag .fn-graph-container .fn-graph-canvas {
+                min-height: 160px;
+            }
             .katex {
                 display: block;
                 max-width: 100%;
@@ -1284,6 +1402,9 @@
                 <div class="flex items-center gap-3">
                     <button id="mistakeAddQuestionBtn" class="flex items-center bg-primary text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
                         <i class="fa fa-plus-circle mr-1"></i> 手动添加题目
+                    </button>
+                    <button id="demoGraphBtn" class="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-green-700 cursor-pointer text-sm">
+                        <i class="fa fa-line-chart mr-1"></i> 添加演示题（含图像）
                     </button>
                     <button id="mistakeClearAllBtn" class="flex items-center bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 cursor-pointer text-sm border border-red-200">
                         <i class="fa fa-trash mr-1"></i> 清空全部
@@ -2598,6 +2719,16 @@
         </div>
     </div>
 
+    <!-- 帮助中心页面 -->
+    <section id="helpPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+        <div class="sub-page-header">
+            <button class="btn-back" id="closeHelpPage"><i class="fa fa-arrow-left"></i> 返回</button>
+            <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900"><i class="fa fa-question-circle text-primary mr-2"></i>帮助中心 - KaTeX 语法参考</h1>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 math-content help-content" id="helpPageContent">
+        </div>
+    </section>
+
     <!-- 图片放大查看页面 -->
     <section id="imageZoomPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
         <div class="sub-page-header">
@@ -2627,7 +2758,7 @@
                 </div>
                 <p class="text-gray-500 text-sm">© 2023 学习助手 - 智能学习记录系统 版权所有</p>
                 <div class="flex space-x-4 mt-4 md:mt-0">
-                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                    <a href="javascript:void(0)" onclick="switchPage('help')" class="text-gray-400 hover:text-primary transition-colors cursor-pointer">
                         <i class="fa fa-question-circle"></i> 帮助中心
                     </a>
                     <a href="#" class="text-gray-400 hover:text-primary transition-colors">
@@ -3452,6 +3583,9 @@
                     showNotification(`知识点顺序已更新`, 'success');
                 });
             });
+
+            // 渲染知识点名称中的函数图像和数学公式
+            renderMathJaxContent(container);
         }
 
         // 渲染树形HTML
@@ -4527,6 +4661,8 @@
                 renderMistakePage();
             } else if (page === 'timer') {
                 updateGlobalStopwatchDisplay();
+            } else if (page === 'help') {
+                renderHelpPage();
             }
         }
 
@@ -5358,6 +5494,12 @@
             if (!text && text !== 0) return '';
             var str = String(text);
             var opts = options || {};
+            // 0. 先保护函数图像代码块（避免数学公式保护干扰其中的表达式）
+            var graphBlockContents = [];
+            str = str.replace(/```graph\s*\n([\s\S]*?)```/g, function(_, content) {
+                graphBlockContents.push(content);
+                return '\u0000GB' + (graphBlockContents.length - 1) + '\u0000';
+            });
             // 1. 保护数学公式（放队列里，避免 Markdown 解析干扰）
             var mathBlocks = [];
             // 先保护 $$...$$（块级公式）
@@ -5365,10 +5507,24 @@
                 mathBlocks.push('$$' + m + '$$');
                 return '\u0000MB' + (mathBlocks.length - 1) + '\u0000';
             });
+            // 再保护 \[...\]（块级公式，LaTeX 风格）
+            str = str.replace(/\\\[([\s\S]*?)\\\]/g, function(_, m) {
+                mathBlocks.push('$$' + m + '$$');
+                return '\u0000MB' + (mathBlocks.length - 1) + '\u0000';
+            });
+            // 保护 \(...\)（行内公式，LaTeX 风格）
+            str = str.replace(/\\\(([\s\S]*?)\\\)/g, function(_, m) {
+                mathBlocks.push('$' + m + '$');
+                return '\u0000MB' + (mathBlocks.length - 1) + '\u0000';
+            });
             // 再保护 $...$（行内公式）
             str = str.replace(/\$([^$]+?)\$/g, function(_, m) {
                 mathBlocks.push('$' + m + '$');
                 return '\u0000MB' + (mathBlocks.length - 1) + '\u0000';
+            });
+            // 1.5 还原函数图像代码块，让 marked.js 正常处理围栏代码块
+            str = str.replace(/\u0000GB(\d+)\u0000/g, function(_, i) {
+                return '```graph\n' + graphBlockContents[parseInt(i)] + '\n```';
             });
             // 2. Markdown → HTML
             var html;
@@ -5431,12 +5587,196 @@
             return renderMarkdownWithMath(text);
         }
 
+        // 解析函数图像配置文本
+        function parseGraphConfig(text) {
+            var lines = text.trim().split('\n').filter(function(l) {
+                return l.trim() && !l.trim().startsWith('#');
+            });
+            var config = {
+                xMin: -10, xMax: 10,
+                yMin: -10, yMax: 10,
+                title: '',
+                grid: true,
+                functions: []
+            };
+            var colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1', '#14B8A6', '#F97316'];
+            var colorIdx = 0;
+            var hasDomainSet = false, hasRangeSet = false;
+
+            lines.forEach(function(line) {
+                var trimmed = line.trim();
+                var eqIdx = trimmed.indexOf('=');
+                if (eqIdx === -1) return;
+                var key = trimmed.substring(0, eqIdx).trim();
+                var val = trimmed.substring(eqIdx + 1).trim();
+
+                // 去除可能残留的 $ 符号（用户可能习惯性地加了 LaTeX 分隔符）
+                val = val.replace(/^\$/, '').replace(/\$$/, '').trim();
+
+                if (key === 'xMin' || key === 'xmin') { config.xMin = parseFloat(val); hasDomainSet = true; }
+                else if (key === 'xMax' || key === 'xmax') { config.xMax = parseFloat(val); hasDomainSet = true; }
+                else if (key === 'yMin' || key === 'ymin') { config.yMin = parseFloat(val); hasRangeSet = true; }
+                else if (key === 'yMax' || key === 'ymax') { config.yMax = parseFloat(val); hasRangeSet = true; }
+                else if (key === 'title') { config.title = val; }
+                else if (key === 'grid') { config.grid = val.toLowerCase() !== 'false'; }
+                else if (key === 'width') { config.width = parseInt(val); }
+                else if (key === 'height') { config.height = parseInt(val); }
+                else if (key === 'fn') {
+                    // 显式函数线: fn = x^2
+                    if (!val) return; // 忽略空表达式
+                    config.functions.push({
+                        fn: val,
+                        color: colors[colorIdx % colors.length],
+                        graphType: 'polyline'
+                    });
+                    colorIdx++;
+                } else if (/\(x\)/.test(key)) {
+                    // f(x) = x^2 格式 => 取等号右边的表达式
+                    if (!val) return;
+                    config.functions.push({
+                        fn: val,
+                        color: colors[colorIdx % colors.length],
+                        graphType: 'polyline'
+                    });
+                    colorIdx++;
+                }
+            });
+
+            // 如果没有指定范围，根据是否有函数自动调整 y 范围
+            if (!hasRangeSet && config.functions.length === 0) {
+                config.yMin = -10; config.yMax = 10;
+            }
+
+            return config;
+        }
+
+        // DOM 后处理：将 <code class="language-graph"> 替换为实际函数图像
+        function renderFunctionGraphs(root) {
+            if (typeof functionPlot === 'undefined') return;
+            root = root || document;
+
+            // 情况 1：标准围栏代码块
+            var codeBlocks = root.querySelectorAll('code.language-graph.fn-graph-code, code.language-graph');
+            // 情况 2：用户可能漏了反引号，直接把 graph 配置写在 <p> 中
+            // 检测特征：包含 xMin/xMax/yMin/yMax 或 fn = 等关键字的多行内容
+            var fallbackBlocks = root.querySelectorAll('.math-content p, .math-content div');
+            var blocks = [];
+            codeBlocks.forEach(function(code) {
+                if (code.closest('.fn-graph-container')) return;
+                blocks.push({ type: 'code', el: code });
+            });
+            fallbackBlocks.forEach(function(p) {
+                if (p.closest('.fn-graph-container')) return;
+                if (p.closest('code, pre')) return;
+                // 用 innerText 获取带换行的文本（<br> 会被转为 \n）
+                var txt = (p.innerText || p.textContent || '').trim();
+                var html = p.innerHTML || '';
+                // 检测 graph 特征：
+                // 1. innerText 中有 \n（说明是多行） 或 innerHTML 中有 <br>
+                var isMultiLine = txt.indexOf('\n') > 0 || /<br\s*\/?>/i.test(html);
+                // 2. 必须同时包含范围设置（xMin/xMax/yMin/yMax）和 fn=
+                //    只含 f(x) = ... 之类的纯数学表达式不算（如 "已知 f(x) = x² + 2x + 1"）
+                var hasRange = /\b(xMin|xMax|yMin|yMax)\s*=/i.test(txt);
+                var hasFn = /\bfn\s*=/i.test(txt);
+                if (isMultiLine && hasRange && hasFn) {
+                    blocks.push({ type: 'inline', el: p, text: txt });
+                }
+            });
+
+            if (!blocks.length) return;
+
+            // 先构建所有容器，准备替换 DOM 节点
+            var pendingJobs = []; // { container, configText, oldNode }
+            var buildContainer = function(configText) {
+                var config = parseGraphConfig(configText);
+                var container = document.createElement('div');
+                container.className = 'fn-graph-container';
+                if (config.title) {
+                    var titleEl = document.createElement('div');
+                    titleEl.className = 'fn-graph-title';
+                    titleEl.textContent = config.title;
+                    container.appendChild(titleEl);
+                }
+                var canvasDiv = document.createElement('div');
+                canvasDiv.className = 'fn-graph-canvas';
+                container.appendChild(canvasDiv);
+                // 暂存配置，稍后渲染（等容器进入 DOM 后再调用 functionPlot）
+                container._graphConfig = config;
+                container._canvasDiv = canvasDiv;
+                return container;
+            };
+
+            // 阶段 1：替换 DOM
+            blocks.forEach(function(item) {
+                var configText, oldNode;
+                if (item.type === 'code') {
+                    var pre = item.el.closest('pre');
+                    configText = item.el.textContent || '';
+                    oldNode = pre;
+                } else {
+                    configText = item.text;
+                    oldNode = item.el;
+                }
+                if (!oldNode || !oldNode.parentNode) return;
+                var container = buildContainer(configText);
+                oldNode.parentNode.replaceChild(container, oldNode);
+                pendingJobs.push({ container: container, configText: configText });
+            });
+
+            // 阶段 2：等 DOM 布局完成后渲染（用 requestAnimationFrame 确保 clientWidth 有效）
+            var renderPendingGraphs = function() {
+                pendingJobs.forEach(function(job) {
+                    var container = job.container;
+                    var config = container._graphConfig;
+                    var canvasDiv = container._canvasDiv;
+                    if (!config || !canvasDiv) return;
+                    if (config.functions.length === 0) {
+                        canvasDiv.innerHTML = '<div class="fn-graph-empty">未识别到 fn = 表达式</div>';
+                    } else {
+                        try {
+                            var isTableCell = !!container.closest('.td-content-cell');
+                            var containerW = container.clientWidth;
+                            var w = (containerW > 0) ? containerW - 24 : 500;
+                            var plotOptions = {
+                                target: canvasDiv,
+                                width: config.width || Math.max(Math.min(w, isTableCell ? 360 : 700), 180),
+                                height: config.height || (isTableCell ? 220 : 350),
+                                grid: config.grid,
+                                disableZoom: true,
+                                xAxis: { domain: [config.xMin, config.xMax] },
+                                yAxis: { domain: [config.yMin, config.yMax] },
+                                data: config.functions
+                            };
+                            functionPlot(plotOptions);
+                        } catch (e) {
+                            canvasDiv.innerHTML = '<div class="fn-graph-error">函数图像渲染失败: ' + (e.message || '未知错误') + '</div>';
+                        }
+                    }
+                    delete container._graphConfig;
+                    delete container._canvasDiv;
+                });
+            };
+
+            // 延迟渲染，确保 DOM 布局已完成
+            if (typeof requestAnimationFrame !== 'undefined') {
+                requestAnimationFrame(renderPendingGraphs);
+            } else {
+                setTimeout(renderPendingGraphs, 10);
+            }
+        }
+
         function renderMathJaxContent(root = document) {
+            // 先处理函数图像
+            renderFunctionGraphs(root);
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
                 const els = root.querySelectorAll('.math-content');
                 if (els.length > 0) {
-                    MathJax.typesetClear(els);
-                    MathJax.typesetPromise(els).catch(() => {});
+                    if (MathJax.typesetClear) {
+                        try { MathJax.typesetClear(els); } catch(e) {}
+                    }
+                    MathJax.typesetPromise(els).catch(function(err) {
+                        console.warn('[MathJax] typesetPromise error:', err);
+                    });
                 }
             }
         }
@@ -6569,6 +6909,72 @@
             document.getElementById('mistakePracticeBtn').onclick = function() {
                 practiceMistakeQuestions();
             };
+
+            // 添加演示题（含函数图像）
+            document.getElementById('demoGraphBtn').onclick = function() {
+                addDemoGraphQuestions();
+            };
+        }
+
+        // 添加演示题目（含 function-plot 图像）
+        function addDemoGraphQuestions() {
+            // 确保有科目
+            if (subjects.length === 0) {
+                subjects.push({ id: generateId(), name: '数学', color: '#3B82F6' });
+            }
+            var mathSubj = subjects.find(function(s) { return s.name === '数学'; }) || subjects[0];
+            var now = new Date().toISOString();
+
+            var demoQuestions = [
+                {
+                    content: '画出二次函数 \\(y = x^2 + 2x + 1\\) 的图像，并求其最小值。\n\n```graph\nfn = x^2 + 2*x + 1\nxMin = -5\nxMax = 3\nyMin = -2\nyMax = 10\ntitle = y = x² + 2x + 1\n```',
+                    type: 'other',
+                    answer: '最小值为 0，当 x = -1 时取得',
+                    difficulty: 'easy',
+                    kpName: '二次函数图像\n```graph\nfn = x^2\nxMin = -3\nxMax = 3\nyMin = -1\nyMax = 10\n```',
+                    source: '演示题'
+                },
+                {
+                    content: '比较 \\(y = x^3 - 3x\\) 与 \\(y = 2x\\) 的交点个数。\n\n```graph\nfn = x^3 - 3*x\nfn = 2*x\nxMin = -3\nxMax = 3\nyMin = -5\nyMax = 5\ntitle = 两条函数曲线交点\n```',
+                    type: 'other',
+                    answer: '共 3 个交点',
+                    difficulty: 'medium',
+                    kpName: '函数综合',
+                    source: '演示题'
+                }
+            ];
+
+            demoQuestions.forEach(function(d) {
+                var qid = generateId();
+                // 创建知识点（如果不存在）
+                var kp = knowledgePoints.find(function(k) { return k.name === d.kpName; });
+                if (!kp) {
+                    kp = { id: generateId(), name: d.kpName, count: 0, subjectId: mathSubj.id };
+                    knowledgePoints.push(kp);
+                }
+                kp.count = (kp.count || 0) + 1;
+
+                var question = {
+                    id: qid,
+                    content: d.content,
+                    type: d.type,
+                    answer: d.answer,
+                    explanation: '',
+                    subjectId: mathSubj.id,
+                    difficulty: d.difficulty,
+                    knowledgePoint: kp.id,
+                    knowledgePointIds: [kp.id],
+                    source: d.source,
+                    date: now,
+                    status: 'pending'
+                };
+                questions.push(question);
+                mistakeQuestionIds.push(qid);
+            });
+
+            saveGradeData();
+            renderMistakeTable();
+            showNotification('已添加 ' + demoQuestions.length + ' 道演示题（含函数图像）', 'success');
         }
 
         // 更新科目筛选下拉
@@ -6640,7 +7046,7 @@
                     <td class="px-4 py-3 text-sm text-gray-500">${i + 1}</td>
                     <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">${typeLabel}</span></td>
                     <td class="px-4 py-3"><span class="text-xs">${subj ? subj.name : '未知'}</span></td>
-                    <td class="px-4 py-3 text-sm text-gray-700 max-w-[300px] truncate" title="${escHtml(q.content || '')}">${escHtml(preview)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 td-content-cell" style="max-width:380px"><span class="math-content">${renderLatexContent(q.content || '')}</span></td>
                     <td class="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate math-content" title="${escHtml(kpText)}">${renderQuestionKpHtml(q).replace(/<br>/g, ' | ') || '-'}</td>
                     <td class="px-4 py-3 text-right">
                         <button class="text-xs text-danger hover:text-danger/80 remove-mistake-btn cursor-pointer px-2 py-1" data-id="${q.id}">
@@ -6843,8 +7249,8 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <input type="checkbox" class="mastery-toggle h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" data-id="${question.id}" ${question.status === 'mastered' ? 'checked' : ''}>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900 line-clamp-2"><span class="math-content">${renderLatexContent(question.content || '')}</span></div>
+                    <td class="px-6 py-4 td-content-cell" style="max-width:380px">
+                        <div class="text-sm font-medium text-gray-900"><span class="math-content">${renderLatexContent(question.content || '')}</span></div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${question.type === 'choice' ? 'bg-blue-100 text-blue-700' : question.type === 'multi' ? 'bg-orange-100 text-orange-700' : question.type === 'fill' ? 'bg-purple-100 text-purple-700' : question.type === 'bool' ? 'bg-amber-100 text-amber-700' : question.type === 'compound' ? 'bg-indigo-100 text-indigo-700' : 'bg-teal-100 text-teal-700'}">
@@ -7493,7 +7899,7 @@
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors';
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-6 py-4 td-content-cell" style="max-width:380px">
                         <div class="text-sm font-medium text-gray-900 math-content">${renderedName}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -9089,6 +9495,8 @@
             return result;
         }
         function renderPracticeMath(element) {
+            // 先处理函数图像
+            renderFunctionGraphs(element);
             // 优先使用 MathJax（与页面其他部分一致）
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
                 MathJax.typesetClear([element]);
@@ -9431,6 +9839,210 @@
             document.getElementById('libPrintModalOverlay').classList.add('hidden');
             libPrintPendingIndex = -1;
         }
+
+        // ========== 帮助中心 ==========
+        var helpPageRendered = false;
+
+        function renderHelpPage() {
+            if (helpPageRendered) return;
+            helpPageRendered = true;
+            var mdContent = '# KaTeX 语法速查表（高中数学版）\n\n' +
+                '## 1. 基础运算与代数\n\n' +
+                '| 功能    | KaTeX 语法                          | 效果               |\n' +
+                '| ------- | ----------------------------------- | ------------------ |\n' +
+                '| 分数    | `$\\frac{a}{b}$`                     | $\\frac{a}{b}$    |\n' +
+                '| 根号    | `$\\sqrt{x}$`                        | $\\sqrt{x}$       |\n' +
+                '| n次根号 | `$\\sqrt[n]{x}$`                     | $\\sqrt[n]{x}$    |\n' +
+                '| 上标    | `$x^{2}$`                           | $x^{2}$          |\n' +
+                '| 下标    | `$x_{i}$`                           | $x_{i}$          |\n' +
+                '| 组合数  | `$\\binom{n}{k}$`                    | $\\binom{n}{k}$   |\n' +
+                '| 绝对值  | `$\\|x\\|$` 或 `$\\lvert x\\rvert$`   | $\\lvert x\\rvert$ |\n' +
+                '| 向量    | `$\\vec{v}$`                         | $\\vec{v}$        |\n' +
+                '| 点乘    | `$\\cdot$`                           | $\\cdot$          |\n' +
+                '| 叉乘    | `$\\times$`                          | $\\times$         |\n' +
+                '| 加减    | `$\\pm$`                             | $\\pm$            |\n' +
+                '| 整除    | `$\\mid$`                            | $\\mid$           |\n\n' +
+                '## 2. 希腊字母（高中常用）\n\n' +
+                '| 小写 | 大写 | KaTeX                          |\n' +
+                '| ---- | ---- | ------------------------------ |\n' +
+                '| α    | A    | `$\\alpha$`                     |\n' +
+                '| β    | B    | `$\\beta$`                      |\n' +
+                '| γ    | Γ    | `$\\gamma$`, `$\\Gamma$`         |\n' +
+                '| δ    | Δ    | `$\\delta$`, `$\\Delta$`         |\n' +
+                '| ε    | E    | `$\\varepsilon$` (常用)          |\n' +
+                '| θ    | Θ    | `$\\theta$`, `$\\Theta$`         |\n' +
+                '| λ    | Λ    | `$\\lambda$`, `$\\Lambda$`       |\n' +
+                '| μ    | M    | `$\\mu$`                        |\n' +
+                '| π    | Π    | `$\\pi$`, `$\\Pi$`               |\n' +
+                '| ρ    | P    | `$\\rho$`                       |\n' +
+                '| σ    | Σ    | `$\\sigma$`, `$\\Sigma$`         |\n' +
+                '| φ    | Φ    | `$\\phi$`, `$\\Phi$`             |\n' +
+                '| ω    | Ω    | `$\\omega$`, `$\\Omega$`         |\n\n' +
+                '## 3. 三角函数与反三角\n\n' +
+                '| 名称     | KaTeX            | 效果          |\n' +
+                '| -------- | ---------------- | ------------- |\n' +
+                '| sin      | `$\\sin x$`       | $\\sin x$    |\n' +
+                '| cos      | `$\\cos x$`       | $\\cos x$    |\n' +
+                '| tan      | `$\\tan x$`       | $\\tan x$    |\n' +
+                '| cot      | `$\\cot x$`       | $\\cot x$    |\n' +
+                '| sec      | `$\\sec x$`       | $\\sec x$    |\n' +
+                '| csc      | `$\\csc x$`       | $\\csc x$    |\n' +
+                '| arcsin   | `$\\arcsin x$`    | $\\arcsin x$ |\n' +
+                '| arccos   | `$\\arccos x$`    | $\\arccos x$ |\n' +
+                '| arctan   | `$\\arctan x$`    | $\\arctan x$ |\n' +
+                '| 角度符号 | `$30^\\circ$`     | $30^\\circ$  |\n\n' +
+                '## 4. 对数与指数\n\n' +
+                '| 功能     | KaTeX              | 效果           |\n' +
+                '| -------- | ------------------ | -------------- |\n' +
+                '| 自然对数 | `$\\ln x$`          | $\\ln x$      |\n' +
+                '| 常用对数 | `$\\log x$`         | $\\log x$     |\n' +
+                '| 指定底数 | `$\\log_{a} b$`     | $\\log_{a} b$ |\n' +
+                '| 指数函数 | `$e^{x}$`          | $e^{x}$      |\n' +
+                '| 幂函数   | `$a^{n}$`          | $a^{n}$      |\n\n' +
+                '## 5. 极限、导数与积分（高中初步）\n\n' +
+                '| 功能     | KaTeX                            | 效果                      |\n' +
+                '| -------- | -------------------------------- | ------------------------- |\n' +
+                '| 极限     | `$\\lim_{x \\to a} f(x)$`         | $\\lim_{x \\to a} f(x)$   |\n' +
+                '| 趋向于   | `$\\to$` 或 `$\\rightarrow$`       | $\\to$                   |\n' +
+                '| 无穷大   | `$\\infty$`                       | $\\infty$                |\n' +
+                '| 导数     | `$f\'(x)$` 或 `$f^{\\prime}(x)$`   | $f\'(x)$                 |\n' +
+                '| 二阶导   | `$f\'\'(x)$`                      | $f\'\'(x)$                |\n' +
+                '| 偏导     | `$\\partial$`                     | $\\partial$              |\n' +
+                '| 定积分   | `$\\int_{a}^{b} f(x)\\,dx$`       | $\\int_{a}^{b} f(x)\\,dx$ |\n' +
+                '| 不定积分 | `$\\int f(x)\\,dx$`               | $\\int f(x)\\,dx$         |\n\n' +
+                '## 6. 求和与连乘\n\n' +
+                '| 功能 | KaTeX                      | 效果                    |\n' +
+                '| ---- | -------------------------- | ----------------------- |\n' +
+                '| 求和 | `$\\sum_{i=1}^{n} a_i$`     | $\\sum_{i=1}^{n} a_i$  |\n' +
+                '| 连乘 | `$\\prod_{i=1}^{n} a_i$`    | $\\prod_{i=1}^{n} a_i$ |\n\n' +
+                '## 7. 集合与逻辑\n\n' +
+                '| 符号   | KaTeX                              | 效果                        |\n' +
+                '| ------ | ---------------------------------- | --------------------------- |\n' +
+                '| 属于   | `$\\in$`                            | $\\in$                     |\n' +
+                '| 不属于 | `$\\notin$`                         | $\\notin$                  |\n' +
+                '| 包含于 | `$\\subset$` / `$\\subseteq$`        | $\\subset$ / $\\subseteq$ |\n' +
+                '| 真包含 | `$\\supset$` / `$\\supseteq$`        | $\\supset$ / $\\supseteq$ |\n' +
+                '| 交集   | `$\\cap$`                           | $\\cap$                    |\n' +
+                '| 并集   | `$\\cup$`                           | $\\cup$                    |\n' +
+                '| 空集   | `$\\emptyset$` 或 `$\\varnothing$`   | $\\emptyset$               |\n' +
+                '| 任意   | `$\\forall$`                        | $\\forall$                 |\n' +
+                '| 存在   | `$\\exists$`                        | $\\exists$                 |\n' +
+                '| 因为   | `$\\because$`                       | $\\because$                |\n' +
+                '| 所以   | `$\\therefore$`                     | $\\therefore$              |\n' +
+                '| 推出   | `$\\Rightarrow$`                    | $\\Rightarrow$             |\n' +
+                '| 等价   | `$\\Leftrightarrow$`                | $\\Leftrightarrow$         |\n' +
+                '| 逻辑且 | `$\\land$`                          | $\\land$                   |\n' +
+                '| 逻辑或 | `$\\lor$`                           | $\\lor$                    |\n' +
+                '| 非     | `$\\neg$`                           | $\\neg$                    |\n\n' +
+                '## 8. 关系运算符\n\n' +
+                '| 符号     | KaTeX                 | 效果          |\n' +
+                '| -------- | --------------------- | ------------- |\n' +
+                '| 小于     | `$<$` 或 `$\\lt$`      | $\\lt$       |\n' +
+                '| 大于     | `$>$` 或 `$\\gt$`      | $\\gt$       |\n' +
+                '| 大于等于 | `$\\ge$` 或 `$\\geq$`   | $\\ge$       |\n' +
+                '| 小于等于 | `$\\le$` 或 `$\\leq$`   | $\\le$       |\n' +
+                '| 不等于   | `$\\ne$` 或 `$\\neq$`   | $\\ne$       |\n' +
+                '| 约等于   | `$\\approx$`           | $\\approx$   |\n' +
+                '| 恒等于   | `$\\equiv$`            | $\\equiv$    |\n' +
+                '| 相似     | `$\\sim$`              | $\\sim$      |\n' +
+                '| 全等     | `$\\cong$`             | $\\cong$     |\n' +
+                '| 垂直     | `$\\perp$`             | $\\perp$     |\n' +
+                '| 平行     | `$\\parallel$`         | $\\parallel$ |\n\n' +
+                '## 9. 箭头与映射\n\n' +
+                '| 箭头     | KaTeX                  | 效果                |\n' +
+                '| -------- | ---------------------- | ------------------- |\n' +
+                '| 左箭头   | `$\\leftarrow$`         | $\\leftarrow$      |\n' +
+                '| 右箭头   | `$\\rightarrow$`        | $\\rightarrow$     |\n' +
+                '| 双箭头   | `$\\leftrightarrow$`    | $\\leftrightarrow$ |\n' +
+                '| 长右箭头 | `$\\longrightarrow$`    | $\\longrightarrow$ |\n' +
+                '| 映射     | `$\\mapsto$`            | $\\mapsto$         |\n\n' +
+                '## 10. 括号与分隔符\n\n' +
+                '| 功能         | KaTeX                        | 效果                           |\n' +
+                '| ------------ | ---------------------------- | ------------------------------ |\n' +
+                '| 自适应圆括号 | `$\\left( ... \\right)$`       | $\\left( \\frac{a}{b} \\right)$ |\n' +
+                '| 自适应方括号 | `$\\left[ ... \\right]$`       | $\\left[ \\frac{a}{b} \\right]$ |\n' +
+                '| 花括号       | `$\\{ ... \\}$`               | $\\{ x \\}$                    |\n' +
+                '| 绝对值       | `$\\left\\| ... \\right\\|$`   | $\\left\\| x \\right\\|$         |\n' +
+                '| 取整         | `$\\lfloor x \\rfloor$`        | $\\lfloor x \\rfloor$          |\n' +
+                '| 上取整       | `$\\lceil x \\rceil$`          | $\\lceil x \\rceil$            |\n\n' +
+                '## 11. 矩阵与行列式（可选）\n\n' +
+                '| 功能           | KaTeX                                              | 效果                                             |\n' +
+                '| -------------- | -------------------------------------------------- | ------------------------------------------------ |\n' +
+                '| 矩阵（无括号） | `$\\begin{matrix} a & b \\\\ c & d \\end{matrix}$`   | $\\begin{matrix} a & b \\\\ c & d \\end{matrix}$   |\n' +
+                '| 带圆括号       | `$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$`  | $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$ |\n' +
+                '| 带方括号       | `$\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$`  | $\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$ |\n' +
+                '| 行列式         | `$\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}$`  | $\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}$ |\n\n' +
+                '## 12. 其他常用符号\n\n' +
+                '| 符号       | KaTeX                         | 效果                          |\n' +
+                '| ---------- | ----------------------------- | ----------------------------- |\n' +
+                '| 省略号     | `$\\dots$`                     | $\\dots$                     |\n' +
+                '| 竖直省略号 | `$\\vdots$`                    | $\\vdots$                    |\n' +
+                '| 斜省略号   | `$\\ddots$`                    | $\\ddots$                    |\n' +
+                '| 度数       | `$^\\circ$`                    | $^\\circ$                    |\n' +
+                '| 圆周率     | `$\\pi$`                       | $\\pi$                       |\n' +
+                '| 自然常数   | `$e$`                         | $e$                         |\n' +
+                '| 虚数单位   | `$i$`                         | $i$                         |\n' +
+                '| 三角形     | `$\\triangle$`                 | $\\triangle$                 |\n' +
+                '| 角         | `$\\angle$`                    | $\\angle$                    |\n' +
+                '| 弧         | `$\\widehat{AB}$`              | $\\widehat{AB}$              |\n' +
+                '| 因为/所以  | `$\\because$` / `$\\therefore$` | $\\because$ / $\\therefore$ |\n\n' +
+                '## 13. 排版技巧\n\n' +
+                '- **空格**：`$\\,$`（小空格）、`$\\;$`（中空格）、`$\\quad$`（大空格）、`$\\qquad$`（更大）。\n' +
+                '- **文本**：`$\\text{文字}$` 用于在公式中插入普通文字。\n' +
+                '- **换行**：在 `$\\begin{aligned}$` 环境中用 `$\\\\$` 换行。\n' +
+                '- **对齐**：`$\\begin{aligned} ... \\end{aligned}$` 配合 `&` 对齐。\n\n' +
+                '> 以上内容涵盖了高中数学常用的 KaTeX 语法。更多细节可参考 [KaTeX 官方文档](https://katex.org/docs/supported.html)。';
+            // 保护所有反引号代码块（含 $ 符号），防止被 renderMarkdownWithMath 的 regex 误匹配
+            var codeBlocks = [];
+            mdContent = mdContent.replace(/`([^`]+)`/g, function(match, content) {
+                codeBlocks.push(content);
+                return '\u0000HC' + (codeBlocks.length - 1) + '\u0000';
+            });
+            var html = renderMarkdownWithMath(mdContent);
+            // 恢复代码块为 <code> 标签（高亮样式）
+            html = html.replace(/\u0000HC(\d+)\u0000/g, function(_, i) {
+                var c = codeBlocks[parseInt(i)];
+                return '<code class="help-code">' + c.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>';
+            });
+            var contentEl = document.getElementById('helpPageContent');
+            contentEl.innerHTML = html;
+            // 使用 KaTeX 直接同步渲染所有 td 中的 $...$ 公式
+            if (typeof katex !== 'undefined') {
+                try {
+                    var katexCells = contentEl.querySelectorAll('td');
+                    katexCells.forEach(function(td) {
+                        // 跳过已被 <code> 包裹的列（KaTeX 语法列）
+                        if (td.querySelector('code.help-code')) return;
+                        var text = td.textContent || '';
+                        if (text.indexOf('$') === -1) return;
+                        // 先 HTML escape 一次，再用 katex 替换所有 $...$ 公式
+                        var safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        var rendered = safe.replace(/\$([^$]+)\$/g, function(_, latex) {
+                            try {
+                                return katex.renderToString(latex, {
+                                    throwOnError: false,
+                                    displayMode: false
+                                });
+                            } catch(ke) {
+                                return '$' + latex + '$';
+                            }
+                        });
+                        td.innerHTML = rendered;
+                    });
+                } catch(e) {
+                    console.warn('[help] KaTeX 批量渲染失败:', e);
+                }
+            }
+            // 同时也尝试 MathJax 渲染（兜底）
+            setTimeout(function() {
+                renderMathJaxContent(contentEl);
+            }, 100);
+        }
+
+        // 帮助中心"返回"按钮
+        document.getElementById('closeHelpPage').addEventListener('click', function() {
+            goBack();
+        });
 
         function confirmLibPrint() {
             const modeRadio = document.querySelector('input[name="libPrintMode"]:checked');
