@@ -2723,7 +2723,7 @@
     <section id="helpPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
         <div class="sub-page-header">
             <button class="btn-back" id="closeHelpPage"><i class="fa fa-arrow-left"></i> 返回</button>
-            <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900"><i class="fa fa-question-circle text-primary mr-2"></i>帮助中心 - KaTeX 语法参考</h1>
+            <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900"><i class="fa fa-question-circle text-primary mr-2"></i>帮助中心 - KaTeX & Markdown 语法参考</h1>
         </div>
         <div class="bg-white rounded-xl shadow-sm p-6 math-content help-content" id="helpPageContent">
         </div>
@@ -4604,7 +4604,7 @@
         const mainPages = ['dashboard','questions','subjects','papers','statistics','knowledgePoints','practice','mistake'];
         let pageHistory = [];
 
-        function switchPage(page) {
+        function switchPage(page, skipHistory) {
             const isMainPage = mainPages.includes(page);
             // 仅主页面受启用开关限制，子页面无需检查
             if (isMainPage && page !== 'dashboard' && !appSettings.enabledPages[page]) {
@@ -4618,11 +4618,13 @@
             const currentEl = document.getElementById(`${currentPage}Page`) || document.getElementById(currentPage);
             if (currentEl) currentEl.classList.add('hidden');
             
-            // 子页面进入时记录来源，便于返回
-            if (!isMainPage) {
-                pageHistory.push(currentPage);
-            } else {
-                pageHistory = [];
+            // 子页面进入时记录来源，便于返回（goBack 调用时不记录）
+            if (!skipHistory) {
+                if (!isMainPage) {
+                    pageHistory.push(currentPage);
+                } else {
+                    pageHistory = [];
+                }
             }
             
             // 显示目标页面
@@ -4666,13 +4668,13 @@
             }
         }
 
-        // 返回上一页
+        // 返回上一页（skipHistory=true 避免返回时再次写入 pageHistory）
         function goBack(fallbackPage) {
             if (pageHistory.length > 0) {
                 const prevPage = pageHistory.pop();
-                switchPage(prevPage);
+                switchPage(prevPage, true);
             } else if (fallbackPage) {
-                switchPage(fallbackPage);
+                switchPage(fallbackPage, true);
             }
         }
 
@@ -5345,7 +5347,7 @@
             
             // 题目详情页面关闭按钮
             document.getElementById('closeQuestionDetail').addEventListener('click', function() {
-                goBack();
+                goBack('questions');
             });
             
             // 个人资料/设置页面
@@ -5456,7 +5458,7 @@
             const closePage = () => {
                 zoomImage.removeAttribute('src');
                 zoomImage.removeAttribute('alt');
-                goBack();
+                goBack('dashboard');
             };
 
             closeBtn.addEventListener('click', closePage);
@@ -10107,7 +10109,14 @@
 
         // 帮助中心"返回"按钮
         document.getElementById('closeHelpPage').addEventListener('click', function() {
-            goBack();
+            goBack('dashboard');
+        });
+
+        // 全局 Esc 键关闭子页面（帮助中心等）
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && currentPage === 'help') {
+                goBack('dashboard');
+            }
         });
 
         function confirmLibPrint() {
