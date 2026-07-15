@@ -2951,7 +2951,7 @@
             },
             statCardOrder: ['total', 'mastered', 'pending', 'subjects'],
             defaultPage: 'dashboard',
-            fontSize: 'medium'
+            fontSize: 100
         };
         // 迁移：确保旧版设置包含新增的字段
         if (appSettings.enabledPages.knowledgePoints === undefined) {
@@ -5167,9 +5167,10 @@
         }
 
         // 应用字号设置 - rem 文本 + px!important 规则按比例缩放
-        function applyFontSize() {
-            var scales = { small: 0.875, medium: 1, large: 1.125, xlarge: 1.25 };
-            var s = scales[appSettings.fontSize] || 1;
+        // optPercent: 可选覆盖参数（滑块实时预览用），传入 50-300 的百分比值
+        function applyFontSize(optPercent) {
+            var pct = (optPercent !== undefined) ? optPercent : (appSettings.fontSize || 100);
+            var s = pct / 100;
             // 1) html font-size → 影响所有 rem 文本（Tailwind class 等）
             document.documentElement.style.setProperty('font-size', Math.round(16 * s) + 'px', 'important');
             // 2) 移除旧的 px 覆写 style 标签
@@ -5193,6 +5194,12 @@
             st.id = 'afs';
             st.textContent = css;
             document.head.appendChild(st);
+        }
+
+        // 滑块拖动实时预览字号（不保存）
+        function applyFontSizePreview() {
+            var val = parseInt(document.getElementById('settingFontSize').value) || 100;
+            applyFontSize(val);
         }
 
         // 应用导航可见性
