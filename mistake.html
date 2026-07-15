@@ -328,6 +328,36 @@
                     color: #555 !important;
                     margin-top: 0.2em !important;
                 }
+                /* 知识点PDF导出样式（复现页面设计） */
+                #exportPrintArea .kp-row {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                #exportPrintArea .kp-sibling-group,
+                #exportPrintArea .kp-children,
+                #exportPrintArea .kp-subject-body {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                #exportPrintArea .kp-row .fa-chevron-down {
+                    font-size: 9pt !important;
+                }
+                #exportPrintArea .kp-subject-print-title {
+                    font-size: 14pt !important;
+                    font-weight: 700 !important;
+                    margin-bottom: 10px !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                #exportPrintArea .kp-subject-print-title .fa-chevron-down {
+                    font-size: 10pt !important;
+                }
+                #exportPrintArea .kp-subject-print-title span[style] {
+                    width: 10px !important;
+                    height: 10px !important;
+                }
             }
             #questionDetailContent .math-content {
                 font-size: 1.05rem;
@@ -475,6 +505,110 @@
             }
             .kp-drag-handle:active {
                 cursor: grabbing;
+            }
+            /* 导出科目选择弹窗 */
+            .kp-export-modal-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 60;
+                background: rgba(0,0,0,0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .kp-export-modal-overlay.hidden {
+                display: none;
+            }
+            .kp-export-modal {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+                width: 90%;
+                max-width: 440px;
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+            }
+            .kp-export-modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 16px 20px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .kp-export-modal-header button {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 24px;
+                line-height: 1;
+                padding: 0 4px;
+            }
+            .kp-export-modal-body {
+                padding: 16px 20px;
+                overflow-y: auto;
+                flex: 1;
+            }
+            .kp-export-modal-tools {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .kp-export-modal-tools button {
+                background: none;
+                border: none;
+                cursor: pointer;
+            }
+            .kp-export-subject-list {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                max-height: 50vh;
+                overflow-y: auto;
+            }
+            .kp-export-subject-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 12px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background 0.15s;
+                user-select: none;
+            }
+            .kp-export-subject-item:hover {
+                background: #f9fafb;
+            }
+            .kp-export-subject-item input[type="checkbox"] {
+                width: 18px;
+                height: 18px;
+                accent-color: #3B82F6;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+            .kp-export-subject-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .kp-export-subject-name {
+                font-size: 15px;
+                font-weight: 500;
+                color: #1f2937;
+                flex: 1;
+            }
+            .kp-export-subject-count {
+                font-size: 12px;
+                color: #9ca3af;
+                flex-shrink: 0;
+            }
+            .kp-export-modal-footer {
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
+                padding: 12px 20px;
+                border-top: 1px solid #e5e7eb;
             }
             #knowledgePointTree .kp-drag-hint {
                 display: none;
@@ -1646,6 +1780,9 @@
                     <button id="exportMindBtn" class="flex items-center bg-purple-500 text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
                         <i class="fa fa-download mr-1"></i> 导出 .xmind
                     </button>
+                    <button id="exportPdfBtn" class="flex items-center bg-red-500 text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
+                        <i class="fa fa-file-pdf-o mr-1"></i> 导出PDF
+                    </button>
                     <button id="importMindBtn" class="flex items-center bg-pink-500 text-white px-4 py-2 rounded-lg shadow-sm btn-effect cursor-pointer text-sm">
                         <i class="fa fa-sitemap mr-1"></i> 导入 .xmind
                     </button>
@@ -1663,6 +1800,29 @@
             <div id="knowledgePointTree" class="bg-white rounded-xl p-6 shadow-sm card-shadow min-h-[200px] show-drag-hint">
                 <p class="kp-drag-hint text-gray-400 text-xs mb-3"><i class="fa fa-grip-vertical mr-1"></i> 拖动 <i class="fa fa-grip-vertical"></i> 手柄可以调整知识点顺序</p>
                 <p class="text-gray-500 text-center py-8">暂无知识点，点击"添加知识点"开始创建</p>
+            </div>
+
+            <!-- 导出科目选择弹窗 -->
+            <div id="kpExportModal" class="kp-export-modal-overlay hidden">
+                <div class="kp-export-modal">
+                    <div class="kp-export-modal-header">
+                        <h3 class="text-lg font-bold text-gray-900"><i class="fa fa-file-pdf-o mr-2 text-red-500"></i>选择导出科目</h3>
+                        <button id="kpExportModalClose" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+                    </div>
+                    <div class="kp-export-modal-body">
+                        <div class="kp-export-modal-tools mb-3">
+                            <button id="kpExportSelectAll" class="text-sm text-primary hover:text-primary/80 cursor-pointer">全选</button>
+                            <span class="text-gray-300 mx-2">|</span>
+                            <button id="kpExportDeselectAll" class="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">取消全选</button>
+                            <span id="kpExportSelectionCount" class="text-xs text-gray-400 ml-auto"></span>
+                        </div>
+                        <div id="kpExportSubjectList" class="kp-export-subject-list"></div>
+                    </div>
+                    <div class="kp-export-modal-footer">
+                        <button id="kpExportModalCancel" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">取消</button>
+                        <button id="kpExportModalConfirm" class="px-5 py-2 text-sm text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer"><i class="fa fa-file-pdf-o mr-1"></i> 导出所选科目</button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -3425,9 +3585,33 @@
                 populateKnowledgePointParentOptions(subjId);
             });
 
-            // .xmind 文件导出/导入
+            // .xmind 文件导出/导入 / PDF导出
             document.getElementById('exportMindBtn').addEventListener('click', exportKnowledgePointsToMind);
+            document.getElementById('exportPdfBtn').addEventListener('click', openKpExportModal);
             document.getElementById('importMindBtn').addEventListener('click', importMindFile);
+
+            // 导出科目选择弹窗事件
+            document.getElementById('kpExportModalClose').addEventListener('click', closeKpExportModal);
+            document.getElementById('kpExportModalCancel').addEventListener('click', closeKpExportModal);
+            document.getElementById('kpExportModalConfirm').addEventListener('click', function() {
+                var selectedIds = kpExportModal_getSelected();
+                if (selectedIds.length === 0) {
+                    showNotification('请至少选择一个科目', 'warning');
+                    return;
+                }
+                closeKpExportModal();
+                exportKnowledgePointsToPdf(selectedIds);
+            });
+            document.getElementById('kpExportSelectAll').addEventListener('click', function() {
+                kpExportModal_setAll(true);
+            });
+            document.getElementById('kpExportDeselectAll').addEventListener('click', function() {
+                kpExportModal_setAll(false);
+            });
+            // 点击遮罩层关闭
+            document.getElementById('kpExportModal').addEventListener('click', function(e) {
+                if (e.target === this) closeKpExportModal();
+            });
         }
 
         // 渲染知识点树
@@ -4297,6 +4481,171 @@
                 console.error('生成 .xmind 文件失败:', err);
                 showNotification('导出失败，请重试', 'error');
             });
+        }
+
+        // ====== 导出科目选择弹窗 ======
+        function kpExportModal_getChecked() {
+            return Array.from(document.querySelectorAll('#kpExportSubjectList input[type="checkbox"]'));
+        }
+        function kpExportModal_getSelected() {
+            return kpExportModal_getChecked()
+                .filter(function(cb) { return cb.checked; })
+                .map(function(cb) { return cb.value; });
+        }
+        function kpExportModal_setAll(checked) {
+            kpExportModal_getChecked().forEach(function(cb) { cb.checked = checked; });
+            kpExportModal_updateCount();
+        }
+        function kpExportModal_updateCount() {
+            var total = kpExportModal_getChecked().length;
+            var sel = kpExportModal_getChecked().filter(function(cb) { return cb.checked; }).length;
+            var el = document.getElementById('kpExportSelectionCount');
+            if (el) el.textContent = '已选 ' + sel + '/' + total + ' 科';
+        }
+        function openKpExportModal() {
+            if (knowledgePoints.length === 0) {
+                showNotification('暂无知识点可导出', 'warning');
+                return;
+            }
+            // 收集有知识点的科目
+            var subjectsWithKp = subjects.filter(function(s) {
+                return knowledgePoints.some(function(kp) { return kp.subjectId === s.id; });
+            });
+            if (subjectsWithKp.length === 0) {
+                showNotification('没有可导出的科目', 'warning');
+                return;
+            }
+            var listHtml = '';
+            subjectsWithKp.forEach(function(s) {
+                var kpCount = knowledgePoints.filter(function(kp) { return kp.subjectId === s.id; }).length;
+                listHtml += '<label class="kp-export-subject-item">';
+                listHtml += '<input type="checkbox" value="' + s.id + '" checked onchange="kpExportModal_updateCount()">';
+                listHtml += '<span class="kp-export-subject-dot" style="background-color:' + (s.color || '#3B82F6') + ';"></span>';
+                listHtml += '<span class="kp-export-subject-name">' + escHtml(s.name) + '</span>';
+                listHtml += '<span class="kp-export-subject-count">' + kpCount + ' 个知识点</span>';
+                listHtml += '</label>';
+            });
+            document.getElementById('kpExportSubjectList').innerHTML = listHtml;
+            kpExportModal_updateCount();
+            document.getElementById('kpExportModal').classList.remove('hidden');
+        }
+        function closeKpExportModal() {
+            document.getElementById('kpExportModal').classList.add('hidden');
+        }
+
+        // ====== 知识点导出为 PDF ======
+        async function exportKnowledgePointsToPdf(selectedSubjectIds) {
+            if (knowledgePoints.length === 0) {
+                showNotification('暂无知识点可导出', 'warning');
+                return;
+            }
+
+            var subjectsToExport;
+            if (selectedSubjectIds && selectedSubjectIds.length > 0) {
+                // 使用用户选择的科目
+                subjectsToExport = subjects.filter(function(s) {
+                    return selectedSubjectIds.indexOf(s.id) >= 0;
+                });
+            } else {
+                // 兼容旧调用：从筛选下拉读取
+                var filterSubject = document.getElementById('kpFilterSubject').value;
+                if (filterSubject) {
+                    var subj = subjects.find(function(s) { return s.id === filterSubject; });
+                    subjectsToExport = subj ? [subj] : [];
+                } else {
+                    subjectsToExport = subjects.filter(function(s) {
+                        return knowledgePoints.some(function(kp) { return kp.subjectId === s.id; });
+                    });
+                }
+            }
+
+            if (subjectsToExport.length === 0) {
+                showNotification('没有可导出的科目', 'warning');
+                return;
+            }
+
+            // 递归渲染知识点为打印HTML（复现知识点页面设计风格）
+            function renderKpTreeForPrint(nodes, depth) {
+                if (!nodes || nodes.length === 0) return '';
+                var html = '<div class="space-y-1 kp-sibling-group">';
+                nodes.forEach(function(node) {
+                    var hasChildren = knowledgePoints.some(function(kp) { return kp.parentId === node.id; });
+                    var descCount = hasChildren ? countAllDescendants(node.id) : 0;
+                    var renderedName = renderKpName(node.name || '');
+                    html += '<div class="kp-row flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5" style="margin-left:' + (depth * 20) + 'px;">';
+                    html += '<div class="flex items-center space-x-2">';
+                    if (hasChildren) {
+                        html += '<span class="text-gray-400"><i class="fa fa-chevron-down"></i></span>';
+                    } else {
+                        html += '<span class="inline-block" style="width:16px;"></span>';
+                    }
+                    html += '<span class="text-xl font-medium text-gray-700 math-content">' + renderedName + '</span>';
+                    if (hasChildren) {
+                        html += '<span class="text-xs text-gray-400">(' + descCount + '个子知识)</span>';
+                    }
+                    html += '</div>';
+                    html += '</div>';
+                    if (hasChildren && node.children && node.children.length > 0) {
+                        html += '<div class="kp-children">';
+                        html += renderKpTreeForPrint(node.children, depth + 1);
+                        html += '</div>';
+                    }
+                });
+                html += '</div>';
+                return html;
+            }
+
+            // 构建完整HTML（复现知识点页面的科目分组设计）
+            var bodyHtml = '';
+            subjectsToExport.forEach(function(subject) {
+                var tree = getKnowledgePointTree(subject.id);
+                if (tree.length === 0) return;
+                bodyHtml += '<div class="print-section mb-6">';
+                bodyHtml += '<h3 class="text-lg font-bold mb-3 flex items-center kp-subject-print-title" style="color:' + (subject.color || '#3B82F6') + ';">';
+                bodyHtml += '<i class="fa fa-chevron-down mr-1"></i>';
+                bodyHtml += '<span class="w-3 h-3 rounded-full inline-block mr-2" style="background-color:' + (subject.color || '#3B82F6') + ';"></span>';
+                bodyHtml += escHtml(subject.name || '未知科目');
+                bodyHtml += '</h3>';
+                bodyHtml += '<div class="kp-subject-body">';
+                bodyHtml += renderKpTreeForPrint(tree, 0);
+                bodyHtml += '</div>';
+                bodyHtml += '</div>';
+                bodyHtml += '<div class="print-page-break"></div>';
+            });
+
+            // 移除最后一个多余的分页符
+            bodyHtml = bodyHtml.replace(/<div class="print-page-break"><\/div>$/, '');
+
+            var grade = grades.find(function(g) { return g.id === currentGradeId; });
+            var gradeName = grade ? grade.name : '';
+            var title = (subjectsToExport.length === 1 ? subjectsToExport[0].name + '知识点' : '知识点汇总');
+
+            var printArea = document.getElementById('exportPrintArea');
+            printArea.innerHTML = '<div class="print-root">' +
+                '<div class="print-section">' +
+                '<div class="print-title">' + escHtml(title) + '</div>' +
+                (gradeName ? '<div class="print-meta">年级：' + escHtml(gradeName) + '　导出时间：' + formatDate(new Date().toISOString()) + '</div>' : '') +
+                '</div>' +
+                '<div class="print-page-break"></div>' +
+                bodyHtml +
+                '</div>';
+
+            // 显示打印区域并渲染MathJax
+            printArea.classList.remove('hidden');
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                try {
+                    await MathJax.typesetPromise(printArea.querySelectorAll('.math-content'));
+                } catch (e) {
+                    console.warn('MathJax typeset failed for knowledge point PDF:', e);
+                }
+            }
+
+            var afterPrint = function() {
+                printArea.classList.add('hidden');
+                window.removeEventListener('afterprint', afterPrint);
+            };
+            window.addEventListener('afterprint', afterPrint);
+            window.print();
         }
 
         // ====== XMind .xmind 文件导入 ======
