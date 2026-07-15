@@ -2289,6 +2289,25 @@
                         </div>
                     </div>
                     
+                    <!-- 显示偏好 -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                            <i class="fa fa-text-height mr-2 text-primary"></i>显示偏好
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">拖动滑块调整页面整体字号大小，实时预览。</p>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs text-gray-400 w-8 shrink-0">50%</span>
+                                <input type="range" id="settingFontSize" min="50" max="300" value="100" step="5" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" oninput="document.getElementById('settingFontSizeDisplay').textContent=this.value+'%';applyFontSizePreview()">
+                                <span class="text-xs text-gray-400 w-8 shrink-0">300%</span>
+                                <span id="settingFontSizeDisplay" class="text-sm font-semibold text-primary w-14 text-center shrink-0">100%</span>
+                            </div>
+                            <div class="mt-2">
+                                <button type="button" onclick="document.getElementById('settingFontSize').value=100;document.getElementById('settingFontSizeDisplay').textContent='100%';applyFontSizePreview()" class="text-xs text-primary hover:underline">恢复默认</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 默认首页 -->
                     <div class="mb-6">
                         <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
@@ -2931,7 +2950,8 @@
                 recentQuestions: true
             },
             statCardOrder: ['total', 'mastered', 'pending', 'subjects'],
-            defaultPage: 'dashboard'
+            defaultPage: 'dashboard',
+            fontSize: 'medium'
         };
         // 迁移：确保旧版设置包含新增的字段
         if (appSettings.enabledPages.knowledgePoints === undefined) {
@@ -2944,6 +2964,10 @@
         }
         if (appSettings.enabledPages.mistake === undefined) {
             appSettings.enabledPages.mistake = true;
+            localStorage.setItem('appSettings', JSON.stringify(appSettings));
+        }
+        if (appSettings.fontSize === undefined || typeof appSettings.fontSize === 'string') {
+            appSettings.fontSize = 100;
             localStorage.setItem('appSettings', JSON.stringify(appSettings));
         }
         const itemsPerPage = 10;
@@ -4932,6 +4956,12 @@
             document.getElementById('settingDefaultPage').value = appSettings.defaultPage;
             // 更新默认首页下拉选项的可见性
             updateDefaultPageOptions();
+
+            // 填充字号设置
+            var fsSlider = document.getElementById('settingFontSize');
+            var fsDisplay = document.getElementById('settingFontSizeDisplay');
+            if (fsSlider) { fsSlider.value = appSettings.fontSize || 100; }
+            if (fsDisplay) { fsDisplay.textContent = (appSettings.fontSize || 100) + '%'; }
             
             // 重建排序列表（按当前顺序）
             rebuildStatCardOrderList();
@@ -5072,6 +5102,10 @@
             } else {
                 appSettings.defaultPage = defaultPage;
             }
+
+            // 读取字号设置
+            var fsSlider = document.getElementById('settingFontSize');
+            if (fsSlider) appSettings.fontSize = parseInt(fsSlider.value) || 100;
             
             // 保存到 localStorage
             localStorage.setItem('appSettings', JSON.stringify(appSettings));
@@ -5101,7 +5135,8 @@
                     recentQuestions: true
                 },
                 statCardOrder: ['total', 'mastered', 'pending', 'subjects'],
-                defaultPage: 'dashboard'
+                defaultPage: 'dashboard',
+                fontSize: 100
             };
             localStorage.setItem('appSettings', JSON.stringify(appSettings));
             applySettings();
@@ -5120,12 +5155,44 @@
             
             // 3. 重新排列统计卡片
             applyStatCardOrder();
+
+            // 4. 应用字号
+            applyFontSize();
             
-            // 4. 如果当前页面被禁用，切换到 dashboard
+            // 5. 如果当前页面被禁用，切换到 dashboard
             const currentPageKey = currentPage;
             if (currentPageKey !== 'dashboard' && !appSettings.enabledPages[currentPageKey]) {
                 switchPage('dashboard');
             }
+        }
+
+        // 应用字号设置 - rem 文本 + px!important 规则按比例缩放
+        function applyFontSize() {
+            var scales = { small: 0.875, medium: 1, large: 1.125, xlarge: 1.25 };
+            var s = scales[appSettings.fontSize] || 1;
+            // 1) html font-size → 影响所有 rem 文本（Tailwind class 等）
+            document.documentElement.style.setProperty('font-size', Math.round(16 * s) + 'px', 'important');
+            // 2) 移除旧的 px 覆写 style 标签
+            var old = document.getElementById('afs');
+            if (old) old.remove();
+            if (s === 1) return;
+            // 3) 按比例覆写移动端 px!important 字号规则
+            var px = [
+                [10,['table th','table td:last-child button']],
+                [11,['#dashboardStatCards p','#dashboardStatCards .mt-4','#batchToolbar button','#practiceModeRandom,#practiceModeSelect,#practiceModePaper','.ocr-btn','#createPaperPage .overflow-y-auto tbody tr td']],
+                [12,['table td','#statisticsPage table td','.btn-effect','#practiceRandomConfig label','#practice-header .text-sm','#practice-exit-btn,#practice-submit-top-btn','#questionForm label','#practice-result-content .p-3','#mistakePage select,#mistakePage input[type="text"]','#notification','#dashboardQuickActions button','#pagination button']],
+                [13,['select,input[type="text"],input[type="number"]','.input-focus','#practiceStartBtn','.practice-answer-area .p-3','.practice-answer-area textarea','#questionForm textarea,#questionForm select,#questionForm input[type="text"],#questionForm input[type="number"]','#practice-result-back']],
+                [14,['.practice-question-card .text-base']],
+                [15,['#practice-submit-btn']],
+                [16,['#dashboardStatCards .w-12 i']]
+            ];
+            var css = '@media(max-width:767px){';
+            px.forEach(function(r){ css += r[1].join(',') + '{font-size:' + Math.round(r[0] * s) + 'px!important;}'; });
+            css += '}';
+            var st = document.createElement('style');
+            st.id = 'afs';
+            st.textContent = css;
+            document.head.appendChild(st);
         }
 
         // 应用导航可见性
