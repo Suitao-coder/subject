@@ -413,7 +413,7 @@
             .kp-children {
                 overflow: hidden;
                 transition: max-height 0.3s ease, opacity 0.3s ease;
-                max-height: 5000px;
+                max-height: 999999px;
                 opacity: 1;
             }
             .kp-children.collapsed {
@@ -438,7 +438,7 @@
             }
             .kp-subject-body {
                 transition: max-height 0.3s ease, opacity 0.3s ease;
-                max-height: 10000px;
+                max-height: 999999px;
                 opacity: 1;
                 overflow: hidden;
             }
@@ -448,6 +448,7 @@
             }
             /* 知识点拖拽排序 */
             .kp-row {
+                min-height: 48px;
                 transition: transform 0.15s ease, box-shadow 0.15s ease;
             }
             .kp-row.dragging {
@@ -5166,29 +5167,48 @@
             }
         }
 
-        // 应用字号设置 - rem 文本 + px!important 规则按比例缩放
+        // 应用字号设置 - 仅知识点和题目内容缩放，其他保持不变
         // optPercent: 可选覆盖参数（滑块实时预览用），传入 50-300 的百分比值
         function applyFontSize(optPercent) {
             var pct = (optPercent !== undefined) ? optPercent : (appSettings.fontSize || 100);
             var s = pct / 100;
-            // 1) html font-size → 影响所有 rem 文本（Tailwind class 等）
-            document.documentElement.style.setProperty('font-size', Math.round(16 * s) + 'px', 'important');
-            // 2) 移除旧的 px 覆写 style 标签
+            // 1) 重置 html font-size 为默认，导航栏/页脚/辅助页面均不受影响
+            document.documentElement.style.setProperty('font-size', '16px', 'important');
+            var footerEl = document.querySelector('footer');
+            if (footerEl) footerEl.style.setProperty('font-size', '16px', 'important');
+            // 2) 只在知识点和题目内容页面设置缩放
+            var contentPages = ['questionsPage', 'practicePage', 'practiceResultPage', 'mistakePage', 'knowledgePointsPage'];
+            contentPages.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.style.setProperty('font-size', Math.round(16 * s) + 'px', 'important');
+            });
+            // 3) 移除旧的 px 覆写
             var old = document.getElementById('afs');
             if (old) old.remove();
             if (s === 1) return;
-            // 3) 按比例覆写移动端 px!important 字号规则
-            var px = [
-                [10,['table th','table td:last-child button']],
-                [11,['#dashboardStatCards p','#dashboardStatCards .mt-4','#batchToolbar button','#practiceModeRandom,#practiceModeSelect,#practiceModePaper','.ocr-btn','#createPaperPage .overflow-y-auto tbody tr td']],
-                [12,['table td','#statisticsPage table td','.btn-effect','#practiceRandomConfig label','#practice-header .text-sm','#practice-exit-btn,#practice-submit-top-btn','#questionForm label','#practice-result-content .p-3','#mistakePage select,#mistakePage input[type="text"]','#notification','#dashboardQuickActions button','#pagination button']],
-                [13,['select,input[type="text"],input[type="number"]','.input-focus','#practiceStartBtn','.practice-answer-area .p-3','.practice-answer-area textarea','#questionForm textarea,#questionForm select,#questionForm input[type="text"],#questionForm input[type="number"]','#practice-result-back']],
-                [14,['.practice-question-card .text-base']],
-                [15,['#practice-submit-btn']],
-                [16,['#dashboardStatCards .w-12 i']]
+            // 4) 按比例覆写内容页移动端 px!important 字号
+            var scope = ['#questionsPage', '#practicePage', '#practiceResultPage', '#mistakePage', '#knowledgePointsPage'];
+            var pxData = [
+                [10, ['table th', 'table td:last-child button']],
+                [11, ['#dashboardStatCards p', '#dashboardStatCards .mt-4', '#batchToolbar button', '#practiceModeRandom,#practiceModeSelect,#practiceModePaper', '.ocr-btn', '#createPaperPage .overflow-y-auto tbody tr td']],
+                [12, ['table td', '#statisticsPage table td', '.btn-effect', '#practiceRandomConfig label', '#practice-header .text-sm', '#practice-exit-btn,#practice-submit-top-btn', '#questionForm label', '#practice-result-content .p-3', '#mistakePage select,#mistakePage input[type="text"]', '#notification', '#dashboardQuickActions button', '#pagination button']],
+                [13, ['select,input[type="text"],input[type="number"]', '.input-focus', '#practiceStartBtn', '.practice-answer-area .p-3', '.practice-answer-area textarea', '#questionForm textarea,#questionForm select,#questionForm input[type="text"],#questionForm input[type="number"]', '#practice-result-back']],
+                [14, ['.practice-question-card .text-base']],
+                [15, ['#practice-submit-btn']],
+                [16, ['#dashboardStatCards .w-12 i']]
             ];
             var css = '@media(max-width:767px){';
-            px.forEach(function(r){ css += r[1].join(',') + '{font-size:' + Math.round(r[0] * s) + 'px!important;}'; });
+            pxData.forEach(function(rule) {
+                var baseSize = rule[0];
+                var sels = rule[1];
+                sels.forEach(function(selGroup) {
+                    var parts = selGroup.split(',');
+                    parts.forEach(function(part) {
+                        var trimmed = part.trim();
+                        css += scope.map(function(p) { return p + ' ' + trimmed; }).join(',') + '{font-size:' + Math.round(baseSize * s) + 'px!important;}';
+                    });
+                });
+            });
             css += '}';
             var st = document.createElement('style');
             st.id = 'afs';
