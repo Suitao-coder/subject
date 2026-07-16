@@ -1411,7 +1411,7 @@
                             <option value="other">其他</option>
                         </select>
                         
-                        <button id="resetFilters" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 btn-effect cursor-pointer">">
+                        <button id="resetFilters" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 btn-effect cursor-pointer">
                             <i class="fa fa-refresh mr-1"></i> 重置
                         </button>
                     </div>
@@ -2744,7 +2744,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm font-medium text-gray-900">XLSX 文件</p>
-                                <p class="text-xs text-gray-500 mt-1">文件第一行必须为：序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源</p>
+                                <p class="text-xs text-gray-500 mt-1">文件第一行必须为：序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源<br><span class="text-primary">复合题支持：连续行使用同一序号（如 1、1），将自动合并为数道小题组成的复合题</span></p>
                             </div>
                             <button type="button" id="selectImportPaperFileBtn" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
                                 <i class="fa fa-upload mr-2"></i> 选择 XLSX
@@ -2815,7 +2815,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-900">XLSX 文件</p>
-                            <p class="text-xs text-gray-500 mt-1">文件第一行必须为：<b>科目</b>,序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源</p>
+                            <p class="text-xs text-gray-500 mt-1">文件第一行必须为：<b>科目</b>,序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源<br><span class="text-primary">复合题支持：相同科目的连续行使用同一序号（如 1、1），将自动合并为数道小题组成的复合题</span></p>
                         </div>
                         <button type="button" id="selectBatchImportFileBtn" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
                             <i class="fa fa-upload mr-2"></i> 选择 XLSX
@@ -7491,7 +7491,16 @@
                     <td class="px-4 py-3 text-sm text-gray-500">${i + 1}</td>
                     <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">${typeLabel}</span></td>
                     <td class="px-4 py-3"><span class="text-xs">${subj ? subj.name : '未知'}</span></td>
-                    <td class="px-4 py-3 text-sm text-gray-700 td-content-cell" style="max-width:380px"><span class="math-content">${renderLatexContent(q.content || '')}</span></td>
+                    <td class="px-4 py-3 text-sm text-gray-700 td-content-cell" style="max-width:380px">
+                        <span class="math-content">${renderLatexContent(q.content || '')}</span>
+                        ${q.type === 'compound' && q.subQuestions && q.subQuestions.length ? `
+                        <div class="mt-1 ml-2 pl-2 border-l-2 border-indigo-200 space-y-0.5">
+                            ${q.subQuestions.map((sq, si) => `
+                            <div class="text-xs text-gray-500"><span class="text-indigo-600 font-medium">(${si+1})</span> <span class="math-content">${renderLatexContent(sq.content || '')}</span> <span class="text-green-600">答案:<span class="math-content">${renderLatexContent(sq.answer || '')}</span></span></div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                    </td>
                     <td class="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate math-content" title="${escHtml(kpText)}">${renderQuestionKpHtml(q).replace(/<br>/g, ' | ') || '-'}</td>
                     <td class="px-4 py-3 text-right">
                         <button class="text-xs text-danger hover:text-danger/80 remove-mistake-btn cursor-pointer px-2 py-1" data-id="${q.id}">
@@ -7696,6 +7705,17 @@
                     </td>
                     <td class="px-6 py-4 td-content-cell" style="max-width:380px">
                         <div class="text-sm font-medium text-gray-900"><span class="math-content">${renderLatexContent(question.content || '')}</span></div>
+                        ${question.type === 'compound' ? (
+                            (function() {
+                                var sqArr = question.subQuestions;
+                                if (sqArr && sqArr.length) {
+                                        return '<div class=\"mt-2 space-y-1 pl-3 border-l-2 border-indigo-200\">' + sqArr.map(function(sq, si) {
+                                        return '<div class=\"text-xs text-gray-600\"><span class=\"text-indigo-600 font-medium\">(' + (si+1) + ')</span> <span class=\"math-content\">' + renderLatexContent(sq.content || '') + '</span> <span class=\"text-green-600\">答案:<span class=\"math-content\">' + renderLatexContent(sq.answer || '') + '</span></span></div>';
+                                        }).join('') + '</div>';
+                                }
+                                return '';
+                            })()
+                        ) : ''}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${question.type === 'choice' ? 'bg-blue-100 text-blue-700' : question.type === 'multi' ? 'bg-orange-100 text-orange-700' : question.type === 'fill' ? 'bg-purple-100 text-purple-700' : question.type === 'bool' ? 'bg-amber-100 text-amber-700' : question.type === 'compound' ? 'bg-indigo-100 text-indigo-700' : 'bg-teal-100 text-teal-700'}">
@@ -8518,10 +8538,11 @@
                 multi: filteredQuestions.filter(q => (q.type || 'other') === 'multi'),
                 fill: filteredQuestions.filter(q => (q.type || 'other') === 'fill'),
                 bool: filteredQuestions.filter(q => (q.type || 'other') === 'bool'),
-                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill', 'bool'].includes(q.type || 'other'))
+                compound: filteredQuestions.filter(q => (q.type || 'other') === 'compound'),
+                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill', 'bool', 'compound'].includes(q.type || 'other'))
             };
-            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '其他', compound: '复合题' };
-            const sections = ['choice', 'multi', 'fill', 'bool', 'other'];
+            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', compound: '复合题', other: '其他' };
+            const sections = ['choice', 'multi', 'fill', 'bool', 'compound', 'other'];
 
             container.innerHTML = sections.map(type => {
                 const items = grouped[type];
@@ -8690,10 +8711,11 @@
                 multi: filteredQuestions.filter(q => (q.type || 'other') === 'multi'),
                 fill: filteredQuestions.filter(q => (q.type || 'other') === 'fill'),
                 bool: filteredQuestions.filter(q => (q.type || 'other') === 'bool'),
-                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill', 'bool'].includes(q.type || 'other'))
+                compound: filteredQuestions.filter(q => (q.type || 'other') === 'compound'),
+                other: filteredQuestions.filter(q => !['choice', 'multi', 'fill', 'bool', 'compound'].includes(q.type || 'other'))
             };
-            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '其他', compound: '复合题' };
-            const sections = ['choice', 'multi', 'fill', 'bool', 'other'];
+            const typeLabels = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', compound: '复合题', other: '其他' };
+            const sections = ['choice', 'multi', 'fill', 'bool', 'compound', 'other'];
 
             container.innerHTML = sections.map(type => {
                 const items = grouped[type];
@@ -8926,7 +8948,18 @@
                             <div class="cursor-grab drag-handle p-2 rounded border border-dotted border-gray-200 mr-2" title="拖动以调整顺序">☰</div>
                             <div class="flex-1">
                                 <div class="text-sm text-gray-500 mb-2">第 ${index + 1} 题 · ${question.type === 'choice' ? '选择题' : question.type === 'multi' ? '多选题' : question.type === 'fill' ? '填空题' : question.type === 'bool' ? '判断题' : question.type === 'compound' ? '复合题' : '其他'}</div>
-                                <div class="text-gray-900 font-medium line-clamp-2 mb-3"><span class="math-content">${renderLatexContent(question.content || '未填写题面')}</span></div>
+                                <div class="text-gray-900 font-medium mb-3"><span class="math-content">${renderLatexContent(question.content || '未填写题面')}</span></div>
+                                ${question.type === 'compound' && question.subQuestions && question.subQuestions.length ? `
+                                <div class="mt-2 mb-3 ml-3 pl-3 border-l-2 border-indigo-300 space-y-1">
+                                    ${question.subQuestions.map((sq, si) => `
+                                    <div class="text-xs text-gray-600">
+                                        <span class="text-indigo-600 font-medium">(${si+1})</span>
+                                        <span class="math-content">${renderLatexContent(sq.content || '')}</span>
+                                        <span class="text-green-600 ml-1">答案：<span class="math-content">${renderLatexContent(sq.answer || '')}</span></span>
+                                    </div>
+                                    `).join('')}
+                                </div>
+                                ` : ''}
                                 <div class="flex flex-wrap gap-3 text-xs">
                                     <span style="color: ${subject ? subject.color : '#6B7280'}">科目：${subjectName}</span>
                                     <span class="text-gray-500">难度：${difficultyText}</span>
@@ -9115,6 +9148,35 @@
             return { id: newKp.id, isNew: true };
         }
 
+        // 解析题型字符串，支持：选择题、多选题、填空题、判断题、复合题
+        function parseQuestionType(str) {
+            const s = String(str || '').trim();
+            if (/多选/.test(s) || /multi/i.test(s)) return 'multi';
+            if (/选择/.test(s) || /choice/i.test(s)) return 'choice';
+            if (/填空/.test(s) || /fill/i.test(s)) return 'fill';
+            if (/判断/.test(s) || /bool/i.test(s) || /true/i.test(s) || /false/i.test(s)) return 'bool';
+            if (/复合/.test(s) || /compound/i.test(s)) return 'compound';
+            return 'other';
+        }
+
+        // 创建空小题对象（用于复合题导入）
+        function createImportSubQuestion(type, content, answer, options, explanation) {
+            return {
+                id: 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                type: type || 'choice',
+                content: content || '',
+                answer: answer || '',
+                options: (type === 'choice' || type === 'multi') ? (options || [
+                    { label: 'A', text: '', photo: '' },
+                    { label: 'B', text: '', photo: '' },
+                    { label: 'C', text: '', photo: '' },
+                    { label: 'D', text: '', photo: '' }
+                ]) : [],
+                explanation: explanation || '',
+                photos: []
+            };
+        }
+
         function handleImportPaperFileSelection(event) {
             const file = event.target.files && event.target.files[0];
             const fileNameEl = document.getElementById('importPaperFileName');
@@ -9172,52 +9234,135 @@
                     showNotification('科目名称无效', 'error');
                     return;
                 }
-                const addedQuestionIds = [];
-                let newKpCount = 0;
+                // 第一步：按序号(列0)分组，相同序号的连续行将合并为复合题
+                // 规则：遇到"复合题"题型自动进入复合模式，后续行自动归入该复合题组
+                const groups = [];
+                let currentCompoundGroup = null;
                 for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
                     const row = rows[rowIndex];
-                    if (!row || row.length < expectedHeader.length) continue;
-                    const questionType = String(row[1] || '').trim();
-                    const kpNames = String(row[10] || '').trim().split(/[,，、;；\s]+/).filter(Boolean);
+                    if (!row || !row.length) continue;
+                    const orderNo = String(row[0] || '').trim();
+                    const qType = String(row[1] || '').trim();
+                    const isCompoundRow = (qType === '复合题' || /复合/i.test(qType));
+
+                    // 当前行是复合题标题行
+                    if (isCompoundRow && orderNo) {
+                        currentCompoundGroup = { orderNo: orderNo, rows: [row] };
+                        groups.push(currentCompoundGroup);
+                        continue;
+                    }
+
+                    // 处于复合模式中，子题行
+                    if (currentCompoundGroup && (orderNo === currentCompoundGroup.orderNo || !orderNo)) {
+                        currentCompoundGroup.rows.push(row);
+                        continue;
+                    }
+
+                    // 否则创建新普通题组
+                    if (!orderNo) continue;
+                    currentCompoundGroup = null;
+                    groups.push({ orderNo: orderNo, rows: [row] });
+                }
+                const addedQuestionIds = [];
+                let newKpCount = 0;
+                let compoundCount = 0;
+                for (let gi = 0; gi < groups.length; gi++) {
+                    const group = groups[gi];
+                    const firstRow = group.rows[0];
+                    const kpNames = String(firstRow[10] || '').trim().split(/[,，、;；\s]+/).filter(Boolean);
                     const kpIds = [];
-                    kpNames.forEach(kpName => {
+                    kpNames.forEach(function(kpName) {
                         const r = findOrCreateKnowledgePointByName(kpName, subject.id, null);
                         if (r.isNew) newKpCount++;
                         if (r.id) kpIds.push(r.id);
                     });
-                    const question = {
-                        id: generateId(),
-                        type: /选择/.test(questionType) || /choice/i.test(questionType) ? 'choice'
-                            : /填空/.test(questionType) || /fill/i.test(questionType) ? 'fill'
-                            : /判断/.test(questionType) || /bool/i.test(questionType) || /true/i.test(questionType) || /false/i.test(questionType) ? 'bool'
-                            : 'other',
-                        content: String(row[2] || '').trim(),
-                        answer: String(row[7] || '').trim(),
-                        explanation: String(row[8] || '').trim(),
-                        difficulty: String(row[9] || '').trim(),
-                        knowledgePointIds: kpIds,
-                        knowledgePoint: kpIds.length > 0 ? kpIds[0] : '',
-                        source: String(row[11] || '').trim(),
-                        subjectId: subject.id,
-                        status: 'pending',
-                        date: new Date().toISOString(),
-                        photos: [],
-                        explanationPhotos: [],
-                        options: []
-                    };
-                    if (question.type === 'choice') {
-                        question.options = [
-                            { label: 'A', text: String(row[3] || '').trim(), photo: '' },
-                            { label: 'B', text: String(row[4] || '').trim(), photo: '' },
-                            { label: 'C', text: String(row[5] || '').trim(), photo: '' },
-                            { label: 'D', text: String(row[6] || '').trim(), photo: '' }
-                        ];
+                    if (group.rows.length === 1) {
+                        // 普通单题
+                        const row = firstRow;
+                        const qType = parseQuestionType(String(row[1] || ''));
+                        const question = {
+                            id: generateId(),
+                            type: qType,
+                            content: String(row[2] || '').trim(),
+                            answer: String(row[7] || '').trim(),
+                            explanation: String(row[8] || '').trim(),
+                            difficulty: String(row[9] || '').trim(),
+                            knowledgePointIds: kpIds,
+                            knowledgePoint: kpIds.length > 0 ? kpIds[0] : '',
+                            source: String(row[11] || '').trim(),
+                            subjectId: subject.id,
+                            status: 'pending',
+                            date: new Date().toISOString(),
+                            photos: [],
+                            explanationPhotos: [],
+                            options: []
+                        };
+                        if (question.type === 'choice' || question.type === 'multi') {
+                            question.options = [
+                                { label: 'A', text: String(row[3] || '').trim(), photo: '' },
+                                { label: 'B', text: String(row[4] || '').trim(), photo: '' },
+                                { label: 'C', text: String(row[5] || '').trim(), photo: '' },
+                                { label: 'D', text: String(row[6] || '').trim(), photo: '' }
+                            ];
+                        }
+                        if (question.type === 'compound') {
+                            question.subQuestions = [];
+                        }
+                        if (!question.content && (!question.options || question.options.every(function(opt) { return !opt.text; }))) {
+                            continue;
+                        }
+                        questions.push(question);
+                        addedQuestionIds.push(question.id);
+                    } else {
+                        // 复合题：相同序号的多行合并
+                        compoundCount++;
+                        const firstRowType = parseQuestionType(String(firstRow[1] || ''));
+                        // 第一行若是"复合题"标题行则跳过，否则全部作为小题
+                        const startSi = firstRowType === 'compound' ? 1 : 0;
+                        const mainContent = String(firstRow[2] || '').trim(); // 第一行的题面作为题干
+                        const subQuestions = [];
+                        for (var si = startSi; si < group.rows.length; si++) {
+                            var row = group.rows[si];
+                            var sqType = parseQuestionType(String(row[1] || ''));
+                            if (sqType === 'compound') sqType = 'choice'; // 小题层面不支持嵌套复合
+                            var sqOptions = null;
+                            if (sqType === 'choice' || sqType === 'multi') {
+                                sqOptions = [
+                                    { label: 'A', text: String(row[3] || '').trim(), photo: '' },
+                                    { label: 'B', text: String(row[4] || '').trim(), photo: '' },
+                                    { label: 'C', text: String(row[5] || '').trim(), photo: '' },
+                                    { label: 'D', text: String(row[6] || '').trim(), photo: '' }
+                                ];
+                            }
+                            subQuestions.push(createImportSubQuestion(
+                                sqType,
+                                String(row[2] || '').trim(),
+                                String(row[7] || '').trim(),
+                                sqOptions,
+                                String(row[8] || '').trim()
+                            ));
+                        }
+                        const question = {
+                            id: generateId(),
+                            type: 'compound',
+                            content: mainContent,
+                            answer: '',
+                            explanation: String(firstRow[8] || '').trim(),
+                            difficulty: String(firstRow[9] || '').trim(),
+                            knowledgePointIds: kpIds,
+                            knowledgePoint: kpIds.length > 0 ? kpIds[0] : '',
+                            source: String(firstRow[11] || '').trim(),
+                            subjectId: subject.id,
+                            status: 'pending',
+                            date: new Date().toISOString(),
+                            photos: [],
+                            explanationPhotos: [],
+                            options: [],
+                            subQuestions: subQuestions
+                        };
+                        questions.push(question);
+                        addedQuestionIds.push(question.id);
                     }
-                    if (!question.content && (!question.options || question.options.every(opt => !opt.text))) {
-                        continue;
-                    }
-                    questions.push(question);
-                    addedQuestionIds.push(question.id);
                 }
                 if (!addedQuestionIds.length) {
                     showNotification('未从 XLSX 中解析出有效题目', 'error');
@@ -9238,7 +9383,18 @@
                 updateCharts();
                 renderPaperList();
                 closeImportPaperPage();
+                // 统计实际导入的小题数
+                const actualQuestionIds = new Set(addedQuestionIds);
+                const totalSubCount = questions.filter(q => actualQuestionIds.has(q.id) && q.type === 'compound' && Array.isArray(q.subQuestions)).reduce((s, q) => s + q.subQuestions.length, 0);
+                // 验证 localStorage 保存完整性
+                if (currentGradeId) {
+                    var raw = localStorage.getItem('data_' + currentGradeId);
+                    if (raw) {
+                        try { JSON.parse(raw); } catch(e) { console.error(e); }
+                    }
+                }
                 let paperMsg = `已导入 ${addedQuestionIds.length} 道题并创建试卷"${paperName}"`;
+                if (compoundCount > 0) paperMsg += `（含 ${compoundCount} 道复合题，共 ${totalSubCount} 道小题）`;
                 if (newKpCount > 0) paperMsg += `，自动创建 ${newKpCount} 个新知识点`;
                 showNotification(paperMsg, 'success');
             }, function() {
@@ -9291,60 +9447,152 @@
                     showNotification('XLSX 首行格式不匹配。请确保第一行：科目,序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源', 'error');
                     return;
                 }
-                let addedCount = 0;
+                // 第一步：按(科目,序号)分组（详见下方循环）
+                // 第一步：按(科目,序号)分组
+                // 规则：遇到"复合题"题型自动进入复合模式，后续行自动归入该复合题组
+                // 直到遇到科目+序号不同的新行才退出复合模式
+                const groups = [];
                 let skippedCount = 0;
-                let newKpCount = 0;
+                let currentCompoundGroup = null;
                 for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
                     const row = rows[rowIndex];
-                    if (!row || row.length < expectedHeader.length) { skippedCount++; continue; }
-                    let subjectName = String(row[0] || '').trim();
-                    const questionType = String(row[2] || '').trim();
-                    const content = String(row[3] || '').trim();
-                    const answer = String(row[8] || '').trim();
-                    const optionA = String(row[4] || '').trim();
-                    const optionB = String(row[5] || '').trim();
-                    const optionC = String(row[6] || '').trim();
-                    const optionD = String(row[7] || '').trim();
-                    if (!content && !optionA && !optionB && !optionC && !optionD) { skippedCount++; continue; }
-                    const subject = findOrCreateSubjectByName(subjectName);
-                    if (!subject) { skippedCount++; continue; }
-                    const kpNames = String(row[11] || '').trim().split(/[,，、;；\s]+/).filter(Boolean);
+                    // 检查此行是否有任何实际内容（至少有一个非空单元格）
+                    var hasAnyContent = row && row.some(function(cell) { return cell !== undefined && cell !== null && String(cell).trim() !== ''; });
+                    if (!row || !hasAnyContent) { skippedCount++; continue; }
+                    const rawSubject = row[0];
+                    const rawOrder = row[1];
+                    const subjectName = String(rawSubject || '').trim();
+                    const orderNo = String(rawOrder || '').trim();
+                    const qType = String(row[2] || '').trim();
+                    const key = subjectName + '|||' + orderNo;
+                    const isCompoundRow = (qType === '复合题' || /复合/i.test(qType));
+
+                    // 如果当前行是"复合题"标题行
+                    if (isCompoundRow && orderNo) {
+                        currentCompoundGroup = { subjectName: subjectName, orderNo: orderNo, rows: [row] };
+                        groups.push(currentCompoundGroup);
+                        continue;
+                    }
+
+                    // 如果处于复合模式中，且是子题行（序号为空或相同）
+                    if (currentCompoundGroup && (orderNo === currentCompoundGroup.orderNo || !orderNo)) {
+                        currentCompoundGroup.rows.push(row);
+                        continue;
+                    }
+
+                    // 否则创建新普通题组
+                    if (!orderNo) {
+                        skippedCount++;
+                        continue;
+                    }
+                    currentCompoundGroup = null;
+                    groups.push({ subjectName: subjectName, orderNo: orderNo, rows: [row] });
+                }
+                let addedCount = 0;
+                let newKpCount = 0;
+                let compoundCount = 0;
+                let totalSubCount = 0;
+                for (let gi = 0; gi < groups.length; gi++) {
+                    const group = groups[gi];
+                    const firstRow = group.rows[0];
+                    const subject = findOrCreateSubjectByName(group.subjectName);
+                    if (!subject) { continue; }
+                    const kpNames = String(firstRow[11] || '').trim().split(/[,，、;；\s]+/).filter(Boolean);
                     const kpIds = [];
-                    kpNames.forEach(kpName => {
+                    kpNames.forEach(function(kpName) {
                         const r = findOrCreateKnowledgePointByName(kpName, subject.id, null);
                         if (r.isNew) newKpCount++;
                         if (r.id) kpIds.push(r.id);
                     });
-                    const question = {
-                        id: generateId(),
-                        type: /选择/.test(questionType) || /choice/i.test(questionType) ? 'choice'
-                            : /填空/.test(questionType) || /fill/i.test(questionType) ? 'fill'
-                            : /判断/.test(questionType) || /bool/i.test(questionType) || /true/i.test(questionType) || /false/i.test(questionType) ? 'bool'
-                            : 'other',
-                        content: content,
-                        answer: answer,
-                        explanation: String(row[9] || '').trim(),
-                        difficulty: String(row[10] || '').trim(),
-                        knowledgePointIds: kpIds,
-                        knowledgePoint: kpIds.length > 0 ? kpIds[0] : '',
-                        source: String(row[12] || '').trim(),
-                        subjectId: subject.id,
-                        status: 'pending',
-                        date: new Date().toISOString(),
-                        photos: [],
-                        explanationPhotos: [],
-                        options: []
-                    };
-                    if (question.type === 'choice') {
-                        question.options = [
-                            { label: 'A', text: optionA, photo: '' },
-                            { label: 'B', text: optionB, photo: '' },
-                            { label: 'C', text: optionC, photo: '' },
-                            { label: 'D', text: optionD, photo: '' }
-                        ];
+                    if (group.rows.length === 1) {
+                        // 普通单题
+                        const row = firstRow;
+                        const content = String(row[3] || '').trim();
+                        const qType = parseQuestionType(String(row[2] || ''));
+                        const question = {
+                            id: generateId(),
+                            type: qType,
+                            content: content,
+                            answer: String(row[8] || '').trim(),
+                            explanation: String(row[9] || '').trim(),
+                            difficulty: String(row[10] || '').trim(),
+                            knowledgePointIds: kpIds,
+                            knowledgePoint: kpIds.length > 0 ? kpIds[0] : '',
+                            source: String(row[12] || '').trim(),
+                            subjectId: subject.id,
+                            status: 'pending',
+                            date: new Date().toISOString(),
+                            photos: [],
+                            explanationPhotos: [],
+                            options: []
+                        };
+                        if (question.type === 'choice' || question.type === 'multi') {
+                            question.options = [
+                                { label: 'A', text: String(row[4] || '').trim(), photo: '' },
+                                { label: 'B', text: String(row[5] || '').trim(), photo: '' },
+                                { label: 'C', text: String(row[6] || '').trim(), photo: '' },
+                                { label: 'D', text: String(row[7] || '').trim(), photo: '' }
+                            ];
+                        }
+                        if (question.type === 'compound') {
+                            question.subQuestions = [];
+                        }
+                        if (!question.content && (!question.options || question.options.every(function(opt) { return !opt.text; }))) {
+                            continue;
+                        }
+                        questions.unshift(question);
+                        addedCount++;
+                    } else {
+                        // 复合题：相同科目+相同序号的多行合并
+                        compoundCount++;
+                        const firstRowType = parseQuestionType(String(firstRow[2] || ''));
+                        // 第一行若是"复合题"标题行则跳过，否则全部作为小题
+                        const startSi = firstRowType === 'compound' ? 1 : 0;
+                        const mainContent = String(firstRow[3] || '').trim();
+                        const subQuestions = [];
+                        for (var si = startSi; si < group.rows.length; si++) {
+                            var row = group.rows[si];
+                            var sqType = parseQuestionType(String(row[2] || ''));
+                            if (sqType === 'compound') sqType = 'choice';
+                            var sqOptions = null;
+                            if (sqType === 'choice' || sqType === 'multi') {
+                                sqOptions = [
+                                    { label: 'A', text: String(row[4] || '').trim(), photo: '' },
+                                    { label: 'B', text: String(row[5] || '').trim(), photo: '' },
+                                    { label: 'C', text: String(row[6] || '').trim(), photo: '' },
+                                    { label: 'D', text: String(row[7] || '').trim(), photo: '' }
+                                ];
+                            }
+                            subQuestions.push(createImportSubQuestion(
+                                sqType,
+                                String(row[3] || '').trim(),
+                                String(row[8] || '').trim(),
+                                sqOptions,
+                                String(row[9] || '').trim()
+                            ));
+                        }
+                        const question = {
+                            id: generateId(),
+                            type: 'compound',
+                            content: mainContent,
+                            answer: '',
+                            explanation: String(firstRow[9] || '').trim(),
+                            difficulty: String(firstRow[10] || '').trim(),
+                            knowledgePointIds: kpIds,
+                            knowledgePoint: kpIds.length > 0 ? kpIds[0] : '',
+                            source: String(firstRow[12] || '').trim(),
+                            subjectId: subject.id,
+                            status: 'pending',
+                            date: new Date().toISOString(),
+                            photos: [],
+                            explanationPhotos: [],
+                            options: [],
+                            subQuestions: subQuestions
+                        };
+                        questions.unshift(question);
+                        addedCount++;
+                        totalSubCount += subQuestions.length;
                     }
-                    questions.unshift(question);
-                    addedCount++;
                 }
                 if (!addedCount) {
                     showNotification('未从 XLSX 中解析出有效题目', 'error');
@@ -9357,6 +9605,7 @@
                 updateCharts();
                 closeBatchImportPage();
                 let msg = `已导入 ${addedCount} 道题目`;
+                if (compoundCount > 0) msg += `（含 ${compoundCount} 道复合题，共 ${totalSubCount} 道小题）`;
                 if (skippedCount > 0) msg += `，跳过 ${skippedCount} 条空行`;
                 if (newKpCount > 0) msg += `，自动创建 ${newKpCount} 个新知识点`;
                 showNotification(msg, 'success');
@@ -9597,37 +9846,57 @@
 
             const subjectMap = Object.fromEntries(subjects.map(s => [s.id, s.name]));
             const headers = ['序号', '题型', '题目内容', '正确答案', '解析', '科目', '难度', '来源', '是否掌握', '选项', '题目图片', '解析图片'];
-            const rows = questions.map((q, index) => {
-                const optionsText = Array.isArray(q.options) && q.options.length
-                    ? q.options.map(option => `${option.label || ''}. ${option.text || ''}`).join('；')
-                    : '';
-                const questionPhotos = Array.isArray(q.photos) ? q.photos.length : 0;
-                const explanationPhotos = Array.isArray(q.explanationPhotos) ? q.explanationPhotos.length : 0;
-                return [
-                    index + 1,
-                    q.type === 'choice' ? '选择题' : q.type === 'multi' ? '多选题' : q.type === 'fill' ? '填空题' : q.type === 'bool' ? '判断题' : q.type === 'compound' ? '复合题' : '其他',
-                    q.content || '',
-                    q.answer || '',
-                    q.explanation || '',
-                    subjectMap[q.subjectId] || '未知科目',
-                    q.difficulty || '',
-                    q.source || '',
-                    q.status === 'mastered' ? '已掌握' : '未掌握',
-                    optionsText,
-                    questionPhotos,
-                    explanationPhotos
-                ];
+            const rows = [];
+            let seq = 0;
+            questions.forEach(function(q) {
+                seq++;
+                const qPhotos = Array.isArray(q.photos) ? q.photos.length : 0;
+                const qExpPhotos = Array.isArray(q.explanationPhotos) ? q.explanationPhotos.length : 0;
+                if (q.type === 'compound' && Array.isArray(q.subQuestions) && q.subQuestions.length > 0) {
+                    // 复合题：第一行为题干，后续行为各小题，共用同一序号
+                    rows.push([
+                        seq, '复合题', q.content || '', '', q.explanation || '',
+                        subjectMap[q.subjectId] || '未知科目', q.difficulty || '', q.source || '',
+                        q.status === 'mastered' ? '已掌握' : '未掌握', '', qPhotos, qExpPhotos
+                    ]);
+                    q.subQuestions.forEach(function(sq) {
+                        var sqOptsText = Array.isArray(sq.options) && sq.options.length
+                            ? sq.options.map(function(o) { return (o.label || '') + '. ' + (o.text || ''); }).join('；')
+                            : '';
+                        rows.push([
+                            seq,
+                            sq.type === 'choice' ? '选择题' : sq.type === 'multi' ? '多选题' : sq.type === 'fill' ? '填空题' : sq.type === 'bool' ? '判断题' : '其他',
+                            sq.content || '', sq.answer || '', sq.explanation || '',
+                            subjectMap[q.subjectId] || '未知科目', q.difficulty || '', q.source || '',
+                            q.status === 'mastered' ? '已掌握' : '未掌握', sqOptsText,
+                            Array.isArray(sq.photos) ? sq.photos.length : 0,
+                            Array.isArray(sq.explanationPhotos) ? sq.explanationPhotos.length : 0
+                        ]);
+                    });
+                } else {
+                    // 普通单题
+                    var optsText = Array.isArray(q.options) && q.options.length
+                        ? q.options.map(function(o) { return (o.label || '') + '. ' + (o.text || ''); }).join('；')
+                        : '';
+                    rows.push([
+                        seq,
+                        q.type === 'choice' ? '选择题' : q.type === 'multi' ? '多选题' : q.type === 'fill' ? '填空题' : q.type === 'bool' ? '判断题' : '其他',
+                        q.content || '', q.answer || '', q.explanation || '',
+                        subjectMap[q.subjectId] || '未知科目', q.difficulty || '', q.source || '',
+                        q.status === 'mastered' ? '已掌握' : '未掌握', optsText, qPhotos, qExpPhotos
+                    ]);
+                }
             });
 
             const csvContent = [headers, ...rows]
-                .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(','))
+                .map(row => row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(','))
                 .join('\n');
 
             const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `题目梳理_${formatDateForFile(new Date())}.csv`;
+            a.download = '题目梳理_' + formatDateForFile(new Date()) + '.csv';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -10876,9 +11145,23 @@
             const subjId = document.getElementById('practiceSubject').value;
             const kpSelect = document.getElementById('practiceKnowledgePoint');
             kpSelect.innerHTML = '<option value="all">全部知识点</option>';
-            const filteredKps = subjId === 'all' ? knowledgePoints : knowledgePoints.filter(k => k.subjectId === subjId);
-            filteredKps.filter(k => !k.parentId).forEach(k => {
-                kpSelect.innerHTML += `<option value="${k.id}">${k.name}</option>`;
+            // 显示所有层级的知识点，而不是只显示一级
+            const subjectsToShow = subjId === 'all' ? subjects : subjects.filter(s => s.id === subjId);
+            subjectsToShow.forEach(subject => {
+                if (subjId === 'all' && subjects.length > 1) {
+                    kpSelect.innerHTML += `<option value="" disabled>—— ${subject.name} ——</option>`;
+                }
+                const tree = getKnowledgePointTree(subject.id);
+                const addOptions = (nodes, depth) => {
+                    nodes.forEach(node => {
+                        const prefix = '　'.repeat(depth) + (depth > 0 ? '└ ' : '');
+                        kpSelect.innerHTML += `<option value="${node.id}">${prefix}${node.name}</option>`;
+                        if (node.children && node.children.length > 0) {
+                            addOptions(node.children, depth + 1);
+                        }
+                    });
+                };
+                addOptions(tree, 0);
             });
         }
 
@@ -10891,8 +11174,8 @@
             if (kpId !== 'all') {
                 const kp = knowledgePoints.find(k => k.id === kpId);
                 if (kp) {
-                    // 匹配该知识点及其所有子知识点的题目
-                    const kpIds = [kp.id, ...knowledgePoints.filter(k => k.parentId === kp.id).map(k => k.id)];
+                    // 匹配该知识点及其所有后代知识点（含子、孙）的题目
+                    const kpIds = [kp.id, ...getKnowledgePointDescendants(kp.id)];
                     filtered = filtered.filter(q => getQuestionKpIds(q).some(id => kpIds.includes(id)));
                 }
             }
@@ -11018,7 +11301,8 @@
             if (kpId !== 'all') {
                 const kp = knowledgePoints.find(k => k.id === kpId);
                 if (kp) {
-                    const kpIds = [kp.id, ...knowledgePoints.filter(k => k.parentId === kp.id).map(k => k.id)];
+                    // 匹配该知识点及其所有后代知识点（含子、孙）的题目
+                    const kpIds = [kp.id, ...getKnowledgePointDescendants(kp.id)];
                     pool = pool.filter(q => getQuestionKpIds(q).some(id => kpIds.includes(id)));
                 }
             }
