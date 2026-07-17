@@ -642,6 +642,22 @@
                 opacity: 1;
                 color: #EF4444;
             }
+            /* 知识点下拉框：在文档流中自然展开，卡片不裁切即可完整显示并可滚动 */
+            #questionFormCard {
+                overflow: visible;
+            }
+            #kpDropdown {
+                max-height: 320px;
+                overflow-y: auto;
+            }
+            /* 滚动条样式，确保可拖动 */
+            #kpDropdown::-webkit-scrollbar {
+                width: 8px;
+            }
+            #kpDropdown::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 4px;
+            }
             #kpDropdown .kp-checkbox-item {
                 display: flex;
                 align-items: center;
@@ -2098,7 +2114,7 @@
             <button class="btn-back" id="closeQuestionForm"><i class="fa fa-arrow-left"></i> 返回题库</button>
             <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900" id="questionFormTitle">添加新题目</h1>
         </div>
-        <div class="bg-white rounded-xl shadow-sm">
+        <div class="bg-white rounded-xl shadow-sm" id="questionFormCard">
             <div class="px-6 py-6">
                 <form id="questionForm">
                     <input type="hidden" id="questionId">
@@ -2139,6 +2155,22 @@
                             </button>
                         </div>
                         <div id="subQuestionsContainer" class="space-y-4"></div>
+                    </div>
+
+                    <!-- 填空题多空编辑器 -->
+                    <div id="questionFillBlanksSection" class="mb-4 hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-sm font-medium text-gray-700">填空答案列表 <span class="text-danger">*</span></label>
+                            <button type="button" id="addFillBlankBtn" class="inline-flex items-center px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
+                                <i class="fa fa-plus mr-1.5"></i> 添加填空
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-3">每个填空输入一个正确答案，可用于"一题多空"场景，如填写多个值</p>
+                        <div id="fillBlanksContainer" class="space-y-3"></div>
+                        <div class="mt-2">
+                            <label class="text-xs text-gray-500">总答案（自动汇总，用于旧数据兼容和列表展示）：</label>
+                            <textarea id="fillBlanksSummary" rows="1" class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none input-focus bg-gray-50" readonly placeholder="多个空自动汇总显示于此"></textarea>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -2202,13 +2234,13 @@
 
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">知识点</label>
-                        <div class="border border-gray-300 rounded-lg p-3 bg-white">
+                        <div class="border border-gray-300 rounded-lg p-3 bg-white" id="kpMultiSelectContainer">
                             <div id="kpSelectedTags" class="flex flex-wrap gap-1 mb-2">
                                 <span class="text-gray-400 text-sm py-0.5" id="kpPlaceholder">点击选择知识点（可多选）</span>
                             </div>
                             <button type="button" class="text-sm text-primary hover:underline" onclick="toggleKpDropdown()"><i class="fa fa-plus-circle mr-1"></i>选择知识点</button>
                             <input type="hidden" id="questionKnowledgePoint" value="">
-                            <div id="kpDropdown" class="hidden mt-2 border border-gray-200 rounded-lg bg-white shadow-lg max-h-48 overflow-y-auto p-2"></div>
+                            <div id="kpDropdown" class="hidden mt-2 border border-gray-200 rounded-lg bg-white shadow-lg p-2"></div>
                         </div>
                     </div>
 
@@ -3078,6 +3110,7 @@
         let currentExplanationImages = [];
         let currentQuestionOptions = [];
         let currentSubQuestions = []; // 复合题小题列表
+        let currentFillBlanks = []; // 填空题多空列表 [{id, answer}]
         let currentPaperSelection = [];
         let currentPaperOrder = [];
         let currentPaperDetailId = null;
@@ -4073,14 +4106,10 @@
             document.getElementById('questionKnowledgePoint').value = selIds.join(',');
         }
 
-        function updateQuestionKnowledgePointTags(subjectId, selectedIds) {
+        // 仅更新已选标签区 + 隐藏域（不重绘下拉框）
+        function updateKpTags(selectedIds) {
             const tagsContainer = document.getElementById('kpSelectedTags');
-            const placeholder = document.getElementById('kpPlaceholder');
-            const dropdown = document.getElementById('kpDropdown');
-
-            if (!tagsContainer || !dropdown) return;
-
-            // 渲染已选标签
+            if (!tagsContainer) return;
             if (selectedIds.length === 0) {
                 tagsContainer.innerHTML = '<span class="text-gray-400 text-sm py-0.5" id="kpPlaceholder">点击选择知识点（可多选）</span>';
             } else {
@@ -4093,8 +4122,14 @@
                 tagsContainer.innerHTML = tagsHtml;
                 renderMathJaxContent(tagsContainer);
             }
+            const hidden = document.getElementById('questionKnowledgePoint');
+            if (hidden) hidden.value = selectedIds.join(',');
+        }
 
-            // 渲染下拉选项
+        // 仅渲染下拉框（打开或刷新科目时调用）
+        function renderKpDropdown(subjectId, selectedIds) {
+            const dropdown = document.getElementById('kpDropdown');
+            if (!dropdown) return;
             if (!subjectId) {
                 dropdown.innerHTML = '<div class="p-2 text-xs text-gray-400">请先选择科目</div>';
             } else {
@@ -4129,17 +4164,20 @@
             }
         }
 
+        function updateQuestionKnowledgePointTags(subjectId, selectedIds) {
+            updateKpTags(selectedIds);
+            renderKpDropdown(subjectId, selectedIds);
+        }
+
         function toggleKpDropdown() {
             const dropdown = document.getElementById('kpDropdown');
             if (!dropdown) return;
             if (dropdown.classList.contains('hidden')) {
-                dropdown.classList.remove('hidden');
-                // 自动渲染（科目已选的情况）
+                // 打开时，从隐藏域读取当前已选知识点，渲染完整下拉框
                 const subjectId = document.getElementById('questionSubject').value;
                 const currentIds = getSelectedKpIds();
-                if (subjectId) {
-                    updateQuestionKnowledgePointTags(subjectId, currentIds);
-                }
+                renderKpDropdown(subjectId, currentIds);
+                dropdown.classList.remove('hidden');
             } else {
                 closeKpDropdown();
             }
@@ -4161,8 +4199,8 @@
             if (!dropdown) return;
             const checked = Array.from(dropdown.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
             document.getElementById('questionKnowledgePoint').value = checked.join(',');
-            const subjectId = document.getElementById('questionSubject').value;
-            updateQuestionKnowledgePointTags(subjectId, checked);
+            // 只更新标签，不重绘下拉框（避免闪屏和状态丢失）
+            updateKpTags(checked);
         }
 
         function removeKpTag(kpId) {
@@ -4198,7 +4236,12 @@
             if (!subjectSelect) return;
             subjectSelect.addEventListener('change', function() {
                 document.getElementById('questionKnowledgePoint').value = '';
-                updateQuestionKnowledgePointSelect(this.value, []);
+                updateKpTags([]);
+                // 如果下拉框正打开，刷新知识点列表
+                const dropdown = document.getElementById('kpDropdown');
+                if (dropdown && !dropdown.classList.contains('hidden')) {
+                    renderKpDropdown(this.value, []);
+                }
             });
         }
 
@@ -5668,6 +5711,8 @@
 
             // 复合题小题编辑器初始化
             initCompoundQuestionEditor();
+            // 填空题多空编辑器初始化
+            initFillBlanksEditor();
 
             // 解析照片上传
             document.getElementById('selectExplanationPhotosBtn').addEventListener('click', function() {
@@ -6230,6 +6275,7 @@
             const type = document.getElementById('questionType').value;
             const section = document.getElementById('questionOptionsSection');
             const compoundSection = document.getElementById('questionCompoundSection');
+            const fillBlanksSection = document.getElementById('questionFillBlanksSection');
             const answerEl = document.getElementById('questionAnswer');
             const boolAnswerEl = document.getElementById('questionBoolAnswer');
             const choiceAnswerEl = document.getElementById('questionChoiceAnswer');
@@ -6239,6 +6285,7 @@
             // 复合题：隐藏选项区、答案区，显示小题编辑器
             if (type === 'compound') {
                 section.classList.add('hidden');
+                if (fillBlanksSection) fillBlanksSection.classList.add('hidden');
                 if (answerWrapper) answerWrapper.classList.add('hidden');
                 if (compoundSection) compoundSection.classList.remove('hidden');
                 if (!currentSubQuestions.length) {
@@ -6251,6 +6298,25 @@
             // 非复合题：隐藏小题编辑器，显示答案区
             if (compoundSection) compoundSection.classList.add('hidden');
             if (answerWrapper) answerWrapper.classList.remove('hidden');
+
+            // 填空题多空模式
+            if (type === 'fill') {
+                if (fillBlanksSection) fillBlanksSection.classList.remove('hidden');
+                section.classList.add('hidden');
+                // 显示文本答案（备用/汇总）
+                if (answerEl) {
+                    answerEl.classList.remove('hidden');
+                    answerEl.placeholder = '单个填空可直接填写；多空请在下方的答案列表中添加';
+                }
+                if (boolAnswerEl) boolAnswerEl.classList.add('hidden');
+                if (choiceAnswerEl) choiceAnswerEl.classList.add('hidden');
+                if (multiAnswerEl) multiAnswerEl.classList.add('hidden');
+                renderFillBlanks();
+                return;
+            }
+
+            // 非填空的非复合题：隐藏填空多空编辑区
+            if (fillBlanksSection) fillBlanksSection.classList.add('hidden');
 
             // 隐藏所有答案区域
             if (answerEl) answerEl.classList.add('hidden');
@@ -6556,6 +6622,87 @@
             }
         }
 
+        // ========== 填空题多空编辑器 ==========
+        function createEmptyBlank() {
+            return {
+                id: 'blk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                answer: ''
+            };
+        }
+
+        function renderFillBlanks() {
+            const container = document.getElementById('fillBlanksContainer');
+            const summary = document.getElementById('fillBlanksSummary');
+            if (!currentFillBlanks.length) {
+                container.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">暂无填空，请点击"添加填空"（单个空也可直接在上方"正确答案"文本框填写）</p>';
+                if (summary) summary.value = '';
+                return;
+            }
+            container.innerHTML = currentFillBlanks.map(function(blk, i) {
+                var escAns = (blk.answer || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                return '<div class="blk-card" data-blk-index="' + i + '">' +
+                    '<div class="flex items-center gap-2 mb-1">' +
+                    '<span class="text-sm font-medium text-gray-700">空 #' + (i + 1) + '</span>' +
+                    '<button type="button" class="text-xs text-red-500 hover:text-red-700 cursor-pointer" data-blk-del="' + i + '"><i class="fa fa-trash"></i> 删除</button>' +
+                    '</div>' +
+                    '<input type="text" class="blk-ans w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none input-focus" placeholder="该空正确答案" value="' + escAns + '" data-blk-i="' + i + '">' +
+                    '</div>';
+            }).join('');
+            updateFillBlanksSummary();
+            bindFillBlankEvents();
+        }
+
+        function bindFillBlankEvents() {
+            const container = document.getElementById('fillBlanksContainer');
+            // 删除按钮
+            container.querySelectorAll('[data-blk-del]').forEach(function(btn) {
+                btn.onclick = function() {
+                    var i = parseInt(this.getAttribute('data-blk-del'));
+                    currentFillBlanks.splice(i, 1);
+                    renderFillBlanks();
+                };
+            });
+            // 答案输入
+            container.querySelectorAll('.blk-ans').forEach(function(input) {
+                input.oninput = function() {
+                    var i = parseInt(this.getAttribute('data-blk-i'));
+                    currentFillBlanks[i].answer = this.value;
+                    updateFillBlanksSummary();
+                };
+            });
+        }
+
+        function updateFillBlanksSummary() {
+            var summary = document.getElementById('fillBlanksSummary');
+            if (summary) {
+                summary.value = currentFillBlanks.map(function(blk) {
+                    return blk.answer || '（未填写）';
+                }).join('；');
+            }
+        }
+
+        function collectFillBlanks() {
+            const container = document.getElementById('fillBlanksContainer');
+            if (!container) return;
+            container.querySelectorAll('.blk-ans').forEach(function(input) {
+                var i = parseInt(input.getAttribute('data-blk-i'));
+                if (currentFillBlanks[i]) {
+                    currentFillBlanks[i].answer = input.value || '';
+                }
+            });
+            updateFillBlanksSummary();
+        }
+
+        function initFillBlanksEditor() {
+            var addBtn = document.getElementById('addFillBlankBtn');
+            if (addBtn) {
+                addBtn.onclick = function() {
+                    currentFillBlanks.push(createEmptyBlank());
+                    renderFillBlanks();
+                };
+            }
+        }
+
         // 收集小题答案：从DOM中的选择器同步到 currentSubQuestions
         function collectSubQuestionAnswers() {
             const container = document.getElementById('subQuestionsContainer');
@@ -6690,6 +6837,7 @@
             currentExplanationImages = [];
             currentQuestionOptions = ['A', 'B', 'C', 'D'].map(label => ({ label, text: '', photo: '' }));
             currentSubQuestions = [];
+            currentFillBlanks = [];
             renderQuestionPhotoPreview();
             renderQuestionOptionsSection();
             
@@ -6726,6 +6874,7 @@
                     currentExplanationImages = Array.isArray(question.explanationPhotos) ? question.explanationPhotos : [];
                     currentQuestionOptions = Array.isArray(question.options) ? question.options : ['A', 'B', 'C', 'D'].map(label => ({ label, text: '', photo: '' }));
                     currentSubQuestions = (question.type === 'compound' && Array.isArray(question.subQuestions)) ? JSON.parse(JSON.stringify(question.subQuestions)) : [];
+                    currentFillBlanks = (question.type === 'fill' && Array.isArray(question.blanks)) ? JSON.parse(JSON.stringify(question.blanks)) : [];
                     renderQuestionOptionsSection();
                     renderQuestionPhotoPreview();
                 }
@@ -6801,6 +6950,11 @@
                 document.getElementById('questionAnswer').value = sorted;
             }
 
+            // 填空题多空：从DOM收集答案
+            if (type === 'fill') {
+                collectFillBlanks();
+            }
+
             // 复合题验证：至少一个小题，每个小题有内容和答案
             if (type === 'compound') {
                 if (!currentSubQuestions.length) {
@@ -6829,6 +6983,23 @@
                 }
             }
 
+            // 填空题多空验证
+            if (type === 'fill' && currentFillBlanks.length > 0) {
+                for (let b = 0; b < currentFillBlanks.length; b++) {
+                    if (!(currentFillBlanks[b].answer || '').trim()) {
+                        showNotification(`第 ${b+1} 空的答案不能为空`, 'error');
+                        return;
+                    }
+                }
+                // 有多个空时，用分号汇总作为兼容答案
+                answer = currentFillBlanks.map(blk => blk.answer.trim()).join('；');
+            }
+
+            if (type !== 'compound' && !answer) {
+                showNotification('正确答案不能为空', 'error');
+                return;
+            }
+
             if (type !== 'compound' && !content && currentQuestionImages.length === 0) {
                 showNotification('请填写题目内容或上传题目照片', 'error');
                 return;
@@ -6850,7 +7021,8 @@
                 date,
                 photos: currentQuestionImages,
                 explanationPhotos: currentExplanationImages,
-                subQuestions: type === 'compound' ? JSON.parse(JSON.stringify(currentSubQuestions)) : []
+                subQuestions: type === 'compound' ? JSON.parse(JSON.stringify(currentSubQuestions)) : [],
+                blanks: type === 'fill' ? JSON.parse(JSON.stringify(currentFillBlanks)) : []
             };
             
             if (currentQuestionId) {
@@ -7060,6 +7232,15 @@
                                 <div class="text-xs font-medium text-green-700 mb-1">小题 ${si+1} (${({choice:'选择',multi:'多选',fill:'填空',bool:'判断',other:'问答'})[sq.type] || sq.type})</div>
                                 <div class="text-sm text-green-800"><div class="math-content">${renderLatexContent(sq.content || '')}</div></div>
                                 <div class="text-xs text-green-600 mt-1"><b>答案：</b><span class="math-content">${renderLatexContent(sq.answer || '')}</span></div>
+                            </div>
+                            `).join('')}
+                        </div>
+                        ` : question.type === 'fill' && Array.isArray(question.blanks) && question.blanks.length ? `
+                        <div class="space-y-2">
+                            ${question.blanks.map((blk, bi) => `
+                            <div class="p-3 bg-green-50 rounded-lg">
+                                <div class="text-xs font-medium text-green-700 mb-1">第 ${bi+1} 空</div>
+                                <div class="text-sm text-green-800"><b>答案：</b><span class="math-content">${renderLatexContent(blk.answer || '')}</span></div>
                             </div>
                             `).join('')}
                         </div>
@@ -7500,6 +7681,13 @@
                             `).join('')}
                         </div>
                         ` : ''}
+                        ${q.type === 'fill' && Array.isArray(q.blanks) && q.blanks.length ? `
+                        <div class="mt-1 ml-2 pl-2 border-l-2 border-purple-200 space-y-0.5">
+                            ${q.blanks.map((blk, bi) => `
+                            <div class="text-xs text-gray-500"><span class="text-purple-600 font-medium">空${bi+1}</span> <span class="text-green-600">答案:<span class="math-content">${renderLatexContent(blk.answer || '')}</span></span></div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
                     </td>
                     <td class="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate math-content" title="${escHtml(kpText)}">${renderQuestionKpHtml(q).replace(/<br>/g, ' | ') || '-'}</td>
                     <td class="px-4 py-3 text-right">
@@ -7714,6 +7902,14 @@
                                         }).join('') + '</div>';
                                 }
                                 return '';
+                            })()
+                        ) : ''}
+                        ${question.type === 'fill' && Array.isArray(question.blanks) && question.blanks.length ? (
+                            (function() {
+                                var blkArr = question.blanks;
+                                return '<div class=\"mt-2 space-y-0.5 pl-3 border-l-2 border-purple-200\">' + blkArr.map(function(blk, bi) {
+                                    return '<div class=\"text-xs text-gray-500\"><span class=\"text-purple-600 font-medium\">空' + (bi+1) + '</span> <span class=\"text-green-600\">答案:<span class=\"math-content\">' + renderLatexContent(blk.answer || '') + '</span></span></div>';
+                                }).join('') + '</div>';
                             })()
                         ) : ''}
                     </td>
@@ -8960,6 +9156,16 @@
                                     `).join('')}
                                 </div>
                                 ` : ''}
+                                ${question.type === 'fill' && Array.isArray(question.blanks) && question.blanks.length ? `
+                                <div class="mt-2 mb-3 ml-3 pl-3 border-l-2 border-purple-300 space-y-1">
+                                    ${question.blanks.map((blk, bi) => `
+                                    <div class="text-xs text-gray-600">
+                                        <span class="text-purple-600 font-medium">空${bi+1}</span>
+                                        <span class="text-green-600 ml-1">答案：<span class="math-content">${renderLatexContent(blk.answer || '')}</span></span>
+                                    </div>
+                                    `).join('')}
+                                </div>
+                                ` : ''}
                                 <div class="flex flex-wrap gap-3 text-xs">
                                     <span style="color: ${subject ? subject.color : '#6B7280'}">科目：${subjectName}</span>
                                     <span class="text-gray-500">难度：${difficultyText}</span>
@@ -9308,6 +9514,20 @@
                         if (question.type === 'compound') {
                             question.subQuestions = [];
                         }
+                        if (question.type === 'fill') {
+                            const rawAnswer = String(row[7] || '').trim();
+                            if (rawAnswer) {
+                                const ansParts = rawAnswer.split(/[；;]/).filter(function(p) { return p.trim(); });
+                                question.answer = ansParts.map(function(p) { return p.trim(); }).join('；');
+                                question.blanks = ansParts.map(function(part, idx) {
+                                    return { id: 'blk_imp_' + question.id + '_' + idx, answer: part.trim() };
+                                });
+                            } else {
+                                question.blanks = [];
+                            }
+                        } else {
+                            question.blanks = [];
+                        }
                         if (!question.content && (!question.options || question.options.every(function(opt) { return !opt.text; }))) {
                             continue;
                         }
@@ -9536,6 +9756,20 @@
                         }
                         if (question.type === 'compound') {
                             question.subQuestions = [];
+                        }
+                        if (question.type === 'fill') {
+                            const rawAnswer = String(row[8] || '').trim();
+                            if (rawAnswer) {
+                                const ansParts = rawAnswer.split(/[；;]/).filter(function(p) { return p.trim(); });
+                                question.answer = ansParts.map(function(p) { return p.trim(); }).join('；');
+                                question.blanks = ansParts.map(function(part, idx) {
+                                    return { id: 'blk_imp_' + question.id + '_' + idx, answer: part.trim() };
+                                });
+                            } else {
+                                question.blanks = [];
+                            }
+                        } else {
+                            question.blanks = [];
                         }
                         if (!question.content && (!question.options || question.options.every(function(opt) { return !opt.text; }))) {
                             continue;
@@ -11716,6 +11950,21 @@
                             '<span class="' + (sr.isCorrect ? 'text-green-600' : 'text-red-600') + '">' + (sr.isCorrect ? '✓' : '✗') + '</span></div>';
                     });
                     item.innerHTML = histCompHtml;
+                } else if (r.type === 'fill' && r._fillResults) {
+                    var histFillHtml = '<div class="font-medium mb-1">题目 ' + (i + 1) + ' (填空题·多空)</div>' +
+                        '<div class="text-sm text-gray-600 mb-2">' + practiceTextToHtml(escC).substring(0, 200) + '</div>' +
+                        '<div class="text-sm font-medium mb-1 ' + (r.isCorrect ? 'text-green-600' : 'text-red-600') + '">' +
+                        (r.isCorrect ? '✓ 全部正确' : '✗ 有错误') + '</div>';
+                    r._fillResults.forEach(function(fr) {
+                        var hfU = (fr.userAns || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        var hfC = (fr.correctAns || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        histFillHtml += '<div class="ml-3 mb-1 text-xs border-l-2 pl-2 ' + (fr.isCorrect ? 'border-green-300' : 'border-red-300') + '">' +
+                            '<span class="font-semibold">第' + (fr.idx + 1) + '空</span> ' +
+                            '<span class="text-gray-500">你的答案：' + practiceTextToHtml(hfU) + '</span> ' +
+                            '<span class="text-gray-500">参考答案：' + practiceTextToHtml(hfC) + '</span> ' +
+                            '<span class="' + (fr.isCorrect ? 'text-green-600' : 'text-red-600') + '">' + (fr.isCorrect ? '✓' : '✗') + '</span></div>';
+                    });
+                    item.innerHTML = histFillHtml;
                 } else {
                 item.innerHTML = `
                     <div class="font-medium mb-1">题目 ${i + 1} (${typeMap[r.type] || r.type})</div>
@@ -11775,7 +12024,18 @@
         // 收集所有答案（在提交前调用，确保 textarea 最新值被收集）
         function collectAllAnswers() {
             practiceQuestions.forEach((q, i) => {
-                if (q.type === 'fill' || q.type === 'other') {
+                if (q.type === 'fill' && Array.isArray(q.blanks) && q.blanks.length > 0) {
+                    // 多空填空题：收集每个空的textarea
+                    if (!practiceUserAnswers[i]._fillBlanks) practiceUserAnswers[i]._fillBlanks = [];
+                    q.blanks.forEach(function(blk, bi) {
+                        var fbTa = document.getElementById('practice-fb-' + i + '-' + bi);
+                        if (fbTa && practiceUserAnswers[i]._fillBlanks) {
+                            practiceUserAnswers[i]._fillBlanks[bi] = fbTa.value;
+                        }
+                    });
+                    // 汇总到 answer 字段用于显示
+                    practiceUserAnswers[i][1] = (practiceUserAnswers[i]._fillBlanks || []).join('；');
+                } else if (q.type === 'fill' || q.type === 'other') {
                     const ta = document.getElementById('practice-ta-' + i);
                     if (ta) practiceUserAnswers[i][1] = ta.value;
                 } else if (q.type === 'compound') {
@@ -12081,6 +12341,31 @@
                     });
                     boolDiv.appendChild(radioGroup);
                     answerArea.appendChild(boolDiv);
+                } else if (q.type === 'fill' && Array.isArray(q.blanks) && q.blanks.length > 0) {
+                    // 多选题的填空题 - 多空分别输入
+                    if (!practiceUserAnswers[idx]._fillBlanks) {
+                        practiceUserAnswers[idx]._fillBlanks = q.blanks.map(function() { return ''; });
+                    }
+                    const blanksDiv = document.createElement('div');
+                    blanksDiv.className = 'space-y-3';
+                    q.blanks.forEach(function(blk, bi) {
+                        var blkItem = document.createElement('div');
+                        blkItem.className = 'p-3 border border-gray-200 rounded-lg bg-gray-50';
+                        var label = document.createElement('div');
+                        label.className = 'text-sm font-medium text-gray-700 mb-1';
+                        label.textContent = '第 ' + (bi + 1) + ' 空';
+                        blkItem.appendChild(label);
+                        var blkTa = document.createElement('textarea');
+                        blkTa.id = 'practice-fb-' + idx + '-' + bi;
+                        blkTa.className = 'w-full p-2 border border-gray-300 rounded input-focus text-sm';
+                        blkTa.rows = 2;
+                        blkTa.placeholder = '请输入第 ' + (bi + 1) + ' 空答案';
+                        blkTa.value = practiceUserAnswers[idx]._fillBlanks[bi] || '';
+                        blkTa.oninput = function(e) { practiceUserAnswers[idx]._fillBlanks[bi] = e.target.value; };
+                        blkItem.appendChild(blkTa);
+                        blanksDiv.appendChild(blkItem);
+                    });
+                    answerArea.appendChild(blanksDiv);
                 } else {
                     // 填空题 / 问答题 - textarea + OCR拍照按钮
                     const textareaDiv = document.createElement('div');
@@ -12484,6 +12769,62 @@
                     userDisplay = userSorted || '未作答';
                     if (!isCorrect && q.id) wrongQuestionIds.push(getScoreId(q));
                 } else if (q.type === 'fill') {
+                    // 多空填空题：逐空判分
+                    const blanks = Array.isArray(q.blanks) && q.blanks.length ? q.blanks : null;
+                    if (blanks) {
+                        var fbResults = [];
+                        var allFbCorrect = true;
+                        var fbCorrectCount = 0;
+                        blanks.forEach(function(blk, bi) {
+                            totalScoreQuestions++;
+                            var fbUserAns = (ua._fillBlanks && ua._fillBlanks[bi]) || '';
+                            var fbCorrectAns = blk.answer || '';
+                            var ubClean = (fbUserAns || '').replace(/\s+/g, '');
+                            var cbClean = fbCorrectAns.replace(/\s+/g, '');
+                            var fbc = ubClean === cbClean;
+                            if (fbc) fbCorrectCount++; else allFbCorrect = false;
+                            fbResults.push({ idx: bi, userAns: fbUserAns || '未作答', correctAns: fbCorrectAns, isCorrect: fbc });
+                        });
+                        isCorrect = allFbCorrect;
+                        correctCount += fbCorrectCount;
+                        if (!isCorrect && q.id) wrongQuestionIds.push(getScoreId(q));
+                        userDisplay = fbCorrectCount + '/' + blanks.length + ' 正确';
+                        correctDisplay = '';
+                        // 多空结果快照
+                        questionResults.push({
+                            questionId: q.id,
+                            type: 'fill',
+                            content: (q.content || '').substring(0, 200),
+                            isCorrect: isCorrect,
+                            userAnswer: userDisplay,
+                            correctAnswer: correctDisplay,
+                            isOther: false,
+                            _fillResults: fbResults
+                        });
+                        // 多空结果卡片
+                        var fbItem = document.createElement('div');
+                        fbItem.className = 'p-3 rounded-lg mb-3 ' + (isCorrect ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100');
+                        var escC2 = (q.content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        var fbHtml = '<div class="font-medium mb-1">题目 ' + (i + 1) + ' (填空题·多空)</div>' +
+                            '<div class="text-sm text-gray-600 mb-2">' + practiceTextToHtml(escC2).substring(0, 200) + '</div>' +
+                            '<div class="text-sm font-medium mb-2 ' + (isCorrect ? 'text-green-600' : 'text-red-600') + '">' +
+                            (isCorrect ? '✓ 全部正确' : '✗ 有错误') + ' (' + fbCorrectCount + '/' + blanks.length + ')</div>';
+                        fbResults.forEach(function(fr) {
+                            var escFU = (fr.userAns || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            var escFC = (fr.correctAns || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            fbHtml += '<div class="ml-3 mb-1.5 text-xs border-l-2 pl-2 ' + (fr.isCorrect ? 'border-green-300' : 'border-red-300') + '">' +
+                                '<span class="font-semibold">第' + (fr.idx + 1) + '空</span> ' +
+                                '<span class="text-gray-500">你的答案：' + practiceTextToHtml(escFU) + '</span> ' +
+                                '<span class="text-gray-500">参考答案：' + practiceTextToHtml(escFC) + '</span> ' +
+                                '<span class="' + (fr.isCorrect ? 'text-green-600' : 'text-red-600') + '">' + (fr.isCorrect ? '✓' : '✗') + '</span>' +
+                                '</div>';
+                        });
+                        fbItem.innerHTML = fbHtml;
+                        resultContainer.appendChild(fbItem);
+                        // 跳过通用统计
+                        return;
+                    }
+                    // 普通填空题
                     totalScoreQuestions++;
                     correctDisplay = q.answer || '（无标准答案）';
                     userDisplay = ua[1] || '未作答';
