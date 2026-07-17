@@ -256,7 +256,7 @@
                 #exportPrintArea .print-section {
                     page-break-inside: avoid !important;
                     break-inside: avoid !important;
-                    margin-bottom: 12px !important;
+                    margin-bottom: 8px !important;
                 }
                 #exportPrintArea .print-page-break {
                     page-break-before: always !important;
@@ -273,11 +273,22 @@
                 #exportPrintArea .print-title {
                     font-size: 16pt !important;
                     font-weight: bold !important;
-                    margin-bottom: 0.5em !important;
+                    margin-bottom: 0.3em !important;
                 }
                 #exportPrintArea .print-subtitle {
                     font-size: 13pt !important;
                     margin-bottom: 0.4em !important;
+                }
+                /* 选择题/多选题选项：行内紧凑排列，每个选项的 字母.内容 保持同一行不拆断 */
+                #exportPrintArea .print-options {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    align-items: baseline !important;
+                    gap: 2px 28px !important;
+                    margin: 2px 0 4px !important;
+                }
+                #exportPrintArea .print-option {
+                    display: inline-block !important;
                 }
                 /* Markdown 表格打印样式 */
                 #exportPrintArea table {
@@ -678,6 +689,40 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+            }
+            /* 搜索框与表头吸顶 */
+            #kpDropdown .kp-search-wrap,
+            #kpDropdown .kp-tree-header {
+                position: sticky;
+                top: 0;
+                background: #fff;
+                z-index: 1;
+            }
+            #kpDropdown .kp-search-wrap input {
+                width: 100%;
+            }
+            /* 可折叠树节点 */
+            .kp-node-row {
+                display: flex;
+                align-items: flex-start;
+            }
+            .kp-node-row .kp-caret {
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 16px;
+                height: 28px;
+                flex-shrink: 0;
+                color: #6b7280;
+                user-select: none;
+                font-size: 10px;
+            }
+            .kp-node-row .kp-caret:hover {
+                color: #2563eb;
+            }
+            .kp-node-row .kp-checkbox-item {
+                flex: 1;
             }
             .ocr-btn {
                 display: inline-flex;
@@ -1907,13 +1952,13 @@
                 <div class="bg-white rounded-xl p-6 shadow-sm card-shadow">
                     <!-- 出题模式切换 -->
                     <div class="flex gap-2 mb-5 p-1 bg-gray-100 rounded-lg">
-                        <button id="practiceModeRandom" class="flex-1 py-2 px-3 rounded-md text-sm font-medium bg-white shadow-sm text-gray-800 transition-colors cursor-pointer">
+                        <button type="button" id="practiceModeRandom" class="flex-1 py-2 px-3 rounded-md text-sm font-medium bg-white shadow-sm text-gray-800 transition-colors cursor-pointer">
                             <i class="fa fa-random mr-1"></i>随机出题
                         </button>
-                        <button id="practiceModeSelect" class="flex-1 py-2 px-3 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
+                        <button type="button" id="practiceModeSelect" class="flex-1 py-2 px-3 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
                             <i class="fa fa-check-square-o mr-1"></i>选择题目
                         </button>
-                        <button id="practiceModePaper" class="flex-1 py-2 px-3 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
+                        <button type="button" id="practiceModePaper" class="flex-1 py-2 px-3 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
                             <i class="fa fa-file-text-o mr-1"></i>选择试卷
                         </button>
                     </div>
@@ -1986,6 +2031,15 @@
                                 <option value="other">问答题</option>
                                 <option value="compound">复合题</option>
                             </select>
+                            <div class="relative flex-1 min-w-[100px]" id="practiceSelectKpDropdownWrapper">
+                                <button type="button" id="practiceSelectKpTrigger" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-left flex items-center justify-between input-focus bg-white">
+                                    <span id="practiceSelectKpText" class="text-gray-500 truncate">全部知识点</span>
+                                    <i class="fa fa-caret-down text-gray-400 ml-1 flex-shrink-0"></i>
+                                </button>
+                                <input type="hidden" id="practiceSelectKnowledgePoint" value="all">
+                                <div id="practiceSelectKpDropdown" class="absolute left-0 z-[100] mt-1 w-72 max-h-80 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg hidden">
+                                </div>
+                            </div>
                         </div>
                         <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
                             <div class="flex gap-1">
@@ -1997,7 +2051,6 @@
                         <div id="practiceSelectList" class="max-h-[250px] overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100 mb-3">
                             <div class="text-center py-8 text-gray-500 text-sm">加载中...</div>
                         </div>
-                    </div>
                     </div>
 
                     <!-- 选择试卷模式 -->
@@ -2030,7 +2083,7 @@
                     </div>
 
                     <div class="flex flex-wrap gap-3 mt-4">
-                        <button id="practiceStartBtn" class="flex-1 bg-primary text-white font-medium py-2.5 px-4 rounded-lg btn-effect cursor-pointer">
+                        <button type="button" id="practiceStartBtn" class="flex-1 bg-primary text-white font-medium py-2.5 px-4 rounded-lg btn-effect cursor-pointer">
                             <i class="fa fa-play mr-2"></i>开始练习
                         </button>
                         <button id="practiceLibraryBtn" class="flex items-center bg-white text-gray-700 font-medium py-2.5 px-4 rounded-lg border border-gray-200 btn-effect cursor-pointer">
@@ -3210,6 +3263,22 @@
                 document.getElementById(`${appSettings.defaultPage}Page`).classList.remove('hidden');
                 currentPage = appSettings.defaultPage;
                 updateNavStyles();
+                // 确保默认首页的初始化函数被调用（switchPage 不会调用因为 currentPage 已设置）
+                if (appSettings.defaultPage === 'practice') {
+                    initPracticePage();
+                } else if (appSettings.defaultPage === 'questions') {
+                    renderQuestions();
+                } else if (appSettings.defaultPage === 'subjects') {
+                    renderSubjects();
+                } else if (appSettings.defaultPage === 'papers') {
+                    renderPaperList();
+                } else if (appSettings.defaultPage === 'statistics') {
+                    updateCharts();
+                } else if (appSettings.defaultPage === 'knowledgePoints') {
+                    renderKnowledgePointTree();
+                } else if (appSettings.defaultPage === 'mistake') {
+                    renderMistakePage();
+                }
             }
 
             // 监听滚动事件，改变导航栏样式
@@ -4169,6 +4238,122 @@
             renderKpDropdown(subjectId, selectedIds);
         }
 
+        // 下拉框内的搜索词与折叠状态（打开/切换科目时重置）
+        let kpSearchTerm = '';
+        let kpCollapsed = {};
+
+        // 计算搜索命中的节点集合（含所有祖先，便于显示层级路径）
+        function computeKpMatchSet(tree, term) {
+            const set = new Set();
+            const walk = (node) => {
+                const selfMatch = (node.name || '').toLowerCase().indexOf(term) !== -1;
+                let childMatch = false;
+                if (node.children) {
+                    node.children.forEach(c => { if (walk(c)) childMatch = true; });
+                }
+                if (selfMatch || childMatch) { set.add(node.id); return true; }
+                return false;
+            };
+            tree.forEach(walk);
+            return set;
+        }
+
+        // 生成可折叠 + 可搜索的知识点树 HTML（所有节点均保留在 DOM 中，仅隐藏不匹配项，避免已选丢失）
+        function buildKpTreeHtml(tree, selectedIds) {
+            const term = kpSearchTerm.trim().toLowerCase();
+            const matchSet = term ? computeKpMatchSet(tree, term) : null;
+            const buildNode = (node, depth) => {
+                const hasChildren = node.children && node.children.length > 0;
+                const isCollapsed = !!kpCollapsed[node.id];
+                const isChecked = selectedIds.indexOf(node.id) !== -1;
+                const renderedN = renderKpName(node.name || '');
+                const pad = 12 + depth * 18;
+                const nodeHidden = matchSet && !matchSet.has(node.id);
+                // 始终渲染子节点（折叠时仅隐藏），确保已选子项复选框保留在 DOM 中不被丢失
+                const showChildren = hasChildren;
+                const caret = (isCollapsed && !matchSet) ? '▶' : '▼';
+
+                let html = '<div class="kp-node"' + (nodeHidden ? ' style="display:none;"' : '') + '>';
+                if (hasChildren) {
+                    html += '<div class="kp-node-row" style="padding-left:' + pad + 'px;">'
+                        + '<span class="kp-caret" onclick="event.stopPropagation();toggleKpNode(\'' + node.id + '\')">' + caret + '</span>'
+                        + '<label class="kp-checkbox-item" style="padding-left:2px;" onclick="event.stopPropagation();">'
+                        + '<input type="checkbox" value="' + node.id + '"' + (isChecked ? ' checked' : '') + ' onchange="kpCheckboxChange()">'
+                        + '<span class="kp-cb-label math-content">' + renderedN + '</span></label></div>';
+                } else {
+                    html += '<div class="kp-node-row" style="padding-left:' + (pad + 16) + 'px;">'
+                        + '<label class="kp-checkbox-item" onclick="event.stopPropagation();">'
+                        + '<input type="checkbox" value="' + node.id + '"' + (isChecked ? ' checked' : '') + ' onchange="kpCheckboxChange()">'
+                        + '<span class="kp-cb-label math-content">' + renderedN + '</span></label></div>';
+                }
+                if (showChildren) {
+                    let childHtml = '';
+                    node.children.forEach(c => { childHtml += buildNode(c, depth + 1); });
+                    html += '<div class="kp-children" id="kpChildren_' + node.id + '"'
+                        + ((isCollapsed && !matchSet) ? ' style="display:none;"' : '') + '>' + childHtml + '</div>';
+                }
+                html += '</div>';
+                return html;
+            };
+            let treeHtml = '';
+            tree.forEach(n => { treeHtml += buildNode(n, 0); });
+            return treeHtml;
+        }
+
+        // 仅重绘树区域（折叠/搜索时调用，保留搜索框焦点与下拉滚动位置）
+        function rerenderKpTree() {
+            const container = document.getElementById('kpTreeContainer');
+            if (!container) return;
+            const subjectId = document.getElementById('questionSubject').value;
+            if (!subjectId) return;
+            const tree = getKnowledgePointTree(subjectId);
+            container.innerHTML = buildKpTreeHtml(tree, getSelectedKpIds());
+            renderMathJaxContent(container);
+        }
+
+        function kpSearchInput(e) {
+            kpSearchTerm = e.target.value;
+            rerenderKpTree();
+        }
+
+        function toggleKpNode(nodeId) {
+            kpCollapsed[nodeId] = !kpCollapsed[nodeId];
+            rerenderKpTree();
+        }
+
+        // 仅渲染下拉框（打开或刷新科目时调用）
+        function renderKpDropdown(subjectId, selectedIds) {
+            const dropdown = document.getElementById('kpDropdown');
+            if (!dropdown) return;
+            // 每次完整重绘时重置搜索与折叠状态
+            kpSearchTerm = '';
+            kpCollapsed = {};
+            if (!subjectId) {
+                dropdown.innerHTML = '<div class="p-2 text-xs text-gray-400">请先选择科目</div>';
+                return;
+            }
+            const tree = getKnowledgePointTree(subjectId);
+            if (tree.length === 0) {
+                dropdown.innerHTML = '<div class="p-2 text-xs text-gray-400">该科目下暂无知识点</div>';
+                return;
+            }
+            dropdown.innerHTML =
+                '<div class="kp-search-wrap p-2 border-b">'
+                + '<input type="text" id="kpSearchBox" class="block w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none input-focus" placeholder="搜索知识点…" oninput="kpSearchInput(event)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();}">'
+                + '</div>'
+                + '<div class="kp-tree-header p-2 border-b text-xs text-gray-400 flex justify-between">'
+                + '<span>勾选知识点（可多选）</span>'
+                + '<a href="#" onclick="event.preventDefault();clearAllKpCheckboxes()" class="text-primary hover:underline">清除全部</a>'
+                + '</div>'
+                + '<div id="kpTreeContainer" class="kp-tree">' + buildKpTreeHtml(tree, selectedIds) + '</div>'
+                + '<div class="p-2 border-t text-center">'
+                + '<button class="text-xs text-primary hover:text-primary/80 px-3 py-1 rounded border border-primary/30 hover:border-primary cursor-pointer" onclick="event.stopPropagation();closeKpDropdown()">完成选择</button>'
+                + '</div>';
+            const si = document.getElementById('kpSearchBox');
+            if (si) si.value = kpSearchTerm;
+            renderMathJaxContent(dropdown);
+        }
+
         function toggleKpDropdown() {
             const dropdown = document.getElementById('kpDropdown');
             if (!dropdown) return;
@@ -4220,6 +4405,34 @@
             const subjectId = document.getElementById('questionSubject').value;
             updateQuestionKnowledgePointTags(subjectId, []);
         }
+
+        // 将知识点选择器相关函数挂到 window，确保动态生成的下拉框中的内联事件处理器（oninput/onchange/onclick）能在全局作用域找到它们
+        window.kpCheckboxChange = kpCheckboxChange;
+        window.clearAllKpCheckboxes = clearAllKpCheckboxes;
+        window.removeKpTag = removeKpTag;
+        window.closeKpDropdown = closeKpDropdown;
+        window.toggleKpNode = toggleKpNode;
+        window.kpSearchInput = kpSearchInput;
+        window.toggleKpDropdown = toggleKpDropdown;
+        window.renderKpDropdown = renderKpDropdown;
+        window.updateKpTags = updateKpTags;
+        window.getSelectedKpIds = getSelectedKpIds;
+        window.updateQuestionKnowledgePointTags = updateQuestionKnowledgePointTags;
+        window.closeTimerPage = closeTimerPage;
+        window.toggleGlobalStopwatch = toggleGlobalStopwatch;
+        window.triggerOcrCamera = triggerOcrCamera;
+        window.triggerOcrUpload = triggerOcrUpload;
+        window.cancelOcr = cancelOcr;
+        window.applyFontSizePreview = applyFontSizePreview;
+        window.closeLibPrintModal = closeLibPrintModal;
+        window.confirmLibPrint = confirmLibPrint;
+        window.switchPage = switchPage;
+        window.editGradeInline = editGradeInline;
+        window.confirmDeleteGrade = confirmDeleteGrade;
+        window.toggleSubjectKp = toggleSubjectKp;
+        window.toggleKpChildren = toggleKpChildren;
+        window.kpExportModal_updateCount = kpExportModal_updateCount;
+        window.updateMultiAnswer = updateMultiAnswer;
 
         // 点击外部关闭知识点下拉
         document.addEventListener('click', function(e) {
@@ -5038,7 +5251,11 @@
             // 子页面进入时记录来源，便于返回（goBack 调用时不记录）
             if (!skipHistory) {
                 if (!isMainPage) {
-                    pageHistory.push(currentPage);
+                    // 仅当来源页有对应 DOM 元素时才推入历史，避免推入无效的过渡页名
+                    const srcEl = document.getElementById(`${currentPage}Page`) || document.getElementById(currentPage);
+                    if (srcEl) {
+                        pageHistory.push(currentPage);
+                    }
                 } else {
                     pageHistory = [];
                 }
@@ -6076,6 +6293,14 @@
         function renderTextWithMath(text) {
             return renderMarkdownWithMath(text);
         }
+        // 行内渲染 Markdown+数学公式，并去掉 marked 自动包裹的外层 <p>，防止行内选项被拆成多行
+        function renderInlineText(text) {
+            if (!text) return '';
+            let h = renderMarkdownWithMath(text);
+            h = h.replace(/^<p[^>]*>\s*/i, '').replace(/\s*<\/p>\s*$/i, '');
+            return h;
+        }
+
 
         // 解析函数图像配置文本
         function parseGraphConfig(text) {
@@ -9974,7 +10199,7 @@
                 const photoHtml = q.photos && q.photos.length ? `<img src="${q.photos[0]}" alt="题目图片">` : '';
                 const optionsHtml = (q.type === 'choice' || q.type === 'multi') && q.options && q.options.length
                     ? `<div class="print-options">${q.options.map(option => `
-                            <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
+                            <span class="print-option math-content">${renderInlineText((option.label || '') + '.' + (option.text || ''))}</span>
                         `).join('')}</div>`
                     : '';
                 return `
@@ -10162,7 +10387,7 @@
                 const photoHtml = q.photos && q.photos.length ? `<img src="${q.photos[0]}" alt="题目图片">` : '';
                 const optionsHtml = (q.type === 'choice' || q.type === 'multi') && q.options && q.options.length
                     ? `<div class="print-options">${q.options.map(option => `
-                            <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
+                            <span class="print-option math-content">${renderInlineText((option.label || '') + '.' + (option.text || ''))}</span>
                         `).join('')}</div>`
                     : '';
                 return `
@@ -10553,7 +10778,8 @@
             }
             // 直接显示 practicePage，保留之前的答题/配置状态
             document.getElementById('practicePage').classList.remove('hidden');
-            currentPage = 'practice';
+            // 将 currentPage 重置为非 practice，确保后续 switchPage('practice') 能正常触发初始化
+            currentPage = (practiceQuizActive ? 'practice' : '_timer_return');
             pageHistory = []; // practice 是主页面，清空导航历史
         }
 
@@ -10706,7 +10932,7 @@
             goToPracticeQuizFromTimer();
         });
 
-        function printPracticeAsPdf() {
+        async function printPracticeAsPdf() {
             if (!practiceQuestions || practiceQuestions.length === 0) {
                 showNotification('没有可打印的题目', 'warning');
                 return;
@@ -10717,7 +10943,7 @@
                 const photoHtml = q.photos && q.photos.length ? `<img src="${q.photos[0]}" alt="题目图片">` : '';
                 const optionsHtml = (q.type === 'choice' || q.type === 'multi') && q.options && q.options.length
                     ? `<div class="print-options">${q.options.map(option => `
-                            <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
+                            <span class="print-option math-content">${renderInlineText((option.label || '') + '.' + (option.text || ''))}</span>
                         `).join('')}</div>`
                     : '';
                 const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题', compound: '复合题' }[q.type] || q.type;
@@ -10755,7 +10981,7 @@
             beforePrint();
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
                 try {
-                    MathJax.typesetPromise(printArea.querySelectorAll('.math-content')).catch(function() {});
+                    await MathJax.typesetPromise(printArea.querySelectorAll('.math-content'));
                 } catch (e) {
                     console.warn('MathJax typeset failed for practice print:', e);
                 }
@@ -11068,8 +11294,9 @@
         function confirmLibPrint() {
             const modeRadio = document.querySelector('input[name="libPrintMode"]:checked');
             const mode = modeRadio ? modeRadio.value : 'question';
+            const idx = libPrintPendingIndex; // 必须在 closeLibPrintModal 前保存，否则会被清零
             closeLibPrintModal();
-            printPracticeLibraryEntry(libPrintPendingIndex, mode);
+            printPracticeLibraryEntry(idx, mode);
         }
 
         async function printPracticeLibraryEntry(idx, mode) {
@@ -11086,7 +11313,7 @@
                 const photoHtml = q.photos && q.photos.length ? q.photos.map(p => `<img src="${p}" alt="题目图片">`).join('') : '';
                 const optionsHtml = (q.type === 'choice' || q.type === 'multi') && q.options && q.options.length
                     ? `<div class="print-options">${q.options.map(option => `
-                            <div><span class="math-content">${renderTextWithMath(option.label || '')}. ${renderTextWithMath(option.text || '')}</span></div>
+                            <span class="print-option math-content">${renderInlineText((option.label || '') + '.' + (option.text || ''))}</span>
                         `).join('')}</div>`
                     : '';
                 const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题', compound: '复合题' }[q.type] || q.type;
@@ -11175,9 +11402,9 @@
         // 初始化练习页面
         function initPracticePage() {
             practiceQuizActive = false;
-                // 离开答题界面，结束秒表
-                resetGlobalStopwatch();
-                // 回到配置界面
+            // 离开答题界面，结束秒表
+            resetGlobalStopwatch();
+            // 回到配置界面
             document.getElementById('practice-config').classList.remove('hidden');
             document.getElementById('practice-quiz').classList.add('hidden');
             document.getElementById('practiceResultPage').classList.add('hidden');
@@ -11241,8 +11468,23 @@
             subjects.forEach(s => {
                 subjSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
             });
-            subjSel.onchange = renderPracticeSelectList;
+            subjSel.onchange = function() {
+                updatePracticeSelectKpOptions();
+                renderPracticeSelectList();
+            };
             document.getElementById('practiceSelectType').onchange = renderPracticeSelectList;
+            // 自定义知识点下拉触发按钮
+            document.getElementById('practiceSelectKpTrigger').onclick = function(e) {
+                e.stopPropagation();
+                openPracticeSelectKpDropdown();
+            };
+            // 点击下拉外关闭
+            document.addEventListener('click', function(e) {
+                var wrapper = document.getElementById('practiceSelectKpDropdownWrapper');
+                if (wrapper && !wrapper.contains(e.target)) {
+                    closePracticeSelectKpDropdown();
+                }
+            });
 
             // 模式切换
             document.getElementById('practiceModeRandom').onclick = function() {
@@ -11267,6 +11509,7 @@
                 document.getElementById('practiceRandomConfig').classList.add('hidden');
                 document.getElementById('practiceSelectConfig').classList.remove('hidden');
                 document.getElementById('practicePaperConfig').classList.add('hidden');
+                updatePracticeSelectKpOptions();
                 renderPracticeSelectList();
             };
             document.getElementById('practiceModePaper').onclick = function() {
@@ -11332,10 +11575,19 @@
         function getPracticeFilteredQuestions() {
             const subjId = document.getElementById('practiceSelectSubject').value;
             const typeF = document.getElementById('practiceSelectType').value;
+            const kpId = document.getElementById('practiceSelectKnowledgePoint').value;
             const mistakeOnly = document.getElementById('practiceMistakeOnly').checked;
             let filtered = [...questions];
             if (subjId !== 'all') filtered = filtered.filter(q => q.subjectId === subjId);
             if (typeF !== 'all') filtered = filtered.filter(q => q.type === typeF);
+            if (kpId !== 'all') {
+                const kp = knowledgePoints.find(k => k.id === kpId);
+                if (kp) {
+                    // 匹配该知识点及其所有后代知识点（含子、孙）的题目
+                    const kpIds = [kp.id, ...getKnowledgePointDescendants(kp.id)];
+                    filtered = filtered.filter(q => getQuestionKpIds(q).some(id => kpIds.includes(id)));
+                }
+            }
             if (mistakeOnly) filtered = filtered.filter(q => mistakeQuestionIds.includes(q.id));
             return filtered;
         }
@@ -11399,6 +11651,164 @@
             });
         }
 
+        // 重置选择题目模式下的知识点选择为"全部"
+        function updatePracticeSelectKpOptions() {
+            updatePracticeSelectKpDisplay('all');
+            document.getElementById('practiceSelectKnowledgePoint').value = 'all';
+        }
+
+        // ========== 选择题目模式 - 知识点自定义下拉（搜索 + 收起 + 单选） ==========
+        let practiceSelectKpSearchTerm = '';
+        let practiceSelectKpCollapsed = {};
+
+        function pracSelEsc(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function updatePracticeSelectKpDisplay(kpId) {
+            const textEl = document.getElementById('practiceSelectKpText');
+            if (!textEl) return;
+            if (kpId === 'all') {
+                textEl.textContent = '全部知识点';
+                textEl.classList.add('text-gray-500');
+            } else {
+                const kp = knowledgePoints.find(k => k.id === kpId);
+                textEl.textContent = kp ? kp.name : kpId;
+                textEl.classList.remove('text-gray-500');
+            }
+        }
+
+        // 构建可折叠+可搜索的知识点树 HTML（单选模式，点击行选中）
+        function buildPracticeSelectKpTree(tree, depth) {
+            const term = practiceSelectKpSearchTerm.trim().toLowerCase();
+            const matchSet = term ? computeKpMatchSet(tree, term) : null;
+            const buildNode = function(node, d) {
+                const hasChildren = node.children && node.children.length > 0;
+                const isCollapsed = !!practiceSelectKpCollapsed[node.id];
+                const renderedN = renderKpName(node.name || '');
+                const pad = 12 + d * 18;
+                const nodeHidden = matchSet && !matchSet.has(node.id);
+                var caret;
+                if (hasChildren) {
+                    caret = (isCollapsed && !matchSet) ? '▶' : '▼';
+                } else {
+                    caret = '';
+                }
+                var html = '<div class="kp-node"' + (nodeHidden ? ' style="display:none;"' : '') + '>';
+                if (hasChildren) {
+                    html += '<div class="kp-node-row hover:bg-blue-50 cursor-pointer" style="padding-left:' + pad + 'px;" onclick="event.stopPropagation();selectPracticeSelectKp(\'' + node.id + '\')">'
+                        + '<span class="kp-caret" onclick="event.stopPropagation();togglePracticeSelectKpNode(event,\'' + node.id + '\')">' + caret + '</span>'
+                        + '<span class="kp-cb-label math-content text-sm truncate">' + renderedN + '</span></div>';
+                } else {
+                    html += '<div class="kp-node-row hover:bg-blue-50 cursor-pointer" style="padding-left:' + (pad + 16) + 'px;" onclick="event.stopPropagation();selectPracticeSelectKp(\'' + node.id + '\')">'
+                        + '<span class="kp-cb-label math-content text-sm truncate">' + renderedN + '</span></div>';
+                }
+                if (hasChildren) {
+                    var childHtml = '';
+                    node.children.forEach(function(c) { childHtml += buildNode(c, d + 1); });
+                    html += '<div class="kp-children"' + ((isCollapsed && !matchSet) ? ' style="display:none;"' : '') + '>' + childHtml + '</div>';
+                }
+                html += '</div>';
+                return html;
+            };
+            var treeHtml = '';
+            tree.forEach(function(n) { treeHtml += buildNode(n, depth); });
+            return treeHtml;
+        }
+
+        function renderPracticeSelectKpDropdown() {
+            var dd = document.getElementById('practiceSelectKpDropdown');
+            if (!dd) return;
+            var subjId = document.getElementById('practiceSelectSubject').value;
+            practiceSelectKpSearchTerm = '';
+            practiceSelectKpCollapsed = {};
+            var subjectsToShow = subjId === 'all' ? subjects : subjects.filter(function(s) { return s.id === subjId; });
+            if (subjectsToShow.length === 0) {
+                dd.innerHTML = '<div class="p-2 text-xs text-gray-400">无可用科目</div>';
+                return;
+            }
+            var treeAllHtml = '';
+            // "全部知识点"快捷选项
+            treeAllHtml += '<div class="px-3 py-1.5 text-xs text-primary hover:bg-primary/5 cursor-pointer border-b border-gray-100" onclick="event.stopPropagation();selectPracticeSelectKp(\'all\')">全部知识点</div>';
+            subjectsToShow.forEach(function(subject) {
+                var tree = getKnowledgePointTree(subject.id);
+                if (!tree || tree.length === 0) return;
+                if (subjId === 'all' && subjects.length > 1) {
+                    treeAllHtml += '<div class="px-3 py-1 text-xs text-gray-400 bg-gray-50 font-medium">' + pracSelEsc(subject.name) + '</div>';
+                }
+                treeAllHtml += buildPracticeSelectKpTree(tree, 0);
+            });
+            dd.innerHTML =
+                '<div class="kp-search-wrap p-2 border-b">'
+                + '<input type="text" id="practiceSelectKpSearchBox" class="block w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none input-focus" placeholder="搜索知识点…" oninput="practiceSelectKpSearchInput(event)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();}">'
+                + '</div>'
+                + '<div id="practiceSelectKpTreeContainer">' + treeAllHtml + '</div>';
+            renderMathJaxContent(dd);
+        }
+
+        function rerenderPracticeSelectKpTree() {
+            var container = document.getElementById('practiceSelectKpTreeContainer');
+            if (!container) return;
+            var subjId = document.getElementById('practiceSelectSubject').value;
+            var subjectsToShow = subjId === 'all' ? subjects : subjects.filter(function(s) { return s.id === subjId; });
+            if (subjectsToShow.length === 0) {
+                container.innerHTML = '<div class="p-2 text-xs text-gray-400">无可用科目</div>';
+                return;
+            }
+            var html = '<div class="px-3 py-1.5 text-xs text-primary hover:bg-primary/5 cursor-pointer border-b border-gray-100" onclick="event.stopPropagation();selectPracticeSelectKp(\'all\')">全部知识点</div>';
+            subjectsToShow.forEach(function(subject) {
+                var tree = getKnowledgePointTree(subject.id);
+                if (!tree || tree.length === 0) return;
+                if (subjId === 'all' && subjects.length > 1) {
+                    html += '<div class="px-3 py-1 text-xs text-gray-400 bg-gray-50 font-medium">' + pracSelEsc(subject.name) + '</div>';
+                }
+                html += buildPracticeSelectKpTree(tree, 0);
+            });
+            container.innerHTML = html;
+            renderMathJaxContent(container);
+        }
+
+        function practiceSelectKpSearchInput(e) {
+            practiceSelectKpSearchTerm = e.target.value;
+            rerenderPracticeSelectKpTree();
+        }
+
+        function togglePracticeSelectKpNode(event, nodeId) {
+            event.stopPropagation();
+            practiceSelectKpCollapsed[nodeId] = !practiceSelectKpCollapsed[nodeId];
+            rerenderPracticeSelectKpTree();
+        }
+
+        function selectPracticeSelectKp(kpId) {
+            updatePracticeSelectKpDisplay(kpId);
+            document.getElementById('practiceSelectKnowledgePoint').value = kpId;
+            document.getElementById('practiceSelectKpDropdown').classList.add('hidden');
+            renderPracticeSelectList();
+        }
+
+        function openPracticeSelectKpDropdown() {
+            var dd = document.getElementById('practiceSelectKpDropdown');
+            if (!dd) return;
+            if (dd.classList.contains('hidden')) {
+                renderPracticeSelectKpDropdown();
+                dd.classList.remove('hidden');
+            } else {
+                dd.classList.add('hidden');
+            }
+        }
+
+        function closePracticeSelectKpDropdown() {
+            var dd = document.getElementById('practiceSelectKpDropdown');
+            if (dd) dd.classList.add('hidden');
+        }
+
+        // 暴露到 window 以便行内 onclick 调用
+        window.selectPracticeSelectKp = selectPracticeSelectKp;
+        window.togglePracticeSelectKpNode = togglePracticeSelectKpNode;
+        window.practiceSelectKpSearchInput = practiceSelectKpSearchInput;
+        window.openPracticeSelectKpDropdown = openPracticeSelectKpDropdown;
+        window.closePracticeSelectKpDropdown = closePracticeSelectKpDropdown;
+
         function updatePracticeAvailableCount() {
             const mistakeOnly = document.getElementById('practiceMistakeOnly').checked;
             const subjId = document.getElementById('practiceSubject').value;
@@ -11438,13 +11848,25 @@
                 }
                 // 就地洗牌函数
                 const shuffleArr = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; };
-                // 深拷贝并保持选项原顺序
+                // 深拷贝并打乱选择/多选题选项顺序
                 const processed = selected.map(q => {
                     const qCopy = JSON.parse(JSON.stringify(q));
                     if ((qCopy.type === 'choice' || qCopy.type === 'multi') && qCopy.options) {
                         const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
-                        qCopy._shuffledOptions = opts.map((opt, i) => ({ key: String.fromCharCode(65+i), value: opt.text }));
-                        qCopy._correctLetter = (qCopy.answer || '').toUpperCase();
+                        const labels = shuffleArr(opts.map(o => o.label));
+                        if (qCopy.type === 'multi') {
+                            const origAnswerLetters = (qCopy.answer || '').toUpperCase().split('');
+                            const newCorrectLetters = origAnswerLetters.map(origLbl => {
+                                const idx = labels.indexOf(origLbl);
+                                return idx >= 0 ? String.fromCharCode(65 + idx) : origLbl;
+                            }).sort().join('');
+                            qCopy._correctLetter = newCorrectLetters;
+                        } else {
+                            const ans = (qCopy.answer || '').toUpperCase();
+                            const ci = labels.indexOf(ans);
+                            qCopy._correctLetter = ci >= 0 ? String.fromCharCode(65 + ci) : ans;
+                        }
+                        qCopy._shuffledOptions = labels.map((lbl, i) => ({ key: String.fromCharCode(65+i), value: (opts.find(o => o.label===lbl)||{}).text||'' }));
                     }
                     return qCopy;
                 });
@@ -11554,13 +11976,6 @@
             // 随机洗牌
             const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
 
-            // 选项保持原顺序
-            const keepOptions = (qCopy) => {
-                const opts = Array.isArray(qCopy.options) ? qCopy.options : [];
-                qCopy._shuffledOptions = opts.map((opt, i) => ({ key: String.fromCharCode(65 + i), value: opt.text }));
-                qCopy._correctLetter = (qCopy.answer || '').toUpperCase();
-            };
-
             // 选择题选项打乱：随机重排选项顺序，更新正确答案字母对应关系
             const selected = [];
             const takeChoice = shuffle([...choicePool]).slice(0, Math.min(choiceCount, choicePool.length));
@@ -11583,7 +11998,20 @@
             const takeMulti = shuffle([...multiPool]).slice(0, Math.min(multiCount, multiPool.length));
             takeMulti.forEach(q => {
                 const qCopy = JSON.parse(JSON.stringify(q));
-                keepOptions(qCopy);
+                const mOpts = Array.isArray(qCopy.options) ? qCopy.options : [];
+                if (mOpts.length > 0) {
+                    const labels = shuffle(mOpts.map(o => o.label));
+                    const origAnswerLetters = (qCopy.answer || '').toUpperCase().split('');
+                    const newCorrectLetters = origAnswerLetters.map(origLbl => {
+                        const idx = labels.indexOf(origLbl);
+                        return idx >= 0 ? String.fromCharCode(65 + idx) : origLbl;
+                    }).sort().join('');
+                    qCopy._correctLetter = newCorrectLetters;
+                    qCopy._shuffledOptions = labels.map((lbl, i) => ({ key: String.fromCharCode(65 + i), value: (mOpts.find(o => o.label === lbl) || {}).text || '' }));
+                } else {
+                    qCopy._correctLetter = (qCopy.answer || '').toUpperCase();
+                    qCopy._shuffledOptions = [];
+                }
                 selected.push(qCopy);
             });
 
@@ -11636,6 +12064,7 @@
         function goToPracticeQuizFromTimer() {
             document.getElementById('timerPage').classList.add('hidden');
             document.getElementById('practicePage').classList.remove('hidden');
+            // 设置为 practice 以防止后续 switchPage('practice') 误触发 initPracticePage 重置答题
             currentPage = 'practice';
             pageHistory = [];
             document.getElementById('practice-config').classList.add('hidden');
@@ -12009,6 +12438,8 @@
             return qList.map(q => {
                 if (q.type === 'compound' && Array.isArray(q.subQuestions) && q.subQuestions.length) {
                     const qCopy = JSON.parse(JSON.stringify(q));
+                    qCopy._compoundId = q.id;           // 记录母题ID，错题归入时使用
+                    qCopy._compoundSubjectId = q.subjectId; // 记录母题科目
                     qCopy.subQuestions.forEach(sq => {
                         if ((sq.type === 'choice' || sq.type === 'multi') && sq.options) {
                             sq._shuffledOptions = sq.options.map((o, i) => ({ key: String.fromCharCode(65+i), value: o.text }));
