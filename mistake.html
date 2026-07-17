@@ -4890,7 +4890,7 @@
             printArea.classList.remove('hidden');
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
                 try {
-                    await MathJax.typesetPromise(printArea.querySelectorAll('.math-content'));
+                    await MathJax.typesetPromise([printArea]);
                 } catch (e) {
                     console.warn('MathJax typeset failed for knowledge point PDF:', e);
                 }
@@ -10204,8 +10204,7 @@
                     : '';
                 return `
                     <div class="print-section">
-                        <div class="print-title">第 ${index} 题</div>
-                        ${contentHtml ? `<div class="print-subtitle math-content">题目：${contentHtml}</div>` : ''}
+                        <div class="print-title">${index}. ${contentHtml || '（无题目内容）'}</div>
                         ${photoHtml}
                         ${optionsHtml}
                     </div>
@@ -10220,8 +10219,7 @@
                     : '';
                 return `
                     <div class="print-section">
-                        <div class="print-title">第 ${index} 题 答案</div>
-                        ${answerHtml}
+                        <div class="print-title">${index}. ${answerHtml || '（无答案）'}</div>
                         ${explanationHtml}
                         ${photosHtml}
                     </div>
@@ -10229,25 +10227,19 @@
             }
 
             const paperBlocks = orderedPapers.map((paper) => {
-                const questionsContent = [];
-                const answersContent = [];
-                (paper.questionIds || []).forEach((questionId, questionIndex) => {
-                    const question = questions.find(q => q.id === questionId);
-                    if (!question) return;
-                    const itemNumber = questionIndex + 1;
-                    if (mode === 'question' || mode === 'both') {
-                        questionsContent.push(renderQuestionBlock(question, itemNumber));
-                    }
-                    if (mode === 'answer' || mode === 'both') {
-                        answersContent.push(renderAnswerBlock(question, itemNumber));
-                    }
-                });
-
-                const questionSection = questionsContent.length
-                    ? `<div class="print-section">${questionsContent.join('')}</div>`
+                const paperQuestions = (paper.questionIds || []).map(id => questions.find(q => q.id === id)).filter(Boolean);
+                const questionsContent = (mode === 'question' || mode === 'both')
+                    ? buildTypedQuestionsHtml(paperQuestions, renderQuestionBlock)
                     : '';
-                const answerSection = answersContent.length
-                    ? `<div class="print-page-break"></div><div class="print-section"><div class="print-title">试卷答案</div></div>${answersContent.join('')}`
+                const answersContent = (mode === 'answer' || mode === 'both')
+                    ? buildTypedAnswersHtml(paperQuestions, renderAnswerBlock)
+                    : '';
+
+                const questionSection = questionsContent
+                    ? `<div class="print-section">${questionsContent}</div>`
+                    : '';
+                const answerSection = answersContent
+                    ? `<div class="print-page-break"></div><div class="print-section"><div class="print-title">试卷答案</div></div>${answersContent}`
                     : '';
 
                 return `
@@ -10282,7 +10274,7 @@
             beforePrint();
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
                 try {
-                    await MathJax.typesetPromise(printArea.querySelectorAll('.math-content'));
+                    await MathJax.typesetPromise([printArea]);
                 } catch (e) {
                     console.warn('MathJax typeset failed for paper export:', e);
                 }
@@ -10295,6 +10287,71 @@
 
         function updateExportSelectionSummary() {
             document.getElementById('exportSelectionSummary').textContent = `已选择 ${exportSelection.length} 道题`;
+        }
+
+        // ========== 导出通用工具：题型分组 + 章节标题生成 ==========
+        function toChineseNum(n) {
+            var chars = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+                         '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十'];
+            return chars[n - 1] || String(n);
+        }
+
+        var PRINT_TYPE_ORDER = ['choice', 'multi', 'fill', 'bool', 'compound', 'other'];
+        var PRINT_TYPE_NAMES = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', compound: '复合题', other: '问答题' };
+
+        // 将题目列表按题型分组、加章节标题、连续编号，返回渲染后的 HTML 字符串
+        // renderBlock(q, globalIndex): 渲染单题的函数，返回 HTML
+        function buildTypedQuestionsHtml(qList, renderBlock) {
+            var grouped = {};
+            PRINT_TYPE_ORDER.forEach(function(t) { grouped[t] = []; });
+            qList.forEach(function(q) {
+                var t = PRINT_TYPE_ORDER.indexOf(q.type) >= 0 ? q.type : 'other';
+                grouped[t].push(q);
+            });
+            var globalIdx = 0;
+            var sectionNum = 0;
+            var html = '';
+            PRINT_TYPE_ORDER.forEach(function(t) {
+                var qs = grouped[t];
+                if (qs.length === 0) return;
+                sectionNum++;
+                html += '<div class="print-section">' +
+                    '<div class="print-section-title" style="font-size:14pt;font-weight:bold;margin-top:8px;padding-bottom:4px;border-bottom:1px solid #ddd;">' +
+                    toChineseNum(sectionNum) + '、' + PRINT_TYPE_NAMES[t] + '（共' + qs.length + '小题）' +
+                    '</div></div>';
+                qs.forEach(function(q) {
+                    globalIdx++;
+                    html += renderBlock(q, globalIdx);
+                });
+            });
+            return html;
+        }
+
+        // 将题目列表按题型分组、加章节标题，渲染答案块
+        function buildTypedAnswersHtml(qList, renderBlock) {
+            var grouped = {};
+            PRINT_TYPE_ORDER.forEach(function(t) { grouped[t] = []; });
+            qList.forEach(function(q) {
+                var t = PRINT_TYPE_ORDER.indexOf(q.type) >= 0 ? q.type : 'other';
+                grouped[t].push(q);
+            });
+            var globalIdx = 0;
+            var sectionNum = 0;
+            var html = '';
+            PRINT_TYPE_ORDER.forEach(function(t) {
+                var qs = grouped[t];
+                if (qs.length === 0) return;
+                sectionNum++;
+                html += '<div class="print-section">' +
+                    '<div class="print-section-title" style="font-size:14pt;font-weight:bold;margin-top:8px;padding-bottom:4px;border-bottom:1px solid #ddd;">' +
+                    toChineseNum(sectionNum) + '、' + PRINT_TYPE_NAMES[t] + '答案' +
+                    '</div></div>';
+                qs.forEach(function(q) {
+                    globalIdx++;
+                    html += renderBlock(q, globalIdx);
+                });
+            });
+            return html;
         }
 
         function exportQuestionsAsCsv() {
@@ -10392,8 +10449,7 @@
                     : '';
                 return `
                     <div class="print-section">
-                        <div class="print-title">第 ${index} 题</div>
-                        ${contentHtml ? `<div class="print-subtitle math-content">题目：${contentHtml}</div>` : ''}
+                        <div class="print-title">${index}. ${contentHtml || '（无题目内容）'}</div>
                         ${photoHtml}
                         ${optionsHtml}
                     </div>
@@ -10408,28 +10464,15 @@
                     : '';
                 return `
                     <div class="print-section">
-                        <div class="print-title">第 ${index} 题 答案</div>
-                        ${answerHtml}
+                        <div class="print-title">${index}. ${answerHtml || '（无答案）'}</div>
                         ${explanationHtml}
                         ${photosHtml}
                     </div>
                 `;
             }
 
-            const questionBlocks = [];
-            const answerBlocks = [];
-            for (const [index, q] of orderedQuestions.entries()) {
-                const itemNumber = index + 1;
-                if (includeQuestionInfo) {
-                    questionBlocks.push(renderQuestionBlock(q, itemNumber));
-                }
-                if (includeAnswerInfo) {
-                    answerBlocks.push(renderAnswerBlock(q, itemNumber));
-                }
-            }
-
-            const questionContent = questionBlocks.join('');
-            const answerContent = answerBlocks.join('');
+            const questionContent = includeQuestionInfo ? buildTypedQuestionsHtml(orderedQuestions, renderQuestionBlock) : '';
+            const answerContent = includeAnswerInfo ? buildTypedAnswersHtml(orderedQuestions, renderAnswerBlock) : '';
             const content = mode === 'question'
                 ? questionContent
                 : mode === 'answer'
@@ -10460,7 +10503,7 @@
             beforePrint();
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
                 try {
-                    await MathJax.typesetPromise(printArea.querySelectorAll('.math-content'));
+                    await MathJax.typesetPromise([printArea]);
                 } catch (e) {
                     console.warn('MathJax typeset failed for PDF export:', e);
                 }
@@ -10946,18 +10989,16 @@
                             <span class="print-option math-content">${renderInlineText((option.label || '') + '.' + (option.text || ''))}</span>
                         `).join('')}</div>`
                     : '';
-                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题', compound: '复合题' }[q.type] || q.type;
                 return `
                     <div class="print-section">
-                        <div class="print-title">第 ${index} 题（${typeLabel}）</div>
-                        ${contentHtml ? `<div class="print-subtitle math-content">${contentHtml}</div>` : ''}
+                        <div class="print-title">${index}. ${contentHtml || '（无题目内容）'}</div>
                         ${photoHtml}
                         ${optionsHtml}
                     </div>
                 `;
             }
 
-            const questionBlocks = practiceQuestions.map((q, i) => renderQuestionBlock(q, i + 1));
+            const questionBlocks = buildTypedQuestionsHtml(practiceQuestions, renderQuestionBlock);
 
             const printArea = document.getElementById('exportPrintArea');
             printArea.innerHTML = `
@@ -10966,7 +11007,7 @@
                         <div class="print-title">练习题目</div>
                         <div class="print-meta">共 ${practiceQuestions.length} 题 · 导出时间：${formatDate(new Date().toISOString())}</div>
                     </div>
-                    ${questionBlocks.join('')}
+                    ${questionBlocks}
                 </div>
             `;
 
@@ -10981,7 +11022,7 @@
             beforePrint();
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
                 try {
-                    await MathJax.typesetPromise(printArea.querySelectorAll('.math-content'));
+                    await MathJax.typesetPromise([printArea]);
                 } catch (e) {
                     console.warn('MathJax typeset failed for practice print:', e);
                 }
@@ -11316,11 +11357,9 @@
                             <span class="print-option math-content">${renderInlineText((option.label || '') + '.' + (option.text || ''))}</span>
                         `).join('')}</div>`
                     : '';
-                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题', compound: '复合题' }[q.type] || q.type;
                 return `
                     <div class="print-section">
-                        <div class="print-title">第 ${index} 题（${typeLabel}）</div>
-                        ${contentHtml ? `<div class="print-subtitle math-content">${contentHtml}</div>` : ''}
+                        <div class="print-title">${index}. ${contentHtml || '（无题目内容）'}</div>
                         ${photoHtml}
                         ${optionsHtml}
                     </div>
@@ -11333,37 +11372,24 @@
                 const photosHtml = q.explanationPhotos && q.explanationPhotos.length
                     ? `<div>${q.explanationPhotos.map(photo => `<img src="${photo}" alt="解析图片">`).join('')}</div>`
                     : '';
-                const typeLabel = { choice: '选择题', multi: '多选题', fill: '填空题', bool: '判断题', other: '问答题', compound: '复合题' }[q.type] || q.type;
                 return `
                     <div class="print-section">
-                        <div class="print-title">第 ${index} 题 答案（${typeLabel}）</div>
-                        ${answerHtml}
+                        <div class="print-title">${index}. ${answerHtml}</div>
                         ${explanationHtml}
                         ${photosHtml}
                     </div>
                 `;
             }
 
-            const questionBlocks = [];
-            const answerBlocks = [];
-            qList.forEach((q, i) => {
-                if (mode === 'question' || mode === 'both') {
-                    questionBlocks.push(renderQuestionBlock(q, i + 1));
-                }
-                if (mode === 'answer' || mode === 'both') {
-                    answerBlocks.push(renderAnswerBlock(q, i + 1));
-                }
-            });
-
             let contentHtml = '';
             if (mode === 'question') {
-                contentHtml = questionBlocks.join('');
+                contentHtml = buildTypedQuestionsHtml(qList, renderQuestionBlock);
             } else if (mode === 'answer') {
-                contentHtml = `<div class="print-section"><div class="print-title">答案解析</div></div>${answerBlocks.join('')}`;
+                contentHtml = `<div class="print-section"><div class="print-title">答案解析</div></div>${buildTypedAnswersHtml(qList, renderAnswerBlock)}`;
             } else {
-                contentHtml = questionBlocks.join('') +
+                contentHtml = buildTypedQuestionsHtml(qList, renderQuestionBlock) +
                     '<div class="print-page-break"></div>' +
-                    `<div class="print-section"><div class="print-title">答案解析</div></div>${answerBlocks.join('')}`;
+                    `<div class="print-section"><div class="print-title">答案解析</div></div>${buildTypedAnswersHtml(qList, renderAnswerBlock)}`;
             }
 
             const modeLabel = { question: '纯题目', answer: '纯答案解析', both: '题目加答案' }[mode];
@@ -11389,7 +11415,7 @@
             beforePrint();
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
                 try {
-                    await MathJax.typesetPromise(printArea.querySelectorAll('.math-content'));
+                    await MathJax.typesetPromise([printArea]);
                 } catch (e) {
                     console.warn('MathJax typeset failed for lib print:', e);
                 }
