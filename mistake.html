@@ -1137,6 +1137,120 @@
         .sq-card .sq-del { color:#ef4444; cursor:pointer; font-size:0.875rem; padding:0.25rem 0.5rem; border-radius:0.375rem; background:none; border:none; }
         .sq-card .sq-del:hover { background:#fef2f2; }
         .sq-card .sq-row { display:flex; gap:0.5rem; margin-bottom:0.5rem; flex-wrap:wrap; }
+        /* ====== 笔记系统样式 ====== */
+        /* 课时列表 */
+        .note-lesson-list { max-height: calc(100vh - 260px); overflow-y: auto; }
+        .note-lesson-item { display:flex; align-items:center; justify-content:space-between; padding:6px 8px; border-radius:6px; cursor:pointer; transition:background 0.15s; font-size:13px; color:#374151; margin-bottom:1px; }
+        .note-lesson-item:hover { background:#f3f4f6; }
+        .note-lesson-item.active { background:#eff6ff; color:#3B82F6; font-weight:600; }
+        .note-lesson-item .note-lesson-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
+        .note-lesson-item .note-lesson-toggle { width:16px; height:16px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#9ca3af; margin-right:4px; flex-shrink:0; cursor:pointer; }
+        .note-lesson-item .note-lesson-toggle.collapsed i { transform:rotate(-90deg); }
+        .note-lesson-item .note-lesson-toggle i { transition:transform 0.2s; }
+        .note-lesson-children { overflow:hidden; }
+        .note-lesson-children.collapsed { display:none; }
+        /* 康奈尔笔记布局 */
+        .cornell-grid { display:grid; grid-template-columns:200px 1fr; grid-template-rows:1fr auto; height:calc(100vh - 240px); min-height:400px; }
+        .cornell-cues { grid-column:1; grid-row:1; border-right:2px solid #e5e7eb; background:#fafbfc; padding:14px; }
+        .cornell-cues-header { font-size:13px; font-weight:700; color:#6b7280; margin-bottom:8px; border-bottom:1px solid #e5e7eb; padding-bottom:6px; }
+        .cornell-cues textarea { width:100%; height:calc(100% - 30px); resize:none; border:none; background:transparent; font-size:13px; line-height:1.6; color:#374151; outline:none; }
+        .cornell-cues textarea::placeholder { color:#cbd5e1; }
+        .cornell-notes { grid-column:2; grid-row:1; padding:14px; }
+        .cornell-notes-header { font-size:13px; font-weight:700; color:#6b7280; margin-bottom:8px; border-bottom:1px solid #e5e7eb; padding-bottom:6px; }
+        /* 知识点关联标签 */
+        .note-kp-area { padding:8px 14px; border-bottom:1px solid #f0f0f0; display:flex; flex-wrap:wrap; align-items:center; gap:6px; background:#fcfcfd; }
+        .note-kp-area .note-kp-label { font-size:12px; color:#9ca3af; flex-shrink:0; }
+        .note-kp-area .note-kp-label .note-kp-toggle { cursor:pointer; color:#6b7280; margin-left:2px; font-size:11px; }
+        .note-kp-area .note-kp-label .note-kp-toggle:hover { color:#3B82F6; }
+        .note-kp-tag { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:99px; font-size:11px; background:#eff6ff; color:#3B82F6; cursor:default; max-width:220px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+        .note-kp-tag:hover { max-width:none; white-space:normal; z-index:5; position:relative; }
+        .note-kp-tag-child { background:#fef3c7; color:#b45309; border:1px dashed #fcd34d; }
+        .note-kp-tag .note-kp-remove { cursor:pointer; font-size:12px; opacity:0.6; margin-left:2px; flex-shrink:0; }
+        .note-kp-tag .note-kp-remove:hover { opacity:1; color:#ef4444; }
+        .note-kp-area.collapsed .note-kp-tag { display:none; }
+        .note-kp-area.collapsed .note-kp-rel-wrap { display:none; }
+        .note-kp-area .note-kp-collapsed-summary { display:none; font-size:11px; color:#3B82F6; cursor:pointer; }
+        .note-kp-area.collapsed .note-kp-collapsed-summary { display:inline; }
+        .note-kp-area .note-kp-label .note-kp-toggle i { transition:transform 0.2s; }
+        .note-kp-area.collapsed .note-kp-label .note-kp-toggle i { transform:rotate(-90deg); }
+        .note-kp-dropdown-btn { padding:2px 8px; border-radius:99px; font-size:11px; border:1px dashed #d1d5db; color:#9ca3af; background:transparent; cursor:pointer; }
+        .note-kp-dropdown-btn:hover { border-color:#3B82F6; color:#3B82F6; background:#f8faff; }
+        .note-kp-dropdown { position:absolute; z-index:30; background:white; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.12); max-height:200px; overflow-y:auto; min-width:180px; display:none; }
+        .note-kp-dropdown.show { display:block; }
+        .note-kp-dropdown-item { padding:6px 12px; font-size:12px; cursor:pointer; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; }
+        .note-kp-dropdown-item:hover { background:#f3f4f6; }
+        .note-kp-dropdown-item.selected { background:#eff6ff; color:#3B82F6; }
+        .note-kp-dropdown-item.note-kp-child-item { font-size:11px; color:#6b7280; }
+        .note-kp-tree-indent { font-size:10px; margin-right:1px; flex-shrink:0; }
+        .note-kp-dd-toggle { flex-shrink:0; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; border-radius:3px; font-size:10px; color:#9ca3af; margin-right:2px; transition:transform 0.2s; }
+        .note-kp-dd-toggle:hover { color:#374151; background:#e5e7eb; }
+        .note-kp-dd-toggle.collapsed i { transform:rotate(-90deg); }
+        .note-kp-dd-toggle i { transition:transform 0.2s; }
+        .note-kp-dd-children.collapsed { display:none; }
+        .note-kp-dd-parent-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+        .note-kp-dropdown-empty { padding:6px 12px; font-size:12px; color:#9ca3af; }
+        .note-kp-dropdown-search { padding:6px 8px; border-bottom:1px solid #e5e7eb; position:sticky; top:0; background:white; }
+        .note-kp-dropdown-search input { width:100%; border:1px solid #e5e7eb; border-radius:4px; padding:4px 8px; font-size:12px; outline:none; }
+        .note-kp-dropdown-search input:focus { border-color:#3B82F6; }
+        .note-kp-rel-wrap { position:relative; display:inline-flex; }
+        .cornell-notes textarea { width:100%; height:calc(100% - 30px); resize:none; border:none; background:transparent; font-size:14px; line-height:1.8; color:#374151; outline:none; }
+        .cornell-notes textarea::placeholder { color:#cbd5e1; }
+        .cornell-summary { grid-column:1 / -1; grid-row:2; border-top:2px solid #e5e7eb; background:#fafbfc; padding:12px 14px; }
+        .cornell-summary-header { font-size:13px; font-weight:700; color:#6b7280; margin-bottom:6px; }
+        .cornell-summary textarea { width:100%; height:60px; resize:none; border:none; background:transparent; font-size:13px; line-height:1.6; color:#374151; outline:none; }
+        .cornell-summary textarea::placeholder { color:#cbd5e1; }
+        @media (max-width:768px) {
+            .cornell-grid { grid-template-columns:1fr; grid-template-rows:auto 1fr auto; height:auto; min-height:auto; }
+            .cornell-cues { grid-column:1; grid-row:1; border-right:none; border-bottom:2px solid #e5e7eb; }
+            .cornell-cues textarea { height:80px; }
+            .cornell-notes { grid-column:1; grid-row:2; }
+            .cornell-notes textarea { min-height:200px; }
+            .cornell-summary { grid-column:1; grid-row:3; }
+        }
+        /* 导出弹窗 */
+        .note-export-overlay { position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
+        .note-export-overlay.hidden { display:none; }
+        .note-export-modal { background:white; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.2); width:90%; max-width:480px; max-height:80vh; display:flex; flex-direction:column; }
+        .note-export-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb; }
+        .note-export-header button { background:none; border:none; cursor:pointer; font-size:24px; line-height:1; padding:0 4px; }
+        .note-export-body { padding:16px 20px; overflow-y:auto; }
+        .note-export-footer { padding:12px 20px; border-top:1px solid #e5e7eb; display:flex; justify-content:flex-end; gap:8px; }
+        .note-export-lesson-item { display:flex; align-items:center; gap:8px; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:13px; color:#4b5563; }
+        .note-export-lesson-item:hover { background:#f3f4f6; }
+        .note-export-lesson-item input[type="checkbox"] { margin:0; }
+        /* 编辑课时弹窗 */
+        .note-edit-overlay { position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
+        .note-edit-overlay.hidden { display:none; }
+        .note-edit-modal { background:white; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.2); width:90%; max-width:560px; max-height:80vh; display:flex; flex-direction:column; }
+        .note-edit-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb; }
+        .note-edit-header button { background:none; border:none; cursor:pointer; font-size:24px; line-height:1; padding:0 4px; }
+        .note-edit-body { padding:16px 20px; overflow-y:auto; flex:1; }
+        .note-edit-footer { padding:12px 20px; border-top:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center; }
+        .note-edit-row { display:flex; align-items:center; gap:8px; padding:6px 8px; margin-bottom:4px; border-radius:8px; background:#f9fafb; }
+        .note-edit-row input { flex:1; border:1px solid #e5e7eb; border-radius:6px; padding:6px 10px; font-size:13px; outline:none; }
+        .note-edit-row input:focus { border-color:#3B82F6; }
+        .note-edit-row .note-edit-drag { color:#9ca3af; cursor:grab; font-size:14px; padding:4px; }
+        .note-edit-row .note-edit-drag:active { cursor:grabbing; }
+        .note-edit-row .note-edit-del { color:#ef4444; cursor:pointer; font-size:14px; padding:4px; background:none; border:none; }
+        .note-edit-row .note-edit-del:hover { background:#fef2f2; border-radius:4px; }
+        .note-edit-row .note-edit-child { color:#3B82F6; cursor:pointer; font-size:12px; padding:4px; background:none; border:none; }
+        .note-edit-row .note-edit-child:hover { background:#eff6ff; border-radius:4px; }
+        .note-edit-row .note-edit-parent-select { border:1px solid #e5e7eb; border-radius:6px; padding:5px 6px; font-size:11px; background:white; color:#6b7280; outline:none; min-width:100px; max-width:140px; cursor:pointer; }
+        .note-edit-row .note-edit-parent-select:focus { border-color:#3B82F6; }
+        .note-edit-row.note-edit-child-row { margin-left:28px; background:#f0f5ff; }
+        /* 康奈尔笔记打印样式 */
+        @media print {
+            #exportPrintArea .cornell-print-grid { display:grid; grid-template-columns:30% 70%; grid-template-rows:auto auto; border:2px solid #1f2937; margin-bottom:12px; page-break-inside:avoid; break-inside:avoid; }
+            #exportPrintArea .cornell-print-cues { border-right:2px solid #1f2937; border-bottom:2px solid #1f2937; padding:8px 10px; }
+            #exportPrintArea .cornell-print-cues h4 { font-size:11pt; margin-bottom:4px; color:#1f2937; }
+            #exportPrintArea .cornell-print-cues p { font-size:10pt; color:#374151; white-space:pre-wrap; }
+            #exportPrintArea .cornell-print-notes { border-bottom:2px solid #1f2937; padding:8px 10px; }
+            #exportPrintArea .cornell-print-notes h4 { font-size:11pt; margin-bottom:4px; color:#1f2937; }
+            #exportPrintArea .cornell-print-notes p { font-size:10pt; color:#374151; white-space:pre-wrap; }
+            #exportPrintArea .cornell-print-summary { grid-column:1 / -1; padding:8px 10px; }
+            #exportPrintArea .cornell-print-summary h4 { font-size:11pt; margin-bottom:4px; color:#1f2937; }
+            #exportPrintArea .cornell-print-summary p { font-size:10pt; color:#374151; white-space:pre-wrap; }
+        }
         .sq-card .sq-sel { padding:0.3rem 0.5rem; border:1px solid #d1d5db; border-radius:0.375rem; font-size:0.8rem; background:#fff; }
         .sq-card textarea { font-size:0.8rem; min-height:48px; }
     </style>
@@ -1208,6 +1322,9 @@
                     <a href="#practice" class="nav-link text-gray-600 hover:text-primary transition-colors">
                         <i class="fa fa-pencil-square-o mr-1"></i> 练习
                     </a>
+                    <a href="#notes" class="nav-link text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa fa-sticky-note mr-1"></i> 笔记
+                    </a>
                 </div>
                 
                 <div class="flex items-center">
@@ -1272,6 +1389,9 @@
                 </a>
                 <a href="#practice" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
                     <i class="fa fa-pencil-square-o mr-2"></i>练习
+                </a>
+                <a href="#notes" class="mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 cursor-pointer">
+                    <i class="fa fa-sticky-note mr-2"></i>笔记
                 </a>
             </div>
         </div>
@@ -2128,6 +2248,117 @@
             </div>
         </section>
 
+        <!-- 笔记页面 -->
+        <section id="notesPage" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900"><i class="fa fa-sticky-note mr-2 text-primary"></i>笔记</h1>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">选择以下科目进入对应笔记，或先在「科目管理」中创建科目。</p>
+                <div id="notesSubjectGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                </div>
+                <div id="notesEmpty" class="text-center py-16 hidden">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="fa fa-sticky-note text-gray-400 text-3xl"></i>
+                    </div>
+                    <p class="text-gray-500 text-sm mb-2">还没有添加科目</p>
+                    <a href="#subjects" class="text-primary text-sm hover:underline cursor-pointer" onclick="switchPage('subjects')">前往科目管理 <i class="fa fa-arrow-right ml-1"></i></a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 笔记-科目详情页（康奈尔笔记法） -->
+        <section id="noteSubjectPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
+            <div class="sub-page-header">
+                <button class="btn-back" id="noteSubjectBack"><i class="fa fa-arrow-left"></i> 返回笔记</button>
+                <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900" id="noteSubjectTitle">笔记</h1>
+            </div>
+            <!-- 顶部操作栏 -->
+            <div class="flex items-center gap-3 mb-4" id="noteTopBar">
+                <button id="noteExportBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition cursor-pointer" title="选择课时导出为PDF">
+                    <i class="fa fa-file-pdf-o mr-1"></i> 导出笔记
+                </button>
+                <button id="noteEditLessonBtn" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition cursor-pointer" title="编辑课时结构">
+                    <i class="fa fa-list-alt mr-1"></i> 编辑课时
+                </button>
+                <button id="noteAfterClassPracticeBtn" class="px-4 py-2 bg-secondary text-white rounded-lg text-sm font-medium hover:bg-secondary/90 transition cursor-pointer hidden" title="练习本节课关联知识点的所有题目">
+                    <i class="fa fa-pencil-square-o mr-1"></i> 课后练习
+                </button>
+            </div>
+            <!-- 主体：左侧课时栏 + 右侧笔记区 -->
+            <div class="flex gap-4" id="noteMainLayout">
+                <!-- 左侧课时栏 -->
+                <div id="noteSidebar" class="w-64 flex-shrink-0 transition-all duration-300">
+                    <div class="bg-white rounded-xl shadow-sm p-4" id="noteSidebarInner">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                            <i class="fa fa-list text-primary"></i> 课时列表
+                        </h3>
+                        <div id="noteLessonList" class="note-lesson-list">
+                            <p class="text-xs text-gray-400 text-center py-4">暂无课时，点击"编辑课时"添加</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 右侧康奈尔笔记区 -->
+                <div class="flex-1 min-w-0">
+                    <div id="noteCornellArea" class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="cornell-empty text-center py-16 text-gray-400">
+                            <i class="fa fa-hand-o-left text-4xl block mb-3"></i>
+                            <p class="text-sm">请从左侧课时列表中选择一个课时</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 导出笔记弹窗 -->
+        <div id="noteExportModal" class="note-export-overlay hidden">
+            <div class="note-export-modal">
+                <div class="note-export-header">
+                    <h3 class="text-lg font-bold text-gray-900"><i class="fa fa-file-pdf-o mr-2 text-red-500"></i>导出笔记</h3>
+                    <button id="noteExportClose" class="text-gray-400 hover:text-gray-600 text-xl cursor-pointer">&times;</button>
+                </div>
+                <div class="note-export-body">
+                    <p class="text-sm text-gray-600 mb-3">选择要导出笔记的科目和课时：</p>
+                    <div class="mb-3">
+                        <label class="text-xs text-gray-500 mb-1 block">科目</label>
+                        <select id="noteExportSubject" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        </select>
+                    </div>
+                    <div id="noteExportLessonList" class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-2 space-y-1"></div>
+                    <div class="note-export-tools mt-2" id="noteExportTools">
+                        <button id="noteExportSelectAll" class="text-xs text-primary hover:underline cursor-pointer">全选</button>
+                        <span class="text-gray-300 mx-2">|</span>
+                        <button id="noteExportDeselectAll" class="text-xs text-gray-500 hover:underline cursor-pointer">取消全选</button>
+                        <span id="noteExportCount" class="text-xs text-gray-400 ml-2"></span>
+                    </div>
+                </div>
+                <div class="note-export-footer">
+                    <button id="noteExportCancel" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">取消</button>
+                    <button id="noteExportConfirm" class="px-5 py-2 text-sm text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer"><i class="fa fa-file-pdf-o mr-1"></i> 导出PDF</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑课时弹窗 -->
+        <div id="noteEditModal" class="note-edit-overlay hidden">
+            <div class="note-edit-modal">
+                <div class="note-edit-header">
+                    <h3 class="text-lg font-bold text-gray-900"><i class="fa fa-list-alt mr-2 text-primary"></i>编辑课时结构</h3>
+                    <button id="noteEditClose" class="text-gray-400 hover:text-gray-600 text-xl cursor-pointer">&times;</button>
+                </div>
+                <div class="note-edit-body" id="noteEditBody">
+                    <!-- 动态填充 -->
+                </div>
+                <div class="note-edit-footer">
+                    <button id="noteEditAdd" class="px-4 py-2 text-sm text-primary border border-primary rounded-lg hover:bg-primary/5 cursor-pointer"><i class="fa fa-plus mr-1"></i> 添加课时</button>
+                    <div class="flex gap-2">
+                        <button id="noteEditCancel" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">取消</button>
+                        <button id="noteEditSave" class="px-5 py-2 text-sm text-white bg-primary rounded-lg hover:bg-primary/90 cursor-pointer"><i class="fa fa-check mr-1"></i> 保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 练习结果页面 -->
         <section id="practiceResultPage" class="sub-page container mx-auto px-4 sm:px-6 lg:px-8 pb-8 hidden">
             <div class="sub-page-header">
@@ -2480,6 +2711,10 @@
                                 <span class="text-sm text-gray-700"><i class="fa fa-exclamation-triangle mr-2 text-red-500"></i>错题</span>
                                 <input type="checkbox" id="settingPageMistake" class="toggle-switch settings-page-toggle" data-page="mistake">
                             </label>
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <span class="text-sm text-gray-700"><i class="fa fa-sticky-note mr-2 text-amber-500"></i>笔记</span>
+                                <input type="checkbox" id="settingPageNotes" class="toggle-switch settings-page-toggle" data-page="notes">
+                            </label>
                         </div>
                     </div>
                     
@@ -2568,6 +2803,7 @@
                             <option value="knowledgePoints" id="optDefaultKnowledgePoints">知识点</option>
                             <option value="practice" id="optDefaultPractice">练习</option>
                             <option value="mistake" id="optDefaultMistake">错题</option>
+                            <option value="notes" id="optDefaultNotes">笔记</option>
                         </select>
                     </div>
                     
@@ -3051,6 +3287,7 @@
                 subjects: subjects,
                 papers: papers,
                 knowledgePoints: knowledgePoints,
+                noteLessons: noteLessons,
                 mistakeQuestionIds: mistakeQuestionIds,
                 practiceHistory: practiceHistory,
                 practiceLibrary: practiceLibrary
@@ -3066,6 +3303,7 @@
                 subjects = data.subjects || [];
                 papers = data.papers || [];
                 knowledgePoints = data.knowledgePoints || [];
+                noteLessons = data.noteLessons || [];
                 mistakeQuestionIds = data.mistakeQuestionIds || [];
                 practiceHistory = data.practiceHistory || [];
                 practiceLibrary = data.practiceLibrary || [];
@@ -3085,6 +3323,7 @@
                 subjects = [];
                 papers = [];
                 knowledgePoints = [];
+                noteLessons = [];
                 mistakeQuestionIds = [];
                 practiceHistory = [];
                 practiceLibrary = [];
@@ -3150,6 +3389,7 @@
         let subjects = [];
         let papers = [];
         let knowledgePoints = [];
+        let noteLessons = [];         // 笔记课时：[{id, subjectId, parentId, name, sortOrder, cues, notes, summary, knowledgePointIds}]
         let mistakeQuestionIds = []; // 错题本（题目ID数组）
         let practiceHistory = [];    // 练习历史：[{date, totalQuestions, correctCount, accuracy}]
         let practiceLibrary = [];    // 练习库：[{id, name, date, questionIds, questionCount}]
@@ -3188,7 +3428,8 @@
                 statistics: true,
                 knowledgePoints: true,
                 practice: true,
-                mistake: true
+                mistake: true,
+                notes: true
             },
             dashboardWidgets: {
                 quickActions: true,
@@ -3211,6 +3452,10 @@
         }
         if (appSettings.enabledPages.mistake === undefined) {
             appSettings.enabledPages.mistake = true;
+            localStorage.setItem('appSettings', JSON.stringify(appSettings));
+        }
+        if (appSettings.enabledPages.notes === undefined) {
+            appSettings.enabledPages.notes = true;
             localStorage.setItem('appSettings', JSON.stringify(appSettings));
         }
         if (appSettings.fontSize === undefined || typeof appSettings.fontSize === 'string') {
@@ -3278,6 +3523,8 @@
                     renderKnowledgePointTree();
                 } else if (appSettings.defaultPage === 'mistake') {
                     renderMistakePage();
+                } else if (appSettings.defaultPage === 'notes') {
+                    initNotesPage();
                 }
             }
 
@@ -4433,6 +4680,30 @@
         window.toggleKpChildren = toggleKpChildren;
         window.kpExportModal_updateCount = kpExportModal_updateCount;
         window.updateMultiAnswer = updateMultiAnswer;
+        // 笔记功能
+        window.openNoteSubject = openNoteSubject;
+        window.selectNoteLesson = selectNoteLesson;
+        window.toggleNoteLessonChildren = toggleNoteLessonChildren;
+        window.openNoteExportModal = openNoteExportModal;
+        window.closeNoteExportModal = closeNoteExportModal;
+        window.exportNotesToPdf = exportNotesToPdf;
+        window.openNoteEditModal = openNoteEditModal;
+        window.closeNoteEditModal = closeNoteEditModal;
+        window.saveNoteEdit = saveNoteEdit;
+        window._noteEditUpdateName = _noteEditUpdateName;
+        window._noteEditAddChild = _noteEditAddChild;
+        window._noteEditDelete = _noteEditDelete;
+        window._noteEditUpdateParent = _noteEditUpdateParent;
+        window._noteEditGetValidParents = _noteEditGetValidParents;
+        window.noteKpToggleDropdown = noteKpToggleDropdown;
+        window.noteKpToggleDropdownChildren = noteKpToggleDropdownChildren;
+        window.noteKpToggleSelect = noteKpToggleSelect;
+        window.noteKpRemove = noteKpRemove;
+        window.noteKpFilterList = noteKpFilterList;
+        window._noteKpRenderDropdownList = _noteKpRenderDropdownList;
+        window._noteKpRefreshTags = _noteKpRefreshTags;
+        window._noteKpBuildAreaHtml = _noteKpBuildAreaHtml;
+        window.noteKpToggleCollapse = noteKpToggleCollapse;
 
         // 点击外部关闭知识点下拉
         document.addEventListener('click', function(e) {
@@ -5231,7 +5502,7 @@
         }
 
         // 切换页面
-        const mainPages = ['dashboard','questions','subjects','papers','statistics','knowledgePoints','practice','mistake'];
+        const mainPages = ['dashboard','questions','subjects','papers','statistics','knowledgePoints','practice','mistake','notes'];
         let pageHistory = [];
 
         function switchPage(page, skipHistory) {
@@ -5295,6 +5566,8 @@
                 initPracticePage();
             } else if (page === 'mistake') {
                 renderMistakePage();
+            } else if (page === 'notes') {
+                initNotesPage();
             } else if (page === 'timer') {
                 updateGlobalStopwatchDisplay();
             } else if (page === 'help') {
@@ -5555,6 +5828,7 @@
             document.getElementById('settingPageKnowledgePoints').checked = appSettings.enabledPages.knowledgePoints;
             document.getElementById('settingPagePractice').checked = appSettings.enabledPages.practice;
             document.getElementById('settingPageMistake').checked = appSettings.enabledPages.mistake;
+            document.getElementById('settingPageNotes').checked = appSettings.enabledPages.notes;
             
             // 填充仪表盘部件开关
             document.getElementById('settingWidgetQuickActions').checked = appSettings.dashboardWidgets.quickActions;
@@ -5599,6 +5873,7 @@
             document.getElementById('optDefaultKnowledgePoints').style.display = appSettings.enabledPages.knowledgePoints ? '' : 'none';
             document.getElementById('optDefaultPractice').style.display = appSettings.enabledPages.practice ? '' : 'none';
             document.getElementById('optDefaultMistake').style.display = appSettings.enabledPages.mistake ? '' : 'none';
+            document.getElementById('optDefaultNotes').style.display = appSettings.enabledPages.notes ? '' : 'none';
             
             // 如果当前默认页被禁用，自动切到 dashboard
             const sel = document.getElementById('settingDefaultPage');
@@ -5695,6 +5970,7 @@
             appSettings.enabledPages.knowledgePoints = document.getElementById('settingPageKnowledgePoints').checked;
             appSettings.enabledPages.practice = document.getElementById('settingPagePractice').checked;
             appSettings.enabledPages.mistake = document.getElementById('settingPageMistake').checked;
+            appSettings.enabledPages.notes = document.getElementById('settingPageNotes').checked;
             
             // 读取仪表盘部件开关
             appSettings.dashboardWidgets.quickActions = document.getElementById('settingWidgetQuickActions').checked;
@@ -5736,7 +6012,10 @@
                     subjects: true,
                     papers: true,
                     statistics: true,
-                    knowledgePoints: true
+                    knowledgePoints: true,
+                    practice: true,
+                    mistake: true,
+                    notes: true
                 },
                 dashboardWidgets: {
                     quickActions: true,
@@ -5840,7 +6119,8 @@
                 statistics: { desktop: 'a[href="#statistics"]', mobile: 'a[href="#statistics"]' },
                 knowledgePoints: { desktop: 'a[href="#knowledgePoints"]', mobile: 'a[href="#knowledgePoints"]' },
                 practice: { desktop: 'a[href="#practice"]', mobile: 'a[href="#practice"]' },
-                mistake: { desktop: 'a[href="#mistake"]', mobile: 'a[href="#mistake"]' }
+                mistake: { desktop: 'a[href="#mistake"]', mobile: 'a[href="#mistake"]' },
+                notes: { desktop: 'a[href="#notes"]', mobile: 'a[href="#notes"]' }
             };
             
             Object.keys(pageNavMap).forEach(page => {
@@ -11324,6 +11604,968 @@
         document.getElementById('closeHelpPage').addEventListener('click', function() {
             goBack('dashboard');
         });
+
+        // ========== 笔记功能 ==========
+        // 当前浏览的笔记科目 ID 和课时 ID
+        let currentNoteSubjectId = null;
+        let currentNoteLessonId = null;
+
+        // 初始化笔记页面：按科目展示卡片
+        function initNotesPage() {
+            var grid = document.getElementById('notesSubjectGrid');
+            var empty = document.getElementById('notesEmpty');
+            if (!grid) { console.warn('[笔记] notesSubjectGrid 元素未找到'); return; }
+            console.log('[笔记] subjects 数量:', subjects ? subjects.length : 'null');
+
+            if (!subjects || subjects.length === 0) {
+                grid.innerHTML = '';
+                if (empty) empty.classList.remove('hidden');
+                console.log('[笔记] 显示空状态');
+                return;
+            }
+            if (empty) empty.classList.add('hidden');
+
+            var html = '';
+            subjects.forEach(function(s) {
+                var color = s.color || '#6366f1';
+                html +=
+                    '<div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 cursor-pointer transition-all duration-200 overflow-hidden"' +
+                    ' style="display:block;"' +
+                    ' onclick="openNoteSubject(\'' + s.id + '\')"' +
+                    '>' +
+                        '<div style="height:8px;background:' + color + ';"></div>' +
+                        '<div style="padding:16px;">' +
+                            '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+                                '<div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0;background:' + color + ';">' +
+                                    '<i class="fa fa-sticky-note"></i>' +
+                                '</div>' +
+                                '<h3 style="font-weight:600;color:#1f2937;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (s.name || '未命名科目') + '</h3>' +
+                            '</div>' +
+                            '<p style="font-size:12px;color:#9ca3af;margin-top:8px;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;">' + (s.description || '点击进入查看笔记') + '</p>' +
+                        '</div>' +
+                    '</div>';
+            });
+            grid.innerHTML = html;
+            console.log('[笔记] 已渲染 ' + subjects.length + ' 张卡片');
+        }
+
+        // 获取科目课时树
+        function getNoteLessonTree(subjectId) {
+            var lessons = noteLessons.filter(function(l) { return l.subjectId === subjectId; });
+            // 确保有 sortOrder
+            lessons.forEach(function(l) {
+                if (l.sortOrder === undefined) l.sortOrder = 0;
+            });
+            lessons.sort(function(a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+            function buildTree(parentId) {
+                return lessons.filter(function(l) { return l.parentId === parentId; }).map(function(l) {
+                    return { id: l.id, name: l.name, sortOrder: l.sortOrder, children: buildTree(l.id) };
+                });
+            }
+            return buildTree(null);
+        }
+
+        // 进入科目笔记页（子页面，后续实现具体内容）
+        function openNoteSubject(subjectId) {
+            var subject = subjects.find(function(s) { return s.id === subjectId; });
+            if (!subject) return;
+            currentNoteSubjectId = subjectId;
+            currentNoteLessonId = null;
+            document.getElementById('noteSubjectTitle').innerHTML =
+                '<i class="fa fa-sticky-note mr-2" style="color:' + (subject.color || '#6366f1') + ';"></i>' +
+                (subject.name || '未命名科目') + ' · 笔记';
+            switchPage('noteSubject');
+            initNoteSubjectPage(subjectId);
+        }
+
+        // 初始化笔记科目详情页
+        function initNoteSubjectPage(subjectId) {
+            renderNoteSidebar(subjectId);
+            // 默认不选中任何课时，显示空白，隐藏课后练习按钮
+            document.getElementById('noteCornellArea').innerHTML =
+                '<div class="cornell-empty text-center py-16 text-gray-400">' +
+                '<i class="fa fa-hand-o-left text-4xl block mb-3"></i>' +
+                '<p class="text-sm">请从左侧课时列表中选择一个课时</p>' +
+                '</div>';
+            document.getElementById('noteAfterClassPracticeBtn').classList.add('hidden');
+        }
+
+        // 渲染课时侧边栏
+        function renderNoteSidebar(subjectId) {
+            var listEl = document.getElementById('noteLessonList');
+            var tree = getNoteLessonTree(subjectId);
+
+            if (tree.length === 0) {
+                listEl.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">暂无课时，点击"编辑课时"添加</p>';
+                return;
+            }
+
+            // 恢复选中状态
+            var selectedId = currentNoteLessonId;
+
+            function renderItem(node, depth) {
+                var hasChildren = node.children && node.children.length > 0;
+                var isActive = node.id === selectedId;
+                var html = '';
+                html += '<div class="note-lesson-item' + (isActive ? ' active' : '') + '" style="padding-left:' + (8 + depth * 16) + 'px;" onclick="selectNoteLesson(\'' + subjectId + '\', \'' + node.id + '\')">';
+                html += '<div style="display:flex;align-items:center;flex:1;min-width:0;gap:4px;">';
+                if (hasChildren) {
+                    var collapsed = isCollapsed(node.id);
+                    html += '<span class="note-lesson-toggle' + (collapsed ? ' collapsed' : '') + '" onclick="event.stopPropagation();toggleNoteLessonChildren(\'' + subjectId + '\', \'' + node.id + '\')"><i class="fa fa-chevron-down"></i></span>';
+                } else {
+                    html += '<span style="width:16px;flex-shrink:0;"></span>';
+                }
+                html += '<span class="note-lesson-name">' + escHtml(node.name || '未命名课时') + '</span>';
+                html += '</div>';
+                html += '</div>';
+                if (hasChildren) {
+                    html += '<div class="note-lesson-children' + (collapsed ? ' collapsed' : '') + '" id="note-lesson-children-' + node.id + '">';
+                    node.children.forEach(function(child) {
+                        html += renderItem(child, depth + 1);
+                    });
+                    html += '</div>';
+                }
+                return html;
+            }
+
+            var html = '';
+            tree.forEach(function(root) {
+                html += renderItem(root, 0);
+            });
+            listEl.innerHTML = html;
+        }
+
+        // 课时折叠状态缓存
+        var _noteCollapsedLessons = {};
+        // 知识点标签区折叠状态
+        var _noteKpCollapsed = {};
+
+        function isCollapsed(lessonId) {
+            return _noteCollapsedLessons[lessonId] || false;
+        }
+
+        function toggleNoteLessonChildren(subjectId, lessonId) {
+            _noteCollapsedLessons[lessonId] = !_noteCollapsedLessons[lessonId];
+            renderNoteSidebar(subjectId);
+        }
+
+        // 选择课时 - 渲染康奈尔笔记
+        function selectNoteLesson(subjectId, lessonId) {
+            currentNoteLessonId = lessonId;
+            var lesson = noteLessons.find(function(l) { return l.id === lessonId; });
+            if (!lesson) return;
+
+            // 更新侧边栏高亮
+            renderNoteSidebar(subjectId);
+
+            // 渲染康奈尔笔记区
+            var cues = lesson.cues || '';
+            var notes = lesson.notes || '';
+            var summary = lesson.summary || '';
+            var kpIds = lesson.knowledgePointIds || [];
+
+            var area = document.getElementById('noteCornellArea');
+            // 获取当前科目的知识点列表
+            var subjectKps = knowledgePoints.filter(function(kp) { return kp.subjectId === subjectId; });
+
+            area.innerHTML =
+                _noteKpBuildAreaHtml(subjectId, lessonId, kpIds) +
+                '<div class="cornell-grid">' +
+                    '<div class="cornell-cues">' +
+                        '<div class="cornell-cues-header">关键词 / 线索</div>' +
+                        '<textarea id="cornellCuesInput" placeholder="记录关键词、问题、提示...">' + escHtml(cues) + '</textarea>' +
+                    '</div>' +
+                    '<div class="cornell-notes">' +
+                        '<div class="cornell-notes-header"><span id="cornellLessonName">' + escHtml(lesson.name || '未命名课时') + '</span></div>' +
+                        '<textarea id="cornellNotesInput" placeholder="在此记录笔记内容...">' + escHtml(notes) + '</textarea>' +
+                    '</div>' +
+                    '<div class="cornell-summary">' +
+                        '<div class="cornell-summary-header">总结</div>' +
+                        '<textarea id="cornellSummaryInput" placeholder="用一两句话总结本课内容...">' + escHtml(summary) + '</textarea>' +
+                    '</div>' +
+                '</div>';
+
+            // 显示课后练习按钮（课时有关联知识点且有对应题目时显示）
+            _updateAfterClassPracticeBtn(lesson);
+
+            // 自动保存（防抖）
+            var saveTimer = null;
+            function autoSave() {
+                if (saveTimer) clearTimeout(saveTimer);
+                saveTimer = setTimeout(function() {
+                    var l = noteLessons.find(function(l) { return l.id === lessonId; });
+                    if (!l) return;
+                    var cuesEl = document.getElementById('cornellCuesInput');
+                    var notesEl = document.getElementById('cornellNotesInput');
+                    var summaryEl = document.getElementById('cornellSummaryInput');
+                    if (cuesEl) l.cues = cuesEl.value;
+                    if (notesEl) l.notes = notesEl.value;
+                    if (summaryEl) l.summary = summaryEl.value;
+                    // 同步知识点标签
+                    var tags = document.querySelectorAll('#noteCornellArea .note-kp-tag');
+                    l.knowledgePointIds = [];
+                    tags.forEach(function(tag) {
+                        l.knowledgePointIds.push(tag.getAttribute('data-kp-id'));
+                    });
+                    saveGradeData();
+                }, 800);
+            }
+
+            var cuesEl = document.getElementById('cornellCuesInput');
+            var notesEl = document.getElementById('cornellNotesInput');
+            var summaryEl = document.getElementById('cornellSummaryInput');
+            if (cuesEl) cuesEl.addEventListener('input', autoSave);
+            if (notesEl) notesEl.addEventListener('input', autoSave);
+            if (summaryEl) summaryEl.addEventListener('input', autoSave);
+        }
+
+        // ========== 知识点关联辅助函数 ==========
+        // 下拉知识点折叠状态缓存
+        var _noteKpDdCollapsed = {};
+
+        // 渲染知识点下拉列表 HTML（支持树形层级，父节点可折叠子节点）
+        function _noteKpRenderDropdownList(nodes, selectedIds, lessonId, depth) {
+            depth = depth || 0;
+            if (!nodes || nodes.length === 0) {
+                if (depth === 0) return '<div class="note-kp-dropdown-empty">该科目暂无知识点</div>';
+                return '';
+            }
+            var html = '';
+            nodes.forEach(function(node) {
+                var hasChildren = node.children && node.children.length > 0;
+                var isSelected = selectedIds.indexOf(node.id) >= 0;
+                var padLeft = 8 + depth * 18;
+                var isCollapsed = _noteKpDdCollapsed[node.id] === true;
+                var toggleCollapsedClass = (hasChildren && isCollapsed) ? ' collapsed' : '';
+
+                // 整个条目点击选中；若点击了折叠按钮则跳过
+                html += '<div class="note-kp-dropdown-item' + (isSelected ? ' selected' : '') + (depth > 0 ? ' note-kp-child-item' : '') + '" data-kp-id="' + node.id + '" style="padding-left:' + padLeft + 'px;" onclick="if(event.target.closest(\'.note-kp-dd-toggle\'))return;noteKpToggleSelect(\'' + lessonId + '\', \'' + node.id + '\')">';
+                // 折叠/展开按钮
+                if (hasChildren) {
+                    html += '<span class="note-kp-dd-toggle' + toggleCollapsedClass + '" data-kp-dd-toggle="' + node.id + '" onclick="noteKpToggleDropdownChildren(\'' + node.id + '\')"><i class="fa fa-chevron-down"></i></span>';
+                } else {
+                    html += '<span class="note-kp-dd-toggle-placeholder" style="width:16px;height:16px;display:inline-block;flex-shrink:0;margin-right:2px;"></span>';
+                }
+                // 选中图标
+                if (isSelected) {
+                    html += '<i class="fa fa-check mr-1" style="flex-shrink:0;"></i>';
+                } else {
+                    html += '<span class="inline-block" style="width:14px;flex-shrink:0;"></span>';
+                }
+                // 树形缩进线
+                if (depth > 0) {
+                    html += '<span class="note-kp-tree-indent">├ </span>';
+                }
+                // 名称
+                html += '<span class="note-kp-dd-parent-name">' + escHtml(node.name) + '</span>';
+                html += '</div>';
+
+                if (hasChildren) {
+                    html += '<div class="note-kp-dd-children' + toggleCollapsedClass + '" id="note-kp-dd-children-' + node.id + '">';
+                    html += _noteKpRenderDropdownList(node.children, selectedIds, lessonId, depth + 1);
+                    html += '</div>';
+                }
+            });
+            return html;
+        }
+
+        // 构建用于下拉的过滤知识点树（搜索时保持层级）
+        function _noteKpBuildFilteredTree(subjectId, keyword) {
+            var tree = getKnowledgePointTree(subjectId);
+            if (!keyword) return tree;
+            var keywordLower = keyword.toLowerCase();
+            function filterNode(node) {
+                var nameMatch = node.name.toLowerCase().indexOf(keywordLower) >= 0;
+                var filteredChildren = (node.children || []).map(filterNode).filter(function(c) { return c !== null; });
+                if (nameMatch || filteredChildren.length > 0) {
+                    return { id: node.id, name: node.name, children: filteredChildren };
+                }
+                return null;
+            }
+            return tree.map(filterNode).filter(function(n) { return n !== null; });
+        }
+
+        // 生成知识点标签区 HTML（统一方法，避免重复代码）
+        function _noteKpBuildAreaHtml(subjectId, lessonId, kpIds) {
+            var tagsHtml = '';
+            kpIds.forEach(function(kpId) {
+                var kp = knowledgePoints.find(function(k) { return k.id === kpId; });
+                if (kp) {
+                    var path = getKnowledgePointPath(kpId);
+                    var displayName = path || kp.name;
+                    // 如果是子知识点，用斜体样式区分
+                    var isChildKp = !!kp.parentId;
+                    var tagClass = isChildKp ? ' note-kp-tag-child' : '';
+                    tagsHtml += '<span class="note-kp-tag' + tagClass + '" data-kp-id="' + kpId + '" title="' + escHtml(displayName) + '">' + escHtml(displayName) + '<span class="note-kp-remove" onclick="noteKpRemove(\'' + lessonId + '\', \'' + kpId + '\')">&times;</span></span>';
+                }
+            });
+
+            var isCollapsed = _noteKpCollapsed[lessonId] || false;
+            var collapsedClass = isCollapsed ? ' collapsed' : '';
+            var countText = kpIds.length > 0 ? '（' + kpIds.length + '个）' : '';
+
+            return '<div class="note-kp-area' + collapsedClass + '">' +
+                '<span class="note-kp-label">' +
+                    '<i class="fa fa-tags mr-1" style="color:#3B82F6;"></i>知识点' +
+                    '<span class="note-kp-toggle" onclick="noteKpToggleCollapse(\'' + lessonId + '\')" title="展开/收起">' +
+                        '<i class="fa fa-chevron-down"></i>' +
+                    '</span>' +
+                '</span>' +
+                '<span class="note-kp-collapsed-summary" onclick="noteKpToggleCollapse(\'' + lessonId + '\')">' + countText + '</span>' +
+                tagsHtml +
+                '<span class="note-kp-rel-wrap">' +
+                    '<button class="note-kp-dropdown-btn" id="noteKpDropdownBtn" onclick="noteKpToggleDropdown()"><i class="fa fa-plus"></i> 关联</button>' +
+                    '<div class="note-kp-dropdown" id="noteKpDropdown">' +
+                        '<div class="note-kp-dropdown-search"><input type="text" id="noteKpSearchInput" placeholder="搜索知识点..." oninput="noteKpFilterList(\'' + subjectId + '\', \'' + lessonId + '\')"></div>' +
+                        '<div id="noteKpDropdownList">' + _noteKpRenderDropdownList(
+                            getKnowledgePointTree(subjectId),
+                            kpIds,
+                            lessonId,
+                            0
+                        ) + '</div>' +
+                    '</div>' +
+                '</span>' +
+            '</div>';
+        }
+
+        // 切换知识点标签区展开/收起
+        function noteKpToggleCollapse(lessonId) {
+            _noteKpCollapsed[lessonId] = !_noteKpCollapsed[lessonId];
+            _noteKpRefreshTags(lessonId);
+        }
+
+        // 过滤知识点下拉列表（保持层级关系）
+        function noteKpFilterList(subjectId, lessonId) {
+            var input = document.getElementById('noteKpSearchInput');
+            var listEl = document.getElementById('noteKpDropdownList');
+            if (!input || !listEl) return;
+            var keyword = input.value.toLowerCase();
+            var lesson = noteLessons.find(function(l) { return l.id === lessonId; });
+            var selectedIds = lesson ? (lesson.knowledgePointIds || []) : [];
+            var filteredTree = _noteKpBuildFilteredTree(subjectId, keyword);
+            listEl.innerHTML = _noteKpRenderDropdownList(filteredTree, selectedIds, lessonId, 0);
+        }
+
+        // 切换知识点下拉菜单内的父节点展开/收起
+        function noteKpToggleDropdownChildren(nodeId) {
+            _noteKpDdCollapsed[nodeId] = !_noteKpDdCollapsed[nodeId];
+            var children = document.getElementById('note-kp-dd-children-' + nodeId);
+            var toggle = document.querySelector('[data-kp-dd-toggle="' + nodeId + '"]');
+            if (children) children.classList.toggle('collapsed');
+            if (toggle) toggle.classList.toggle('collapsed');
+        }
+
+        // 切换知识点下拉菜单
+        function noteKpToggleDropdown() {
+            var dropdown = document.getElementById('noteKpDropdown');
+            if (!dropdown) return;
+            var isOpen = dropdown.classList.contains('show');
+            // 关闭所有下拉
+            document.querySelectorAll('.note-kp-dropdown').forEach(function(d) { d.classList.remove('show'); });
+            if (!isOpen) {
+                dropdown.classList.add('show');
+            }
+        }
+
+        // 切换选中知识点
+        function noteKpToggleSelect(lessonId, kpId) {
+            var lesson = noteLessons.find(function(l) { return l.id === lessonId; });
+            if (!lesson) return;
+            if (!lesson.knowledgePointIds) lesson.knowledgePointIds = [];
+            var idx = lesson.knowledgePointIds.indexOf(kpId);
+            if (idx >= 0) {
+                lesson.knowledgePointIds.splice(idx, 1);
+            } else {
+                lesson.knowledgePointIds.push(kpId);
+            }
+            saveGradeData();
+            // 重新渲染知识点标签区，保持康奈尔内容不变
+            _noteKpRefreshTags(lessonId);
+        }
+
+        // 从标签上移除知识点
+        function noteKpRemove(lessonId, kpId) {
+            var lesson = noteLessons.find(function(l) { return l.id === lessonId; });
+            if (!lesson || !lesson.knowledgePointIds) return;
+            lesson.knowledgePointIds = lesson.knowledgePointIds.filter(function(id) { return id !== kpId; });
+            saveGradeData();
+            _noteKpRefreshTags(lessonId);
+        }
+
+        // 刷新知识点标签区域
+        function _noteKpRefreshTags(lessonId) {
+            var lesson = noteLessons.find(function(l) { return l.id === lessonId; });
+            if (!lesson) return;
+            var kpIds = lesson.knowledgePointIds || [];
+            var subjectId = lesson.subjectId;
+
+            var kpArea = document.querySelector('#noteCornellArea .note-kp-area');
+            if (kpArea) {
+                kpArea.outerHTML = _noteKpBuildAreaHtml(subjectId, lessonId, kpIds);
+            }
+            // 知识点变更后同步更新课后练习按钮状态
+            _updateAfterClassPracticeBtn(lesson);
+        }
+
+        // ========== 课后练习功能 ==========
+        // 更新课后练习按钮可见性
+        function _updateAfterClassPracticeBtn(lesson) {
+            var btn = document.getElementById('noteAfterClassPracticeBtn');
+            if (!btn) return;
+            if (!lesson) {
+                btn.classList.add('hidden');
+                return;
+            }
+            var kpIds = lesson.knowledgePointIds || [];
+            if (kpIds.length === 0) {
+                btn.classList.add('hidden');
+                return;
+            }
+            // 有知识点就显示按钮
+            btn.classList.remove('hidden');
+        }
+
+        // 启动课后练习：筛选当前课时关联知识点的所有题目
+        function startAfterClassPractice() {
+            var lesson = noteLessons.find(function(l) { return l.id === currentNoteLessonId; });
+            if (!lesson) {
+                showNotification('请先选择一个课时', 'error');
+                return;
+            }
+            var kpIds = lesson.knowledgePointIds || [];
+            if (kpIds.length === 0) {
+                showNotification('当前课时未关联任何知识点，请先关联知识点', 'error');
+                return;
+            }
+
+            // 展开所有知识点（含后代）
+            var allKpIds = new Set();
+            kpIds.forEach(function(kpId) {
+                allKpIds.add(kpId);
+                getKnowledgePointDescendants(kpId).forEach(function(descId) {
+                    allKpIds.add(descId);
+                });
+            });
+            var kpIdsArr = Array.from(allKpIds);
+
+            // 筛选匹配知识点的题目
+            var pool = questions.filter(function(q) {
+                var qKpIds = getQuestionKpIds(q);
+                return qKpIds.some(function(id) { return allKpIds.has(id); });
+            });
+
+            if (pool.length === 0) {
+                showNotification('当前课时关联的知识点下暂无题目，请先在题库中添加相关题目', 'warning');
+                return;
+            }
+
+            // 处理题目选项（打乱选择题选项顺序）
+            var shuffle = function(arr) {
+                for (var i = arr.length - 1; i > 0; i--) {
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+                }
+                return arr;
+            };
+
+            var processed = pool.map(function(q) {
+                var qCopy = JSON.parse(JSON.stringify(q));
+                if ((qCopy.type === 'choice' || qCopy.type === 'multi') && qCopy.options) {
+                    var opts = Array.isArray(qCopy.options) ? qCopy.options : [];
+                    var labels = shuffle(opts.map(function(o) { return o.label; }));
+                    if (qCopy.type === 'multi') {
+                        var origAnswerLetters = (qCopy.answer || '').toUpperCase().split('');
+                        var newCorrectLetters = origAnswerLetters.map(function(origLbl) {
+                            var idx = labels.indexOf(origLbl);
+                            return idx >= 0 ? String.fromCharCode(65 + idx) : origLbl;
+                        }).sort().join('');
+                        qCopy._correctLetter = newCorrectLetters;
+                    } else {
+                        var ans = (qCopy.answer || '').toUpperCase();
+                        var ci = labels.indexOf(ans);
+                        qCopy._correctLetter = ci >= 0 ? String.fromCharCode(65 + ci) : ans;
+                    }
+                    qCopy._shuffledOptions = labels.map(function(lbl, i) {
+                        return { key: String.fromCharCode(65 + i), value: (opts.find(function(o) { return o.label === lbl; }) || {}).text || '' };
+                    });
+                }
+                return qCopy;
+            });
+
+            // 按题型排序，展开复合题
+            practiceQuestions = expandCompoundQuestions(sortByPracticeTypeOrder(processed));
+            practiceUserAnswers = practiceQuestions.map(function() { return {}; });
+            practiceCurrentIndex = 0;
+
+            // 获取科目名称显示
+            var subject = subjects.find(function(s) { return s.id === lesson.subjectId; });
+            document.getElementById('practice-current-subject').textContent = (subject ? subject.name : '未知科目') + ' · ' + (lesson.name || '课时');
+
+            // 自动保存到练习库
+            autoSaveToPracticeLibrary(practiceQuestions.map(function(q) { return q.id; }));
+
+            // 启动答题
+            startPracticeQuiz();
+        }
+
+        // 点击页面其他地方关闭知识点下拉
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.note-kp-rel-wrap')) {
+                document.querySelectorAll('.note-kp-dropdown').forEach(function(d) { d.classList.remove('show'); });
+            }
+        });
+
+        // ========== 导出笔记弹窗 ==========
+        function openNoteExportModal() {
+            if (noteLessons.length === 0) {
+                showNotification('暂无笔记数据可导出', 'warning');
+                return;
+            }
+            // 收集有笔记课时的科目
+            var subjectsWithNotes = subjects.filter(function(s) {
+                return noteLessons.some(function(l) { return l.subjectId === s.id; });
+            });
+            if (subjectsWithNotes.length === 0) {
+                showNotification('没有可导出的科目', 'warning');
+                return;
+            }
+            // 填充科目下拉
+            var subjSelect = document.getElementById('noteExportSubject');
+            subjSelect.innerHTML = '';
+            subjectsWithNotes.forEach(function(s) {
+                subjSelect.innerHTML += '<option value="' + s.id + '">' + escHtml(s.name) + '</option>';
+            });
+
+            // 初次渲染课时列表
+            _noteExportRenderLessons(subjSelect.value);
+
+            // 科目切换
+            subjSelect.onchange = function() {
+                _noteExportRenderLessons(this.value);
+            };
+
+            // 全选/取消
+            document.getElementById('noteExportSelectAll').onclick = function() {
+                _noteExportSetAll(true);
+            };
+            document.getElementById('noteExportDeselectAll').onclick = function() {
+                _noteExportSetAll(false);
+            };
+
+            document.getElementById('noteExportModal').classList.remove('hidden');
+        }
+
+        function _noteExportRenderLessons(subjectId) {
+            var tree = getNoteLessonTree(subjectId);
+            var html = '';
+            function renderCheck(node, depth) {
+                html += '<label class="note-export-lesson-item" style="padding-left:' + (8 + depth * 20) + 'px;">';
+                html += '<input type="checkbox" value="' + node.id + '" checked>';
+                html += '<span>' + escHtml(node.name || '未命名课时') + '</span>';
+                html += '</label>';
+                if (node.children && node.children.length > 0) {
+                    node.children.forEach(function(c) { renderCheck(c, depth + 1); });
+                }
+            }
+            if (tree.length === 0) {
+                html = '<p class="text-xs text-gray-400 text-center py-4">该科目暂无课时</p>';
+            } else {
+                tree.forEach(function(root) { renderCheck(root, 0); });
+            }
+            document.getElementById('noteExportLessonList').innerHTML = html;
+            _noteExportUpdateCount();
+            // 绑定复选框变化
+            document.querySelectorAll('#noteExportLessonList input[type="checkbox"]').forEach(function(cb) {
+                cb.onchange = _noteExportUpdateCount;
+            });
+        }
+
+        function _noteExportGetChecked() {
+            return Array.from(document.querySelectorAll('#noteExportLessonList input[type="checkbox"]'));
+        }
+
+        function _noteExportSetAll(checked) {
+            _noteExportGetChecked().forEach(function(cb) { cb.checked = checked; });
+            _noteExportUpdateCount();
+        }
+
+        function _noteExportUpdateCount() {
+            var total = _noteExportGetChecked().length;
+            var sel = _noteExportGetChecked().filter(function(cb) { return cb.checked; }).length;
+            var el = document.getElementById('noteExportCount');
+            if (el) el.textContent = '已选 ' + sel + '/' + total + ' 课时';
+        }
+
+        function closeNoteExportModal() {
+            document.getElementById('noteExportModal').classList.add('hidden');
+        }
+
+        async function exportNotesToPdf() {
+            var subjectId = document.getElementById('noteExportSubject').value;
+            var selectedIds = _noteExportGetChecked()
+                .filter(function(cb) { return cb.checked; })
+                .map(function(cb) { return cb.value; });
+
+            if (selectedIds.length === 0) {
+                showNotification('请至少选择一个课时', 'warning');
+                return;
+            }
+
+            closeNoteExportModal();
+
+            var subject = subjects.find(function(s) { return s.id === subjectId; });
+            if (!subject) return;
+
+            // 按树结构排序获取选中的课时
+            var tree = getNoteLessonTree(subjectId);
+            var selectedLessons = [];
+            function collectSelected(nodes) {
+                nodes.forEach(function(node) {
+                    if (selectedIds.indexOf(node.id) >= 0) {
+                        var lesson = noteLessons.find(function(l) { return l.id === node.id; });
+                        if (lesson) selectedLessons.push(lesson);
+                    }
+                    if (node.children && node.children.length) collectSelected(node.children);
+                });
+            }
+            collectSelected(tree);
+
+            if (selectedLessons.length === 0) {
+                showNotification('没有可导出的课时内容', 'warning');
+                return;
+            }
+
+            var bodyHtml = '';
+            bodyHtml += '<div class="print-section">';
+            bodyHtml += '<div class="print-title">' + escHtml(subject.name) + ' · 笔记</div>';
+            var grade = grades.find(function(g) { return g.id === currentGradeId; });
+            bodyHtml += '<div class="print-meta">年级：' + escHtml(grade ? grade.name : '') + '　导出时间：' + formatDate(new Date().toISOString()) + '</div>';
+            bodyHtml += '</div>';
+
+            selectedLessons.forEach(function(lesson) {
+                bodyHtml += '<div class="print-page-break"></div>';
+                bodyHtml += '<div class="print-section">';
+                bodyHtml += '<div class="print-subtitle" style="margin-bottom:8px;">' + escHtml(lesson.name || '未命名课时') + '</div>';
+                // 关联知识点
+                var kpIds = lesson.knowledgePointIds || [];
+                if (kpIds.length > 0) {
+                    var kpNames = kpIds.map(function(kpId) {
+                        return getKnowledgePointPath(kpId) || '';
+                    }).filter(Boolean);
+                    if (kpNames.length > 0) {
+                        bodyHtml += '<div class="print-meta" style="margin-bottom:6px;">关联知识点：' + escHtml(kpNames.join('、')) + '</div>';
+                    }
+                }
+                bodyHtml += '<div class="cornell-print-grid">';
+                // 线索栏
+                bodyHtml += '<div class="cornell-print-cues">';
+                bodyHtml += '<h4>关键词 / 线索</h4>';
+                bodyHtml += '<p>' + escHtml(lesson.cues || '（无）') + '</p>';
+                bodyHtml += '</div>';
+                // 笔记栏
+                bodyHtml += '<div class="cornell-print-notes">';
+                bodyHtml += '<h4>笔记内容</h4>';
+                bodyHtml += '<p>' + escHtml(lesson.notes || '（无）') + '</p>';
+                bodyHtml += '</div>';
+                // 总结栏
+                bodyHtml += '<div class="cornell-print-summary">';
+                bodyHtml += '<h4>总结</h4>';
+                bodyHtml += '<p>' + escHtml(lesson.summary || '（无）') + '</p>';
+                bodyHtml += '</div>';
+                bodyHtml += '</div>';
+                bodyHtml += '</div>';
+            });
+
+            var printArea = document.getElementById('exportPrintArea');
+            printArea.innerHTML = '<div class="print-root">' + bodyHtml + '</div>';
+
+            printArea.classList.remove('hidden');
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                try {
+                    await MathJax.typesetPromise([printArea]);
+                } catch (e) {
+                    console.warn('MathJax typeset failed for note PDF:', e);
+                }
+            }
+
+            var afterPrint = function() {
+                printArea.classList.add('hidden');
+                window.removeEventListener('afterprint', afterPrint);
+            };
+            window.addEventListener('afterprint', afterPrint);
+            window.print();
+        }
+
+        // ========== 编辑课时弹窗 ==========
+        var _noteEditDraft = null; // 编辑中的课时副本
+
+        function openNoteEditModal(subjectId) {
+            if (!subjectId) subjectId = currentNoteSubjectId;
+            if (!subjectId) return;
+            // 深拷贝当前科目课时到草稿
+            _noteEditDraft = noteLessons
+                .filter(function(l) { return l.subjectId === subjectId; })
+                .map(function(l) { return { id: l.id, subjectId: l.subjectId, parentId: l.parentId, name: l.name, sortOrder: l.sortOrder, cues: l.cues, notes: l.notes, summary: l.summary, knowledgePointIds: l.knowledgePointIds ? l.knowledgePointIds.slice() : [] }; });
+
+            // 确保有 sortOrder
+            _noteEditDraft.forEach(function(l, i) {
+                if (l.sortOrder === undefined) l.sortOrder = i;
+            });
+            _noteEditDraft.sort(function(a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+
+            document.getElementById('noteEditModal').classList.remove('hidden');
+            _noteEditRender(subjectId);
+        }
+
+        function closeNoteEditModal() {
+            document.getElementById('noteEditModal').classList.add('hidden');
+            _noteEditDraft = null;
+        }
+
+        function _noteEditRender(subjectId) {
+            var bodyEl = document.getElementById('noteEditBody');
+            var roots = _noteEditDraft.filter(function(l) { return !l.parentId; });
+            roots.sort(function(a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+
+            function renderRow(lesson, depth) {
+                var children = _noteEditDraft.filter(function(l) { return l.parentId === lesson.id; });
+                children.sort(function(a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+                var isChild = !!lesson.parentId;
+                // 构建父课时选项（排除自身及其所有后代，避免循环引用）
+                var validParents = _noteEditGetValidParents(lesson.id, _noteEditDraft);
+                var html = '';
+                html += '<div class="note-edit-row' + (isChild ? ' note-edit-child-row' : '') + '" data-lesson-id="' + lesson.id + '" data-depth="' + depth + '" draggable="true">';
+                html += '<span class="note-edit-drag" title="拖拽排序"><i class="fa fa-grip-vertical"></i></span>';
+                html += '<input type="text" value="' + escHtml(lesson.name || '') + '" placeholder="课时名称" onchange="_noteEditUpdateName(\'' + lesson.id + '\', this.value)">';
+                // 父课时选择器
+                html += '<select class="note-edit-parent-select" onchange="_noteEditUpdateParent(\'' + lesson.id + '\', this.value)" title="选择父课时">';
+                html += '<option value=""' + (!lesson.parentId ? ' selected' : '') + '>根课时</option>';
+                validParents.forEach(function(p) {
+                    html += '<option value="' + p.id + '"' + (lesson.parentId === p.id ? ' selected' : '') + '>' + escHtml(p.name || '未命名') + '</option>';
+                });
+                html += '</select>';
+                html += '<button class="note-edit-child" title="添加子课时" onclick="_noteEditAddChild(\'' + lesson.id + '\')"><i class="fa fa-plus-circle"></i></button>';
+                html += '<button class="note-edit-del" title="删除" onclick="_noteEditDelete(\'' + lesson.id + '\')"><i class="fa fa-trash"></i></button>';
+                html += '</div>';
+                children.forEach(function(child) {
+                    html += renderRow(child, depth + 1);
+                });
+                return html;
+            }
+
+            var html = '';
+            if (roots.length === 0) {
+                html = '<p class="text-xs text-gray-400 text-center py-8">暂无课时，点击左下角"添加课时"按钮创建</p>';
+            } else {
+                roots.forEach(function(root) {
+                    html += renderRow(root, 0);
+                });
+                html += '<p class="text-xs text-gray-400 mt-3"><i class="fa fa-info-circle mr-1"></i>拖拽 <i class="fa fa-grip-vertical"></i> 手柄可调整课时顺序，仅同层级间排序</p>';
+            }
+            bodyEl.innerHTML = html;
+
+            // 拖拽排序
+            var dragSrcId = null;
+            bodyEl.querySelectorAll('.note-edit-row[draggable="true"]').forEach(function(row) {
+                row.addEventListener('dragstart', function(e) {
+                    dragSrcId = this.getAttribute('data-lesson-id');
+                    this.style.opacity = '0.5';
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', dragSrcId);
+                });
+                row.addEventListener('dragend', function() {
+                    this.style.opacity = '1';
+                    dragSrcId = null;
+                    bodyEl.querySelectorAll('.note-edit-row').forEach(function(r) { r.style.borderTop = ''; });
+                });
+                row.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    if (!dragSrcId || dragSrcId === this.getAttribute('data-lesson-id')) return;
+                    // 同层级间排序
+                    var srcLesson = _noteEditDraft.find(function(l) { return l.id === dragSrcId; });
+                    var tgtLesson = _noteEditDraft.find(function(l) { return l.id === this.getAttribute('data-lesson-id'); });
+                    if (!srcLesson || !tgtLesson) return;
+                    if (srcLesson.parentId !== tgtLesson.parentId) return;
+                    this.style.borderTop = '2px solid #3B82F6';
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                row.addEventListener('dragleave', function() {
+                    this.style.borderTop = '';
+                });
+                row.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.style.borderTop = '';
+                    var targetId = this.getAttribute('data-lesson-id');
+                    if (!dragSrcId || dragSrcId === targetId) return;
+                    var srcIdx = _noteEditDraft.findIndex(function(l) { return l.id === dragSrcId; });
+                    var tgtIdx = _noteEditDraft.findIndex(function(l) { return l.id === targetId; });
+                    if (srcIdx < 0 || tgtIdx < 0) return;
+                    var srcLesson = _noteEditDraft[srcIdx];
+                    var tgtLesson = _noteEditDraft[tgtIdx];
+                    if (srcLesson.parentId !== tgtLesson.parentId) return;
+                    // 同级间重排 sortOrder
+                    var parentId = srcLesson.parentId;
+                    var siblings = _noteEditDraft.filter(function(l) { return l.parentId === parentId; });
+                    siblings.sort(function(a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+                    var sibIds = siblings.map(function(l) { return l.id; });
+                    var srcPos = sibIds.indexOf(srcLesson.id);
+                    var tgtPos = sibIds.indexOf(tgtLesson.id);
+                    var moved = sibIds.splice(srcPos, 1)[0];
+                    sibIds.splice(tgtPos, 0, moved);
+                    sibIds.forEach(function(id, i) {
+                        var l = _noteEditDraft.find(function(l) { return l.id === id; });
+                        if (l) l.sortOrder = i;
+                    });
+                    _noteEditRender(subjectId);
+                });
+            });
+        }
+
+        function _noteEditUpdateName(lessonId, name) {
+            var lesson = _noteEditDraft.find(function(l) { return l.id === lessonId; });
+            if (lesson) lesson.name = name;
+        }
+
+        // 获取可选的父课时列表（排除指定课时自身及其所有后代，避免循环引用）
+        function _noteEditGetValidParents(selfId, allLessons) {
+            // 收集所有后代 ID
+            var descendants = {};
+            function collectDescendants(id) {
+                allLessons.forEach(function(l) {
+                    if (l.parentId === id) {
+                        descendants[l.id] = true;
+                        collectDescendants(l.id);
+                    }
+                });
+            }
+            collectDescendants(selfId);
+            descendants[selfId] = true; // 也排除自身
+
+            return allLessons.filter(function(l) {
+                return !descendants[l.id];
+            });
+        }
+
+        // 更新父课时
+        function _noteEditUpdateParent(lessonId, newParentId) {
+            var lesson = _noteEditDraft.find(function(l) { return l.id === lessonId; });
+            if (!lesson) return;
+            // 转换空字符串为 null
+            var parentId = newParentId || null;
+            if (parentId === lesson.parentId) return; // 无变化
+            lesson.parentId = parentId;
+            // 排到新父节点末尾
+            var siblings = _noteEditDraft.filter(function(l) { return l.parentId === parentId; });
+            lesson.sortOrder = siblings.length - 1;
+            _noteEditRender(currentNoteSubjectId);
+        }
+
+        function _noteEditAddChild(parentId) {
+            var newLesson = {
+                id: generateId(),
+                subjectId: currentNoteSubjectId,
+                parentId: parentId,
+                name: '新子课时',
+                sortOrder: _noteEditDraft.filter(function(l) { return l.parentId === parentId; }).length,
+                cues: '',
+                notes: '',
+                summary: '',
+                knowledgePointIds: []
+            };
+            _noteEditDraft.push(newLesson);
+            _noteEditRender(currentNoteSubjectId);
+        }
+
+        function _noteEditDelete(lessonId) {
+            // 递归删除子课时
+            function delRecursive(id) {
+                var children = _noteEditDraft.filter(function(l) { return l.parentId === id; });
+                children.forEach(function(c) { delRecursive(c.id); });
+                _noteEditDraft = _noteEditDraft.filter(function(l) { return l.id !== id; });
+            }
+            if (!confirm('确定要删除该课时吗？子课时也会一并删除。')) return;
+            delRecursive(lessonId);
+            _noteEditRender(currentNoteSubjectId);
+        }
+
+        function saveNoteEdit() {
+            var subjectId = currentNoteSubjectId;
+            if (!_noteEditDraft || !subjectId) return;
+
+            // 更新名称及父课时
+            var bodyEl = document.getElementById('noteEditBody');
+            bodyEl.querySelectorAll('.note-edit-row').forEach(function(row) {
+                var lessonId = row.getAttribute('data-lesson-id');
+                var lesson = _noteEditDraft.find(function(l) { return l.id === lessonId; });
+                if (!lesson) return;
+                var input = row.querySelector('input[type="text"]');
+                if (input) lesson.name = input.value;
+                var select = row.querySelector('.note-edit-parent-select');
+                if (select) lesson.parentId = select.value || null;
+            });
+
+            // 删除当前科目的旧课时，替换为新草稿（保留其他科目的课时）
+            noteLessons = noteLessons.filter(function(l) { return l.subjectId !== subjectId; });
+            noteLessons = noteLessons.concat(_noteEditDraft);
+            saveGradeData();
+            closeNoteEditModal();
+            initNoteSubjectPage(subjectId);
+            showNotification('课时结构已保存', 'success');
+        }
+
+        // 笔记子页面返回按钮
+        document.getElementById('noteSubjectBack').addEventListener('click', function() {
+            goBack('notes');
+        });
+
+        // 导出笔记按钮
+        document.getElementById('noteExportBtn').addEventListener('click', function() {
+            openNoteExportModal();
+        });
+
+        // 编辑课时按钮
+        document.getElementById('noteEditLessonBtn').addEventListener('click', function() {
+            openNoteEditModal();
+        });
+
+        // 课后练习按钮
+        document.getElementById('noteAfterClassPracticeBtn').addEventListener('click', function() {
+            startAfterClassPractice();
+        });
+
+        // 导出弹窗按钮事件
+        document.getElementById('noteExportClose').addEventListener('click', closeNoteExportModal);
+        document.getElementById('noteExportCancel').addEventListener('click', closeNoteExportModal);
+        document.getElementById('noteExportConfirm').addEventListener('click', exportNotesToPdf);
+        document.getElementById('noteExportModal').addEventListener('click', function(e) {
+            if (e.target === this) closeNoteExportModal();
+        });
+
+        // 编辑弹窗按钮事件
+        document.getElementById('noteEditClose').addEventListener('click', closeNoteEditModal);
+        document.getElementById('noteEditCancel').addEventListener('click', closeNoteEditModal);
+        document.getElementById('noteEditSave').addEventListener('click', saveNoteEdit);
+        document.getElementById('noteEditAdd').addEventListener('click', function() {
+            if (!currentNoteSubjectId) return;
+            var newLesson = {
+                id: generateId(),
+                subjectId: currentNoteSubjectId,
+                parentId: null,
+                name: '新课时',
+                sortOrder: _noteEditDraft.filter(function(l) { return !l.parentId; }).length,
+                cues: '',
+                notes: '',
+                summary: '',
+                knowledgePointIds: []
+            };
+            _noteEditDraft.push(newLesson);
+            _noteEditRender(currentNoteSubjectId);
+        });
+        document.getElementById('noteEditModal').addEventListener('click', function(e) {
+            if (e.target === this) closeNoteEditModal();
+        });
+
+        // ========== 帮助中心 END ==========
 
         // 全局 Esc 键关闭子页面（帮助中心等）
         document.addEventListener('keydown', function(e) {
