@@ -1137,28 +1137,147 @@
         .sq-card .sq-del { color:#ef4444; cursor:pointer; font-size:0.875rem; padding:0.25rem 0.5rem; border-radius:0.375rem; background:none; border:none; }
         .sq-card .sq-del:hover { background:#fef2f2; }
         .sq-card .sq-row { display:flex; gap:0.5rem; margin-bottom:0.5rem; flex-wrap:wrap; }
+        /* ====== 课本选择卡片 ====== */
+        .note-textbook-section { padding:12px 0; }
+        .note-textbook-section .note-textbook-header { text-align:center; margin-bottom:28px; }
+        .note-textbook-section .note-textbook-header h2 { font-size:21px; font-weight:800; color:#1e293b; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:8px; }
+        .note-textbook-section .note-textbook-header h2 i { font-size:26px; background:linear-gradient(135deg, #3B82F6, #6366f1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .note-textbook-section .note-textbook-header p { font-size:13px; color:#94a3b8; }
+        .note-add-tb-btn { display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:8px 18px; border-radius:10px; font-size:13px; font-weight:600; color:#6366f1; background:#eef2ff; border:2px dashed #c7d2fe; cursor:pointer; transition:all 0.2s; }
+        .note-add-tb-btn:hover { background:#e0e7ff; border-color:#818cf8; color:#4f46e5; transform:translateY(-1px); }
+        .note-add-tb-btn i { font-size:12px; }
+        /* 课本添加卡片（网格末尾的+号卡片） */
+        .note-textbook-add-card { position:relative; background:#fff; border:2px dashed #d1d5db; border-radius:16px; cursor:pointer; transition:all 0.25s; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:180px; }
+        .note-textbook-add-card:hover { border-color:var(--tb-accent,#3B82F6); background:#f8faff; box-shadow:0 4px 20px rgba(59,130,246,0.08); transform:translateY(-3px); }
+        .note-textbook-add-card .note-tb-add-icon { width:48px; height:48px; margin-bottom:10px; border-radius:14px; background:var(--tb-accent-bg,#eff6ff); display:flex; align-items:center; justify-content:center; transition:all 0.25s; }
+        .note-textbook-add-card:hover .note-tb-add-icon { transform:scale(1.1); background:var(--tb-accent,#3B82F6); }
+        .note-textbook-add-card .note-tb-add-icon i { font-size:22px; color:var(--tb-accent,#3B82F6); transition:color 0.25s; }
+        .note-textbook-add-card:hover .note-tb-add-icon i { color:#fff; }
+        .note-textbook-add-card .note-tb-add-text { font-size:14px; font-weight:600; color:#9ca3af; transition:color 0.2s; }
+        .note-textbook-add-card:hover .note-tb-add-text { color:var(--tb-accent,#3B82F6); }
+        .note-textbook-section .note-textbook-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px; }
+        .note-textbook-card {
+            position:relative; background:#fff;
+            border:2px solid #e2e8f0; border-radius:16px;
+            padding:0; cursor:pointer;
+            transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
+            box-shadow:0 2px 8px rgba(0,0,0,0.04);
+            overflow:hidden; display:flex; flex-direction:column;
+        }
+        .note-textbook-card:hover {
+            border-color:var(--tb-accent, #3B82F6);
+            box-shadow:0 10px 30px rgba(59,130,246,0.12);
+            transform:translateY(-3px);
+        }
+        .note-textbook-card:active { transform:translateY(-1px); }
+        .note-textbook-card .note-tb-bar {
+            height:6px; width:100%;
+            background:var(--tb-accent, #3B82F6);
+            flex-shrink:0;
+            transition:height 0.2s;
+        }
+        .note-textbook-card:hover .note-tb-bar { height:8px; }
+        .note-textbook-card .note-tb-body {
+            padding:22px 16px 24px;
+            display:flex; flex-direction:column;
+            align-items:center; text-align:center; flex:1;
+        }
+        .note-textbook-card .note-tb-icon {
+            width:52px; height:52px; margin-bottom:12px;
+            border-radius:14px; display:flex;
+            align-items:center; justify-content:center;
+            flex-shrink:0; background:var(--tb-accent-bg, #eff6ff);
+            transition:transform 0.25s, box-shadow 0.25s;
+        }
+        .note-textbook-card:hover .note-tb-icon {
+            transform:scale(1.08);
+            box-shadow:0 4px 15px rgba(59,130,246,0.2);
+        }
+        .note-textbook-card .note-tb-icon i {
+            font-size:24px; color:var(--tb-accent, #3B82F6);
+        }
+        .note-textbook-card .note-tb-name {
+            font-size:15px; font-weight:700; color:#1e293b;
+            line-height:1.3; margin-bottom:8px;
+            max-width:100%; overflow:hidden;
+            text-overflow:ellipsis; white-space:nowrap;
+        }
+        .note-textbook-card .note-tb-meta {
+            display:inline-flex; align-items:center; gap:5px;
+            padding:5px 14px; border-radius:99px;
+            font-size:12px; font-weight:600;
+            background:#f1f5f9; color:#64748b;
+            transition:all 0.2s;
+        }
+        .note-textbook-card:hover .note-tb-meta {
+            background:var(--tb-accent-bg, #eff6ff);
+            color:var(--tb-accent, #3B82F6);
+        }
+        .note-textbook-empty-state {
+            text-align:center; padding:48px 20px; max-width:400px; margin:0 auto;
+        }
+        .note-textbook-empty-state .empty-icon-wrap {
+            width:72px; height:72px; margin:0 auto 16px;
+            border-radius:20px; background:linear-gradient(135deg,#f0f9ff,#eff6ff);
+            display:flex; align-items:center; justify-content:center;
+        }
+        .note-textbook-empty-state .empty-icon-wrap i {
+            font-size:32px; color:#93c5fd;
+        }
+        .note-textbook-empty-state h3 {
+            font-size:16px; font-weight:700; color:#334155; margin-bottom:6px;
+        }
+        .note-textbook-empty-state p {
+            font-size:13px; color:#94a3b8; line-height:1.6; margin-bottom:16px;
+        }
+        .note-textbook-empty-state .empty-action-btn {
+            display:inline-flex; align-items:center; gap:6px;
+            padding:10px 22px; border-radius:10px;
+            font-size:13px; font-weight:600; color:#fff;
+            background:linear-gradient(135deg,#3B82F6,#6366f1);
+            cursor:pointer; border:none;
+            transition:all 0.2s; box-shadow:0 2px 8px rgba(59,130,246,0.25);
+        }
+        .note-textbook-empty-state .empty-action-btn:hover {
+            transform:translateY(-1px);
+            box-shadow:0 4px 16px rgba(59,130,246,0.35);
+        }
         /* ====== 笔记系统样式 ====== */
         /* 课时列表 */
-        .note-lesson-list { max-height: calc(100vh - 260px); overflow-y: auto; }
-        .note-lesson-item { display:flex; align-items:center; justify-content:space-between; padding:6px 8px; border-radius:6px; cursor:pointer; transition:background 0.15s; font-size:13px; color:#374151; margin-bottom:1px; }
-        .note-lesson-item:hover { background:#f3f4f6; }
-        .note-lesson-item.active { background:#eff6ff; color:#3B82F6; font-weight:600; }
+        .note-lesson-list { max-height: calc(100vh - 300px); overflow-y: auto; }
+        .note-lesson-item { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer; transition:all 0.15s; font-size:13px; color:#475569; margin-bottom:2px; }
+        .note-lesson-item:hover { background:#f1f5f9; color:#334155; }
+        .note-lesson-item.active { background:linear-gradient(135deg, #eff6ff, #eef2ff); color:#4f46e5; font-weight:600; box-shadow:0 1px 3px rgba(79,70,229,0.08); }
         .note-lesson-item .note-lesson-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
-        .note-lesson-item .note-lesson-toggle { width:16px; height:16px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#9ca3af; margin-right:4px; flex-shrink:0; cursor:pointer; }
+        .note-lesson-item .note-lesson-toggle { width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#94a3b8; margin-right:6px; flex-shrink:0; cursor:pointer; border-radius:4px; }
+        .note-lesson-item .note-lesson-toggle:hover { background:#e2e8f0; color:#64748b; }
         .note-lesson-item .note-lesson-toggle.collapsed i { transform:rotate(-90deg); }
         .note-lesson-item .note-lesson-toggle i { transition:transform 0.2s; }
         .note-lesson-children { overflow:hidden; }
         .note-lesson-children.collapsed { display:none; }
+        .note-switch-tb-btn { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; color:#6366f1; background:#eef2ff; border:1px solid transparent; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+        .note-switch-tb-btn:hover { background:#e0e7ff; color:#4f46e5; border-color:#c7d2fe; }
+        .note-switch-tb-btn i { font-size:10px; }
+        /* 顶部操作按钮 */
+        .note-topbar-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; white-space:nowrap; }
+        .note-topbar-btn i { font-size:13px; }
+        .note-topbar-btn-primary { color:#fff; background:linear-gradient(135deg, #3B82F6, #6366f1); box-shadow:0 2px 8px rgba(59,130,246,0.2); }
+        .note-topbar-btn-primary:hover { box-shadow:0 4px 16px rgba(59,130,246,0.35); transform:translateY(-1px); }
+        .note-topbar-btn-danger { color:#fff; background:linear-gradient(135deg, #ef4444, #f97316); box-shadow:0 2px 8px rgba(239,68,68,0.2); }
+        .note-topbar-btn-danger:hover { box-shadow:0 4px 16px rgba(239,68,68,0.35); transform:translateY(-1px); }
+        .note-topbar-btn-success { color:#fff; background:linear-gradient(135deg, #10b981, #059669); box-shadow:0 2px 8px rgba(16,185,129,0.2); }
+        .note-topbar-btn-success:hover { box-shadow:0 4px 16px rgba(16,185,129,0.35); transform:translateY(-1px); }
         /* 康奈尔笔记布局 */
-        .cornell-grid { display:grid; grid-template-columns:200px 1fr; grid-template-rows:1fr auto; height:calc(100vh - 240px); min-height:400px; }
-        .cornell-cues { grid-column:1; grid-row:1; border-right:2px solid #e5e7eb; background:#fafbfc; padding:14px; }
-        .cornell-cues-header { font-size:13px; font-weight:700; color:#6b7280; margin-bottom:8px; border-bottom:1px solid #e5e7eb; padding-bottom:6px; }
-        .cornell-cues textarea { width:100%; height:calc(100% - 30px); resize:none; border:none; background:transparent; font-size:13px; line-height:1.6; color:#374151; outline:none; }
+        .cornell-grid { display:grid; grid-template-columns:200px 1fr; grid-template-rows:1fr auto; height:calc(100vh - 260px); min-height:400px; }
+        .cornell-cues { grid-column:1; grid-row:1; border-right:2px solid #e5e7eb; background:linear-gradient(180deg, #fafbfd, #f8fafc); padding:14px 12px; }
+        .cornell-cues-header { font-size:12px; font-weight:700; color:#6366f1; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid #e0e7ff; display:flex; align-items:center; gap:6px; }
+        .cornell-cues-header::before { content:''; width:8px; height:8px; border-radius:3px; background:linear-gradient(135deg, #6366f1, #818cf8); }
+        .cornell-cues textarea { width:100%; height:calc(100% - 40px); resize:none; border:none; background:transparent; font-size:13px; line-height:1.7; color:#475569; outline:none; }
         .cornell-cues textarea::placeholder { color:#cbd5e1; }
-        .cornell-notes { grid-column:2; grid-row:1; padding:14px; }
-        .cornell-notes-header { font-size:13px; font-weight:700; color:#6b7280; margin-bottom:8px; border-bottom:1px solid #e5e7eb; padding-bottom:6px; }
+        .cornell-notes { grid-column:2; grid-row:1; padding:14px 16px; }
+        .cornell-notes-header { font-size:13px; font-weight:700; color:#374151; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid #e2e8f0; }
         /* 知识点关联标签 */
-        .note-kp-area { padding:8px 14px; border-bottom:1px solid #f0f0f0; display:flex; flex-wrap:wrap; align-items:center; gap:6px; background:#fcfcfd; }
+        .note-kp-area { padding:8px 16px; border-bottom:1px solid #f0f0f0; display:flex; flex-wrap:wrap; align-items:center; gap:6px; background:#fcfcfd; }
         .note-kp-area .note-kp-label { font-size:12px; color:#9ca3af; flex-shrink:0; }
         .note-kp-area .note-kp-label .note-kp-toggle { cursor:pointer; color:#6b7280; margin-left:2px; font-size:11px; }
         .note-kp-area .note-kp-label .note-kp-toggle:hover { color:#3B82F6; }
@@ -1193,11 +1312,12 @@
         .note-kp-dropdown-search input { width:100%; border:1px solid #e5e7eb; border-radius:4px; padding:4px 8px; font-size:12px; outline:none; }
         .note-kp-dropdown-search input:focus { border-color:#3B82F6; }
         .note-kp-rel-wrap { position:relative; display:inline-flex; }
-        .cornell-notes textarea { width:100%; height:calc(100% - 30px); resize:none; border:none; background:transparent; font-size:14px; line-height:1.8; color:#374151; outline:none; }
+        .cornell-notes textarea { width:100%; height:calc(100% - 40px); resize:none; border:none; background:transparent; font-size:14px; line-height:1.85; color:#475569; outline:none; }
         .cornell-notes textarea::placeholder { color:#cbd5e1; }
-        .cornell-summary { grid-column:1 / -1; grid-row:2; border-top:2px solid #e5e7eb; background:#fafbfc; padding:12px 14px; }
-        .cornell-summary-header { font-size:13px; font-weight:700; color:#6b7280; margin-bottom:6px; }
-        .cornell-summary textarea { width:100%; height:60px; resize:none; border:none; background:transparent; font-size:13px; line-height:1.6; color:#374151; outline:none; }
+        .cornell-summary { grid-column:1 / -1; grid-row:2; border-top:2px solid #e5e7eb; background:linear-gradient(180deg, #fafbfd, #f8fafc); padding:12px 16px; }
+        .cornell-summary-header { font-size:12px; font-weight:700; color:#6366f1; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+        .cornell-summary-header::before { content:''; width:8px; height:8px; border-radius:3px; background:linear-gradient(135deg, #6366f1, #818cf8); }
+        .cornell-summary textarea { width:100%; height:56px; resize:none; border:none; background:transparent; font-size:13px; line-height:1.6; color:#475569; outline:none; }
         .cornell-summary textarea::placeholder { color:#cbd5e1; }
         @media (max-width:768px) {
             .cornell-grid { grid-template-columns:1fr; grid-template-rows:auto 1fr auto; height:auto; min-height:auto; }
@@ -1218,6 +1338,9 @@
         .note-export-lesson-item { display:flex; align-items:center; gap:8px; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:13px; color:#4b5563; }
         .note-export-lesson-item:hover { background:#f3f4f6; }
         .note-export-lesson-item input[type="checkbox"] { margin:0; }
+        .note-export-tb-group { margin-bottom:12px; }
+        .note-export-tb-group-head { display:flex; align-items:center; gap:8px; padding:6px 10px; background:#f1f5f9; border-radius:8px; font-size:13px; font-weight:600; color:#374151; margin-bottom:4px; }
+        .note-export-tb-group-head i { color:#3B82F6; font-size:14px; }
         /* 编辑课时弹窗 */
         .note-edit-overlay { position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
         .note-edit-overlay.hidden { display:none; }
@@ -2274,36 +2397,68 @@
                 <h1 class="text-[clamp(1.3rem,2.5vw,2rem)] font-bold text-gray-900" id="noteSubjectTitle">笔记</h1>
             </div>
             <!-- 顶部操作栏 -->
-            <div class="flex items-center gap-3 mb-4" id="noteTopBar">
-                <button id="noteExportBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition cursor-pointer" title="选择课时导出为PDF">
-                    <i class="fa fa-file-pdf-o mr-1"></i> 导出笔记
+            <div class="flex flex-wrap items-center gap-2.5 mb-5" id="noteTopBar">
+                <button id="noteExportBtn" class="note-topbar-btn note-topbar-btn-danger" title="选择课时导出为PDF">
+                    <i class="fa fa-file-pdf-o"></i> 导出笔记
                 </button>
-                <button id="noteEditLessonBtn" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition cursor-pointer" title="编辑课时结构">
-                    <i class="fa fa-list-alt mr-1"></i> 编辑课时
+                <button id="noteEditLessonBtn" class="note-topbar-btn note-topbar-btn-primary" title="编辑课时结构">
+                    <i class="fa fa-list-alt"></i> 编辑课时
                 </button>
-                <button id="noteAfterClassPracticeBtn" class="px-4 py-2 bg-secondary text-white rounded-lg text-sm font-medium hover:bg-secondary/90 transition cursor-pointer hidden" title="练习本节课关联知识点的所有题目">
-                    <i class="fa fa-pencil-square-o mr-1"></i> 课后练习
+                <button id="noteAfterClassPracticeBtn" class="note-topbar-btn note-topbar-btn-success hidden" title="练习本节课关联知识点的所有题目">
+                    <i class="fa fa-pencil-square-o"></i> 课后练习
                 </button>
             </div>
-            <!-- 主体：左侧课时栏 + 右侧笔记区 -->
-            <div class="flex gap-4" id="noteMainLayout">
+            <!-- 课本选择区域（未选课本时显示） -->
+            <div id="noteTextbookSelection" class="note-textbook-section max-w-5xl mx-auto">
+                <div class="note-textbook-header">
+                    <h2 id="noteTextbookHeaderTitle"><i class="fa fa-book"></i>选择课本</h2>
+                    <p id="noteTextbookHeaderSub">请选择一本课本以查看和管理课时笔记</p>
+                    <button id="noteAddTextbookBtn" class="note-add-tb-btn" title="添加新课本">
+                        <i class="fa fa-plus"></i> 添加课本
+                    </button>
+                </div>
+                <div id="noteTextbookGrid"></div>
+                <div id="noteTextbookEmpty" class="note-textbook-empty-state hidden">
+                    <div class="empty-icon-wrap">
+                        <i class="fa fa-book"></i>
+                    </div>
+                    <h3>还没有课本</h3>
+                    <p>先创建课本再添加课时，让笔记分类更清晰</p>
+                    <button class="empty-action-btn" onclick="document.getElementById('noteEditLessonBtn').click()">
+                        <i class="fa fa-plus"></i> 立即创建课本
+                    </button>
+                </div>
+            </div>
+            <!-- 主体：左侧课时栏 + 右侧笔记区（选完课本后显示） -->
+            <div class="flex gap-5 hidden" id="noteMainLayout">
                 <!-- 左侧课时栏 -->
-                <div id="noteSidebar" class="w-64 flex-shrink-0 transition-all duration-300">
-                    <div class="bg-white rounded-xl shadow-sm p-4" id="noteSidebarInner">
-                        <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <i class="fa fa-list text-primary"></i> 课时列表
-                        </h3>
-                        <div id="noteLessonList" class="note-lesson-list">
-                            <p class="text-xs text-gray-400 text-center py-4">暂无课时，点击"编辑课时"添加</p>
+                <div id="noteSidebar" class="w-60 flex-shrink-0 transition-all duration-300">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="noteSidebarInner">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-50 bg-gradient-to-r from-gray-50/50 to-white">
+                            <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <i class="fa fa-list text-primary text-xs"></i>
+                                </span>
+                                课时列表
+                            </h3>
+                            <button id="noteSwitchTextbookBtn" class="note-switch-tb-btn" title="切换课本">
+                                <i class="fa fa-exchange"></i> 切换课本
+                            </button>
+                        </div>
+                        <div id="noteLessonList" class="note-lesson-list px-2 py-2">
+                            <p class="text-xs text-gray-400 text-center py-6">暂无课时，点击顶部「编辑课时」添加</p>
                         </div>
                     </div>
                 </div>
                 <!-- 右侧康奈尔笔记区 -->
                 <div class="flex-1 min-w-0">
-                    <div id="noteCornellArea" class="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <div class="cornell-empty text-center py-16 text-gray-400">
-                            <i class="fa fa-hand-o-left text-4xl block mb-3"></i>
-                            <p class="text-sm">请从左侧课时列表中选择一个课时</p>
+                    <div id="noteCornellArea" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="cornell-empty text-center py-20">
+                            <div class="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+                                <i class="fa fa-hand-o-left text-blue-300 text-3xl"></i>
+                            </div>
+                            <p class="text-gray-400 text-sm font-medium">请从左侧课时列表中选择一个课时</p>
+                            <p class="text-gray-300 text-xs mt-1">选择后将在此处查看和编辑康奈尔笔记</p>
                         </div>
                     </div>
                 </div>
@@ -2350,7 +2505,7 @@
                     <!-- 动态填充 -->
                 </div>
                 <div class="note-edit-footer">
-                    <button id="noteEditAdd" class="px-4 py-2 text-sm text-primary border border-primary rounded-lg hover:bg-primary/5 cursor-pointer"><i class="fa fa-plus mr-1"></i> 添加课时</button>
+                    <button id="noteEditAdd" class="px-4 py-2 text-sm text-primary border border-primary rounded-lg hover:bg-primary/5 cursor-pointer"><i class="fa fa-plus mr-1"></i> 添加课本</button>
                     <div class="flex gap-2">
                         <button id="noteEditCancel" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">取消</button>
                         <button id="noteEditSave" class="px-5 py-2 text-sm text-white bg-primary rounded-lg hover:bg-primary/90 cursor-pointer"><i class="fa fa-check mr-1"></i> 保存</button>
@@ -3287,6 +3442,7 @@
                 subjects: subjects,
                 papers: papers,
                 knowledgePoints: knowledgePoints,
+                noteTextbooks: noteTextbooks,
                 noteLessons: noteLessons,
                 mistakeQuestionIds: mistakeQuestionIds,
                 practiceHistory: practiceHistory,
@@ -3303,7 +3459,23 @@
                 subjects = data.subjects || [];
                 papers = data.papers || [];
                 knowledgePoints = data.knowledgePoints || [];
+                noteTextbooks = data.noteTextbooks || [];
                 noteLessons = data.noteLessons || [];
+                // 数据迁移：旧课时数据无textbookId → 自动迁移到默认课本
+                var hasMigrationNeeded = false;
+                noteLessons.forEach(function(l) {
+                    if (l.textbookId === undefined && l.subjectId) {
+                        // 为每个科目创建默认课本
+                        var defaultTb = noteTextbooks.find(function(tb) { return tb.subjectId === l.subjectId && tb._default; });
+                        if (!defaultTb) {
+                            defaultTb = { id: generateId(), subjectId: l.subjectId, name: '默认课本', sortOrder: 0, _default: true };
+                            noteTextbooks.push(defaultTb);
+                        }
+                        l.textbookId = defaultTb.id;
+                        hasMigrationNeeded = true;
+                    }
+                });
+                if (hasMigrationNeeded) saveGradeData();
                 mistakeQuestionIds = data.mistakeQuestionIds || [];
                 practiceHistory = data.practiceHistory || [];
                 practiceLibrary = data.practiceLibrary || [];
@@ -3324,6 +3496,7 @@
                 papers = [];
                 knowledgePoints = [];
                 noteLessons = [];
+                noteTextbooks = [];
                 mistakeQuestionIds = [];
                 practiceHistory = [];
                 practiceLibrary = [];
@@ -4682,6 +4855,7 @@
         window.updateMultiAnswer = updateMultiAnswer;
         // 笔记功能
         window.openNoteSubject = openNoteSubject;
+        window.selectNoteTextbook = selectNoteTextbook;
         window.selectNoteLesson = selectNoteLesson;
         window.toggleNoteLessonChildren = toggleNoteLessonChildren;
         window.openNoteExportModal = openNoteExportModal;
@@ -4695,6 +4869,9 @@
         window._noteEditDelete = _noteEditDelete;
         window._noteEditUpdateParent = _noteEditUpdateParent;
         window._noteEditGetValidParents = _noteEditGetValidParents;
+        window._noteEditRenameTextbook = _noteEditRenameTextbook;
+        window._noteEditDeleteTextbook = _noteEditDeleteTextbook;
+        window._noteEditAddLessonTo = _noteEditAddLessonTo;
         window.noteKpToggleDropdown = noteKpToggleDropdown;
         window.noteKpToggleDropdownChildren = noteKpToggleDropdownChildren;
         window.noteKpToggleSelect = noteKpToggleSelect;
@@ -6763,6 +6940,7 @@
         function renderMathJaxContent(root = document) {
             // 先处理函数图像
             renderFunctionGraphs(root);
+            // 三级降级：MathJax typesetPromise → MathJax typeset → KaTeX auto-render
             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
                 const els = root.querySelectorAll('.math-content');
                 if (els.length > 0) {
@@ -6773,6 +6951,30 @@
                         console.warn('[MathJax] typesetPromise error:', err);
                     });
                 }
+            } else if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+                const els = root.querySelectorAll('.math-content');
+                if (els.length > 0) {
+                    try { MathJax.typeset(els); } catch(e) {}
+                }
+            } else if (typeof renderMathInElement === 'function') {
+                // 回退：KaTeX auto-render（支持 $...$、$$...$$ 及 LaTeX 风格定界符）
+                const els = root.querySelectorAll('.math-content');
+                els.forEach(function(el) {
+                    try {
+                        renderMathInElement(el, {
+                            delimiters: [
+                                { left: '$$', right: '$$', display: true },
+                                { left: '\\[', right: '\\]', display: true },
+                                { left: '$', right: '$', display: false },
+                                { left: '\\(', right: '\\)', display: false }
+                            ],
+                            throwOnError: false,
+                            output: 'html'
+                        });
+                    } catch(e) {
+                        console.warn('[KaTeX] fallback error:', e);
+                    }
+                });
             }
         }
 
@@ -11608,6 +11810,7 @@
         // ========== 笔记功能 ==========
         // 当前浏览的笔记科目 ID 和课时 ID
         let currentNoteSubjectId = null;
+        let currentNoteTextbookId = null;
         let currentNoteLessonId = null;
 
         // 初始化笔记页面：按科目展示卡片
@@ -11649,9 +11852,12 @@
             console.log('[笔记] 已渲染 ' + subjects.length + ' 张卡片');
         }
 
-        // 获取科目课时树
-        function getNoteLessonTree(subjectId) {
+        // 获取科目课时树（按课本过滤）
+        function getNoteLessonTree(subjectId, textbookId) {
             var lessons = noteLessons.filter(function(l) { return l.subjectId === subjectId; });
+            if (textbookId) {
+                lessons = lessons.filter(function(l) { return l.textbookId === textbookId; });
+            }
             // 确保有 sortOrder
             lessons.forEach(function(l) {
                 if (l.sortOrder === undefined) l.sortOrder = 0;
@@ -11665,11 +11871,74 @@
             return buildTree(null);
         }
 
-        // 进入科目笔记页（子页面，后续实现具体内容）
+        // 获取科目课本列表
+        function getNoteTextbooks(subjectId) {
+            return noteTextbooks.filter(function(t) { return t.subjectId === subjectId; }).sort(function(a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+        }
+
+        // 渲染课本选择网格
+        function renderNoteTextbookGrid(subjectId) {
+            var section = document.getElementById('noteTextbookSelection');
+            var grid = document.getElementById('noteTextbookGrid');
+            var empty = document.getElementById('noteTextbookEmpty');
+            if (!grid) return;
+            var textbooks = getNoteTextbooks(subjectId);
+            var subject = subjects.find(function(s) { return s.id === subjectId; });
+            var accent = subject ? (subject.color || '#6366f1') : '#3B82F6';
+
+            if (textbooks.length === 0) {
+                grid.innerHTML = '';
+                if (empty) empty.classList.remove('hidden');
+                // 把section类名加好
+                if (section && section.className.indexOf('note-textbook-section') < 0) {
+                    section.className = 'note-textbook-section';
+                }
+                return;
+            }
+            if (empty) empty.classList.add('hidden');
+            if (section && section.className.indexOf('note-textbook-section') < 0) {
+                section.className = 'note-textbook-section';
+            }
+            var html = '<div class="note-textbook-grid">';
+            textbooks.forEach(function(tb) {
+                var lessonCount = noteLessons.filter(function(l) { return l.textbookId === tb.id; }).length;
+                html +=
+                    '<div class="note-textbook-card" style="--tb-accent:' + accent + ';--tb-accent-bg:' + accent + '15;"' +
+                    ' onclick="selectNoteTextbook(\'' + subjectId + '\',\'' + tb.id + '\')">' +
+                        '<div class="note-tb-bar"></div>' +
+                        '<div class="note-tb-body">' +
+                            '<div class="note-tb-icon"><i class="fa fa-book"></i></div>' +
+                            '<div class="note-tb-name" title="' + escHtml(tb.name || '未命名课本') + '">' + escHtml(tb.name || '未命名课本') + '</div>' +
+                            '<div class="note-tb-meta"><i class="fa fa-list-alt"></i> ' + lessonCount + ' 个课时</div>' +
+                        '</div>' +
+                    '</div>';
+            });
+            // 末尾添加课本卡片
+            html += '<div class="note-textbook-add-card" style="--tb-accent:' + accent + ';--tb-accent-bg:' + accent + '15;"' +
+                    ' onclick="openNoteEditModal(\'' + subjectId + '\');setTimeout(function(){document.getElementById(\'noteEditAdd\').click()},200)"' +
+                    ' title="添加新课本">' +
+                    '<div class="note-tb-add-icon"><i class="fa fa-plus"></i></div>' +
+                    '<div class="note-tb-add-text">添加课本</div>' +
+                    '</div>';
+            html += '</div>';
+            grid.innerHTML = html;
+            // 更新标题展示
+            var headerTitle = document.getElementById('noteTextbookHeaderTitle');
+            if (headerTitle) {
+                headerTitle.innerHTML = '<i class="fa fa-book"></i>' + escHtml(subject ? (subject.name + ' · 课本') : '选择课本');
+            }
+            var headerSub = document.getElementById('noteTextbookHeaderSub');
+            if (headerSub) {
+                headerSub.textContent = '共 ' + textbooks.length + ' 本课本，请选择一本查看课时笔记';
+            }
+        }
+
+        // 进入科目笔记页
         function openNoteSubject(subjectId) {
             var subject = subjects.find(function(s) { return s.id === subjectId; });
             if (!subject) return;
             currentNoteSubjectId = subjectId;
+            currentNoteTextbookId = null;
             currentNoteLessonId = null;
             document.getElementById('noteSubjectTitle').innerHTML =
                 '<i class="fa fa-sticky-note mr-2" style="color:' + (subject.color || '#6366f1') + ';"></i>' +
@@ -11678,22 +11947,59 @@
             initNoteSubjectPage(subjectId);
         }
 
+        // 选择课本
+        function selectNoteTextbook(subjectId, textbookId) {
+            currentNoteTextbookId = textbookId;
+            currentNoteLessonId = null;
+            var textbook = noteTextbooks.find(function(t) { return t.id === textbookId; });
+            // 隐藏课本选择区，显示课时布局
+            document.getElementById('noteTextbookSelection').classList.add('hidden');
+            document.getElementById('noteMainLayout').classList.remove('hidden');
+            document.getElementById('noteAfterClassPracticeBtn').classList.add('hidden');
+            // 更新标题加课本名
+            var subject = subjects.find(function(s) { return s.id === subjectId; });
+            document.getElementById('noteSubjectTitle').innerHTML =
+                '<i class="fa fa-sticky-note mr-2" style="color:' + (subject.color || '#6366f1') + ';"></i>' +
+                (subject.name || '未命名科目') + ' · ' + (textbook ? escHtml(textbook.name) : '课本') + ' · 笔记';
+            // 渲染课时列表和空白笔记区
+            renderNoteSidebar(subjectId, textbookId);
+            document.getElementById('noteCornellArea').innerHTML =
+                '<div class="cornell-empty text-center py-20">' +
+                '<div class="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">' +
+                '<i class="fa fa-hand-o-left text-blue-300 text-3xl"></i>' +
+                '</div>' +
+                '<p class="text-gray-400 text-sm font-medium">请从左侧课时列表中选择一个课时</p>' +
+                '<p class="text-gray-300 text-xs mt-1">选择后将在此处查看和编辑康奈尔笔记</p>' +
+                '</div>';
+        }
+
+        // 切换回课本选择
+        function _noteSwitchTextbook() {
+            currentNoteTextbookId = null;
+            currentNoteLessonId = null;
+            document.getElementById('noteTextbookSelection').classList.remove('hidden');
+            document.getElementById('noteMainLayout').classList.add('hidden');
+            document.getElementById('noteAfterClassPracticeBtn').classList.add('hidden');
+            var subject = subjects.find(function(s) { return s.id === currentNoteSubjectId; });
+            document.getElementById('noteSubjectTitle').innerHTML =
+                '<i class="fa fa-sticky-note mr-2" style="color:' + (subject.color || '#6366f1') + ';"></i>' +
+                (subject.name || '未命名科目') + ' · 笔记';
+            if (currentNoteSubjectId) renderNoteTextbookGrid(currentNoteSubjectId);
+        }
+
         // 初始化笔记科目详情页
         function initNoteSubjectPage(subjectId) {
-            renderNoteSidebar(subjectId);
-            // 默认不选中任何课时，显示空白，隐藏课后练习按钮
-            document.getElementById('noteCornellArea').innerHTML =
-                '<div class="cornell-empty text-center py-16 text-gray-400">' +
-                '<i class="fa fa-hand-o-left text-4xl block mb-3"></i>' +
-                '<p class="text-sm">请从左侧课时列表中选择一个课时</p>' +
-                '</div>';
+            // 显示课本选择，隐藏课时布局
+            document.getElementById('noteTextbookSelection').classList.remove('hidden');
+            document.getElementById('noteMainLayout').classList.add('hidden');
             document.getElementById('noteAfterClassPracticeBtn').classList.add('hidden');
+            renderNoteTextbookGrid(subjectId);
         }
 
         // 渲染课时侧边栏
-        function renderNoteSidebar(subjectId) {
+        function renderNoteSidebar(subjectId, textbookId) {
             var listEl = document.getElementById('noteLessonList');
-            var tree = getNoteLessonTree(subjectId);
+            var tree = getNoteLessonTree(subjectId, textbookId);
 
             if (tree.length === 0) {
                 listEl.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">暂无课时，点击"编辑课时"添加</p>';
@@ -11746,7 +12052,7 @@
 
         function toggleNoteLessonChildren(subjectId, lessonId) {
             _noteCollapsedLessons[lessonId] = !_noteCollapsedLessons[lessonId];
-            renderNoteSidebar(subjectId);
+            renderNoteSidebar(subjectId, currentNoteTextbookId);
         }
 
         // 选择课时 - 渲染康奈尔笔记
@@ -11756,7 +12062,7 @@
             if (!lesson) return;
 
             // 更新侧边栏高亮
-            renderNoteSidebar(subjectId);
+            renderNoteSidebar(subjectId, currentNoteTextbookId);
 
             // 渲染康奈尔笔记区
             var cues = lesson.cues || '';
@@ -12156,7 +12462,7 @@
         }
 
         function _noteExportRenderLessons(subjectId) {
-            var tree = getNoteLessonTree(subjectId);
+            var textbooks = getNoteTextbooks(subjectId);
             var html = '';
             function renderCheck(node, depth) {
                 html += '<label class="note-export-lesson-item" style="padding-left:' + (8 + depth * 20) + 'px;">';
@@ -12167,10 +12473,20 @@
                     node.children.forEach(function(c) { renderCheck(c, depth + 1); });
                 }
             }
-            if (tree.length === 0) {
-                html = '<p class="text-xs text-gray-400 text-center py-4">该科目暂无课时</p>';
+            if (textbooks.length === 0) {
+                html = '<p class="text-xs text-gray-400 text-center py-4">该科目暂无课本和课时</p>';
             } else {
-                tree.forEach(function(root) { renderCheck(root, 0); });
+                textbooks.forEach(function(tb) {
+                    var tree = getNoteLessonTree(subjectId, tb.id);
+                    html += '<div class="note-export-tb-group">';
+                    html += '<div class="note-export-tb-group-head"><i class="fa fa-book"></i>' + escHtml(tb.name || '未命名课本') + '</div>';
+                    if (tree.length === 0) {
+                        html += '<p class="text-xs text-gray-300 py-1" style="padding-left:10px;">暂无课时</p>';
+                    } else {
+                        tree.forEach(function(root) { renderCheck(root, 0); });
+                    }
+                    html += '</div>';
+                });
             }
             document.getElementById('noteExportLessonList').innerHTML = html;
             _noteExportUpdateCount();
@@ -12245,6 +12561,13 @@
             selectedLessons.forEach(function(lesson) {
                 bodyHtml += '<div class="print-page-break"></div>';
                 bodyHtml += '<div class="print-section">';
+                // 课本名
+                if (lesson.textbookId) {
+                    var tb = noteTextbooks.find(function(t) { return t.id === lesson.textbookId; });
+                    if (tb) {
+                        bodyHtml += '<div class="print-meta" style="margin-bottom:4px;"><i class="fa fa-book"></i> ' + escHtml(tb.name) + '</div>';
+                    }
+                }
                 bodyHtml += '<div class="print-subtitle" style="margin-bottom:8px;">' + escHtml(lesson.name || '未命名课时') + '</div>';
                 // 关联知识点
                 var kpIds = lesson.knowledgePointIds || [];
@@ -12298,6 +12621,7 @@
 
         // ========== 编辑课时弹窗 ==========
         var _noteEditDraft = null; // 编辑中的课时副本
+        var _noteEditTbDraft = null; // 编辑中的课本副本
 
         function openNoteEditModal(subjectId) {
             if (!subjectId) subjectId = currentNoteSubjectId;
@@ -12305,7 +12629,9 @@
             // 深拷贝当前科目课时到草稿
             _noteEditDraft = noteLessons
                 .filter(function(l) { return l.subjectId === subjectId; })
-                .map(function(l) { return { id: l.id, subjectId: l.subjectId, parentId: l.parentId, name: l.name, sortOrder: l.sortOrder, cues: l.cues, notes: l.notes, summary: l.summary, knowledgePointIds: l.knowledgePointIds ? l.knowledgePointIds.slice() : [] }; });
+                .map(function(l) { return { id: l.id, subjectId: l.subjectId, textbookId: l.textbookId || '', parentId: l.parentId, name: l.name, sortOrder: l.sortOrder, cues: l.cues, notes: l.notes, summary: l.summary, knowledgePointIds: l.knowledgePointIds ? l.knowledgePointIds.slice() : [] }; });
+            // 深拷贝课本草稿
+            _noteEditTbDraft = getNoteTextbooks(subjectId).map(function(t) { return { id: t.id, subjectId: t.subjectId, name: t.name, sortOrder: t.sortOrder }; });
 
             // 确保有 sortOrder
             _noteEditDraft.forEach(function(l, i) {
@@ -12320,12 +12646,11 @@
         function closeNoteEditModal() {
             document.getElementById('noteEditModal').classList.add('hidden');
             _noteEditDraft = null;
+            _noteEditTbDraft = null;
         }
 
         function _noteEditRender(subjectId) {
             var bodyEl = document.getElementById('noteEditBody');
-            var roots = _noteEditDraft.filter(function(l) { return !l.parentId; });
-            roots.sort(function(a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
 
             function renderRow(lesson, depth) {
                 var children = _noteEditDraft.filter(function(l) { return l.parentId === lesson.id; });
@@ -12338,6 +12663,7 @@
                 html += '<span class="note-edit-drag" title="拖拽排序"><i class="fa fa-grip-vertical"></i></span>';
                 html += '<input type="text" value="' + escHtml(lesson.name || '') + '" placeholder="课时名称" onchange="_noteEditUpdateName(\'' + lesson.id + '\', this.value)">';
                 // 父课时选择器
+                html += '<span style="font-size:10px;color:#9ca3af;flex-shrink:0;">父级:</span>';
                 html += '<select class="note-edit-parent-select" onchange="_noteEditUpdateParent(\'' + lesson.id + '\', this.value)" title="选择父课时">';
                 html += '<option value=""' + (!lesson.parentId ? ' selected' : '') + '>根课时</option>';
                 validParents.forEach(function(p) {
@@ -12354,14 +12680,36 @@
             }
 
             var html = '';
-            if (roots.length === 0) {
-                html = '<p class="text-xs text-gray-400 text-center py-8">暂无课时，点击左下角"添加课时"按钮创建</p>';
-            } else {
-                roots.forEach(function(root) {
-                    html += renderRow(root, 0);
-                });
-                html += '<p class="text-xs text-gray-400 mt-3"><i class="fa fa-info-circle mr-1"></i>拖拽 <i class="fa fa-grip-vertical"></i> 手柄可调整课时顺序，仅同层级间排序</p>';
+            // 处理无课本的课时：自动分配到第一个课本
+            if (_noteEditTbDraft.length > 0) {
+                _noteEditDraft.forEach(function(l) { if (!l.textbookId) l.textbookId = _noteEditTbDraft[0].id; });
             }
+
+            if (_noteEditTbDraft.length === 0) {
+                html = '<p class="text-xs text-gray-400 text-center py-4">暂无课本，请先添加课本</p>';
+            } else {
+                _noteEditTbDraft.forEach(function(tb) {
+                    var tbLessons = _noteEditDraft.filter(function(l) { return l.textbookId === tb.id; });
+                    html += '<div class="note-edit-textbook-head" style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f1f5f9;border-radius:8px;margin-top:10px;margin-bottom:4px;">';
+                    html += '<i class="fa fa-book" style="color:#3B82F6;font-size:14px;flex-shrink:0;"></i>';
+                    html += '<input type="text" value="' + escHtml(tb.name || '') + '" placeholder="课本名称" style="flex:1;border:1px solid #d1d5db;border-radius:4px;padding:3px 8px;font-size:13px;font-weight:600;background:white;" onchange="_noteEditRenameTextbook(\'' + tb.id + '\', this.value)">';
+                    html += '<button onclick="_noteEditDeleteTextbook(\'' + tb.id + '\')" title="删除课本" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:14px;padding:2px 4px;flex-shrink:0;"><i class="fa fa-trash"></i></button>';
+                    html += '</div>';
+
+                    var roots = tbLessons.filter(function(l) { return !l.parentId; });
+                    roots.sort(function(a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); });
+
+                    if (roots.length === 0) {
+                        html += '<p class="text-xs text-gray-300 py-1" style="margin-left:8px;">暂无课时</p>';
+                    } else {
+                        roots.forEach(function(root) {
+                            html += renderRow(root, 0);
+                        });
+                    }
+                    html += '<button onclick="_noteEditAddLessonTo(\'' + tb.id + '\')" style="margin-left:8px;margin-top:2px;font-size:11px;color:#3B82F6;background:none;border:none;cursor:pointer;padding:2px 6px;"><i class="fa fa-plus mr-1"></i>添加课时</button>';
+                });
+            }
+            html += '<p class="text-xs text-gray-400 mt-3"><i class="fa fa-info-circle mr-1"></i>拖拽 <i class="fa fa-grip-vertical"></i> 可同层级排序</p>';
             bodyEl.innerHTML = html;
 
             // 拖拽排序
@@ -12421,6 +12769,35 @@
             });
         }
 
+        function _noteEditRenameTextbook(tbId, newName) {
+            var tb = _noteEditTbDraft.find(function(t) { return t.id === tbId; });
+            if (tb) tb.name = newName || '未命名课本';
+        }
+
+        function _noteEditDeleteTextbook(tbId) {
+            if (!confirm('删除课本将同时删除该课本下所有课时，确定要删除吗？')) return;
+            _noteEditTbDraft = _noteEditTbDraft.filter(function(t) { return t.id !== tbId; });
+            _noteEditDraft = _noteEditDraft.filter(function(l) { return l.textbookId !== tbId; });
+            _noteEditRender(currentNoteSubjectId);
+        }
+
+        function _noteEditAddLessonTo(tbId) {
+            var newLesson = {
+                id: generateId(),
+                subjectId: currentNoteSubjectId,
+                textbookId: tbId,
+                parentId: null,
+                name: '新课时',
+                sortOrder: _noteEditDraft.filter(function(l) { return l.textbookId === tbId && !l.parentId; }).length,
+                cues: '',
+                notes: '',
+                summary: '',
+                knowledgePointIds: []
+            };
+            _noteEditDraft.push(newLesson);
+            _noteEditRender(currentNoteSubjectId);
+        }
+
         function _noteEditUpdateName(lessonId, name) {
             var lesson = _noteEditDraft.find(function(l) { return l.id === lessonId; });
             if (lesson) lesson.name = name;
@@ -12461,9 +12838,11 @@
         }
 
         function _noteEditAddChild(parentId) {
+            var parent = _noteEditDraft.find(function(l) { return l.id === parentId; });
             var newLesson = {
                 id: generateId(),
                 subjectId: currentNoteSubjectId,
+                textbookId: parent ? parent.textbookId : '',
                 parentId: parentId,
                 name: '新子课时',
                 sortOrder: _noteEditDraft.filter(function(l) { return l.parentId === parentId; }).length,
@@ -12504,13 +12883,15 @@
                 if (select) lesson.parentId = select.value || null;
             });
 
-            // 删除当前科目的旧课时，替换为新草稿（保留其他科目的课时）
+            // 删除当前科目的旧课时和旧课本，替换为新草稿（保留其他科目的）
             noteLessons = noteLessons.filter(function(l) { return l.subjectId !== subjectId; });
             noteLessons = noteLessons.concat(_noteEditDraft);
+            noteTextbooks = noteTextbooks.filter(function(t) { return t.subjectId !== subjectId; });
+            noteTextbooks = noteTextbooks.concat(_noteEditTbDraft);
             saveGradeData();
             closeNoteEditModal();
             initNoteSubjectPage(subjectId);
-            showNotification('课时结构已保存', 'success');
+            showNotification('课本和课时已保存', 'success');
         }
 
         // 笔记子页面返回按钮
@@ -12526,6 +12907,22 @@
         // 编辑课时按钮
         document.getElementById('noteEditLessonBtn').addEventListener('click', function() {
             openNoteEditModal();
+        });
+
+        // 添加课本按钮（课本选择页头部）
+        document.getElementById('noteAddTextbookBtn').addEventListener('click', function() {
+            if (!currentNoteSubjectId) return;
+            openNoteEditModal(currentNoteSubjectId);
+            // 延迟自动点击添加课本
+            setTimeout(function() {
+                var addBtn = document.getElementById('noteEditAdd');
+                if (addBtn) addBtn.click();
+            }, 200);
+        });
+
+        // 切换课本按钮
+        document.getElementById('noteSwitchTextbookBtn').addEventListener('click', function() {
+            _noteSwitchTextbook();
         });
 
         // 课后练习按钮
@@ -12547,18 +12944,9 @@
         document.getElementById('noteEditSave').addEventListener('click', saveNoteEdit);
         document.getElementById('noteEditAdd').addEventListener('click', function() {
             if (!currentNoteSubjectId) return;
-            var newLesson = {
-                id: generateId(),
-                subjectId: currentNoteSubjectId,
-                parentId: null,
-                name: '新课时',
-                sortOrder: _noteEditDraft.filter(function(l) { return !l.parentId; }).length,
-                cues: '',
-                notes: '',
-                summary: '',
-                knowledgePointIds: []
-            };
-            _noteEditDraft.push(newLesson);
+            // 添加课本
+            var tb = { id: generateId(), subjectId: currentNoteSubjectId, name: '新课本', sortOrder: _noteEditTbDraft.length };
+            _noteEditTbDraft.push(tb);
             _noteEditRender(currentNoteSubjectId);
         });
         document.getElementById('noteEditModal').addEventListener('click', function(e) {
