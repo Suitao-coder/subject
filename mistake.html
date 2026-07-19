@@ -3219,14 +3219,14 @@
                     <div class="border border-dashed border-gray-300 rounded-lg p-5 bg-gray-50">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-gray-900">XLSX 文件</p>
-                                <p class="text-xs text-gray-500 mt-1">文件第一行必须为：序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源<br><span class="text-primary">复合题支持：连续行使用同一序号（如 1、1），将自动合并为数道小题组成的复合题</span></p>
+                                <p class="text-sm font-medium text-gray-900">ZIP 文件（内含 XLSX + 题目图片）</p>
+                                <p class="text-xs text-gray-500 mt-1">压缩包内须含：① 一个 .xlsx 题目表，首行：序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源；② 题目图片（可选）。<br>图片命名：<b>序号.png</b> 题面图（多张用 序号_1.png、序号_2.png），<b>序号_ans.png</b> 解析图，<b>序号_A.png</b> 等选项图；复合题小题用 <b>序号_s1.png</b>、<b>序号_s1_ans.png</b>、<b>序号_s1_A.png</b>。<br><span class="text-primary">复合题支持：连续行使用同一序号（如 1、1），将自动合并</span></p>
                             </div>
                             <button type="button" id="selectImportPaperFileBtn" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
-                                <i class="fa fa-upload mr-2"></i> 选择 XLSX
+                                <i class="fa fa-upload mr-2"></i> 选择 ZIP
                             </button>
                         </div>
-                        <input type="file" id="importPaperFileInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
+                        <input type="file" id="importPaperFileInput" accept=".zip,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
                         <p class="text-xs text-gray-500 mt-3" id="importPaperFileName">未选择文件</p>
                     </div>
                 </div>
@@ -3290,14 +3290,14 @@
                 <div class="border border-dashed border-gray-300 rounded-lg p-5 bg-gray-50">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-900">XLSX 文件</p>
-                            <p class="text-xs text-gray-500 mt-1">文件第一行必须为：<b>科目</b>,序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源<br><span class="text-primary">复合题支持：相同科目的连续行使用同一序号（如 1、1），将自动合并为数道小题组成的复合题</span></p>
+                            <p class="text-sm font-medium text-gray-900">ZIP 文件（内含 XLSX + 题目图片）</p>
+                            <p class="text-xs text-gray-500 mt-1">压缩包内须含：① 一个 .xlsx 题目表，首行：<b>科目</b>,序号,题型,题面,选项A,选项B,选项C,选项D,答案,解析,难度,知识点,来源；② 题目图片（可选）。<br>图片命名：<b>序号.png</b> 题面图（多张用 序号_1.png），<b>序号_ans.png</b> 解析图，<b>序号_A.png</b> 等选项图；多科目同名序号可加科目前缀：<b>科目_序号.png</b>；复合题小题用 <b>序号_s1.png</b>。<br><span class="text-primary">复合题支持：相同科目的连续行使用同一序号（如 1、1），将自动合并</span></p>
                         </div>
                         <button type="button" id="selectBatchImportFileBtn" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
-                            <i class="fa fa-upload mr-2"></i> 选择 XLSX
+                            <i class="fa fa-upload mr-2"></i> 选择 ZIP
                         </button>
                     </div>
-                    <input type="file" id="batchImportFileInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
+                    <input type="file" id="batchImportFileInput" accept=".zip,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
                     <p class="text-xs text-gray-500 mt-3" id="batchImportFileName">未选择文件</p>
                 </div>
             </div>
@@ -10017,6 +10017,104 @@
             reader.readAsArrayBuffer(file);
         }
 
+        // ===== ZIP 导入（XLSX + 题目图片）=====
+        // 从 ZIP 中提取第一个 XLSX 并解析为行数据
+        function extractZipXlsxRows(zip) {
+            let xlsxPath = null;
+            zip.forEach(function(path, entry) {
+                if (entry.dir) return;
+                if (path.toLowerCase().endsWith('.xlsx') && !xlsxPath) xlsxPath = path;
+            });
+            if (!xlsxPath) return Promise.reject(new Error('ZIP 中未找到 XLSX 文件'));
+            return zip.file(xlsxPath).async('arraybuffer').then(function(ab) {
+                const data = new Uint8Array(ab);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const ws = workbook.Sheets[workbook.SheetNames[0]];
+                return XLSX.utils.sheet_to_json(ws, { header: 1, raw: false });
+            });
+        }
+
+        // 从 ZIP 中提取所有图片，建立 "文件名(不含扩展名) -> base64 dataURL" 映射（忽略目录与 __MACOSX）
+        function extractZipImages(zip) {
+            const mimeMap = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp' };
+            const entries = [];
+            zip.forEach(function(path, entry) {
+                if (entry.dir) return;
+                const lower = path.toLowerCase();
+                const dot = lower.lastIndexOf('.');
+                if (dot < 0) return;
+                const ext = lower.slice(dot + 1);
+                if (!mimeMap[ext]) return;
+                if (path.split('/').some(function(p) { return p === '__MACOSX' || p.charAt(0) === '.'; })) return;
+                const base = path.slice(0, path.lastIndexOf('.'));
+                const baseName = base.split('/').pop();
+                entries.push({ baseName: baseName.toLowerCase(), entry: entry, mime: mimeMap[ext] });
+            });
+            return Promise.all(entries.map(function(e) {
+                return e.entry.async('base64').then(function(b64) {
+                    return [e.baseName, 'data:' + e.mime + ';base64,' + b64];
+                });
+            })).then(function(pairs) {
+                const map = new Map();
+                pairs.forEach(function(p) { map.set(p[0], p[1]); });
+                return map;
+            });
+        }
+
+        // 解析 ZIP：返回 { rows, imageMap }
+        function parseZipFile(file) {
+            return JSZip.loadAsync(file).then(function(zip) {
+                return Promise.all([extractZipXlsxRows(zip), extractZipImages(zip)]).then(function(res) {
+                    return { rows: res[0], imageMap: res[1] };
+                });
+            });
+        }
+
+        // 兼容旧流程：ZIP 或 XLSX 统一返回 { rows, imageMap }
+        function loadImportData(file) {
+            const name = (file.name || '').toLowerCase();
+            if (name.endsWith('.zip')) {
+                return parseZipFile(file);
+            }
+            return new Promise(function(resolve, reject) {
+                parseXlsxFile(file, function(rows) { resolve({ rows: rows, imageMap: new Map() }); }, reject);
+            });
+        }
+
+        // 图片命名匹配：依据 key（序号 或 科目_序号）匹配 ZIP 内图片
+        function getImageByBase(imageMap, base) {
+            if (!imageMap || !base) return null;
+            return imageMap.get(String(base).toLowerCase()) || null;
+        }
+        function getNumberedImages(imageMap, basePrefix) {
+            const arr = [];
+            const first = getImageByBase(imageMap, basePrefix);
+            if (first) arr.push(first);
+            for (let i = 1; i <= 50; i++) {
+                const img = getImageByBase(imageMap, basePrefix + '_' + i);
+                if (!img) break;
+                arr.push(img);
+            }
+            return arr;
+        }
+        // keys: 候选匹配键数组，例如 ['5', '数学_5']
+        // 返回 { photos, explanationPhotos, optionPhotos }
+        function collectQuestionPhotos(imageMap, keys) {
+            const photos = [];
+            const explanationPhotos = [];
+            const optionPhotos = {};
+            (keys || []).forEach(function(key) {
+                if (!key) return;
+                getNumberedImages(imageMap, key).forEach(function(d) { photos.push(d); });
+                getNumberedImages(imageMap, key + '_ans').forEach(function(d) { explanationPhotos.push(d); });
+                ['A', 'B', 'C', 'D'].forEach(function(opt) {
+                    const img = getImageByBase(imageMap, key + '_' + opt);
+                    if (img) optionPhotos[opt] = img;
+                });
+            });
+            return { photos: photos, explanationPhotos: explanationPhotos, optionPhotos: optionPhotos };
+        }
+
         function findOrCreateSubjectByName(name) {
             const trimmedName = String(name || '').trim();
             if (!trimmedName) return null;
@@ -10122,14 +10220,17 @@
                 return;
             }
             if (!file) {
-                showNotification('请选择 XLSX 文件', 'error');
+                showNotification('请选择 ZIP 或 XLSX 文件', 'error');
                 return;
             }
-            if (!file.name.toLowerCase().endsWith('.xlsx')) {
-                showNotification('请选择 XLSX 格式文件', 'error');
+            const lowerName = file.name.toLowerCase();
+            if (!lowerName.endsWith('.zip') && !lowerName.endsWith('.xlsx')) {
+                showNotification('请选择 ZIP（内含 XLSX+图片）或 XLSX 文件', 'error');
                 return;
             }
-            parseXlsxFile(file, function(rows) {
+            loadImportData(file).then(function(importData) {
+                const rows = importData.rows;
+                const imageMap = importData.imageMap || new Map();
                 if (!Array.isArray(rows) || rows.length < 2) {
                     showNotification('XLSX 文件内容不足', 'error');
                     return;
@@ -10218,6 +10319,17 @@
                                 { label: 'D', text: String(row[6] || '').trim(), photo: '' }
                             ];
                         }
+                        // 题目图片（来自 ZIP 压缩包）
+                        {
+                            const img = collectQuestionPhotos(imageMap, [group.orderNo]);
+                            question.photos = img.photos;
+                            question.explanationPhotos = img.explanationPhotos;
+                            if (question.options) {
+                                question.options.forEach(function(o) {
+                                    if (img.optionPhotos[o.label]) o.photo = img.optionPhotos[o.label];
+                                });
+                            }
+                        }
                         if (question.type === 'compound') {
                             question.subQuestions = [];
                         }
@@ -10287,6 +10399,27 @@
                             options: [],
                             subQuestions: subQuestions
                         };
+                        // 题干图片（来自 ZIP）
+                        {
+                            const mainImg = collectQuestionPhotos(imageMap, [group.orderNo]);
+                            question.photos = mainImg.photos;
+                            question.explanationPhotos = mainImg.explanationPhotos;
+                            if (question.options) {
+                                question.options.forEach(function(o) {
+                                    if (mainImg.optionPhotos[o.label]) o.photo = mainImg.optionPhotos[o.label];
+                                });
+                            }
+                        }
+                        subQuestions.forEach(function(sq, idx) {
+                            const sqImg = collectQuestionPhotos(imageMap, [group.orderNo + '_s' + (idx + 1)]);
+                            sq.photos = sqImg.photos;
+                            sq.explanationPhotos = sqImg.explanationPhotos;
+                            if (sq.options) {
+                                sq.options.forEach(function(o) {
+                                    if (sqImg.optionPhotos[o.label]) o.photo = sqImg.optionPhotos[o.label];
+                                });
+                            }
+                        });
                         questions.push(question);
                         addedQuestionIds.push(question.id);
                     }
@@ -10324,8 +10457,8 @@
                 if (compoundCount > 0) paperMsg += `（含 ${compoundCount} 道复合题，共 ${totalSubCount} 道小题）`;
                 if (newKpCount > 0) paperMsg += `，自动创建 ${newKpCount} 个新知识点`;
                 showNotification(paperMsg, 'success');
-            }, function() {
-                showNotification('读取 XLSX 文件失败，请重试', 'error');
+            }).catch(function() {
+                showNotification('读取文件失败，请检查 ZIP 结构（须包含 XLSX）', 'error');
             });
         }
 
@@ -10354,14 +10487,17 @@
             const fileInput = document.getElementById('batchImportFileInput');
             const file = fileInput.files && fileInput.files[0];
             if (!file) {
-                showNotification('请选择 XLSX 文件', 'error');
+                showNotification('请选择 ZIP 或 XLSX 文件', 'error');
                 return;
             }
-            if (!file.name.toLowerCase().endsWith('.xlsx')) {
-                showNotification('请选择 XLSX 格式文件', 'error');
+            const lowerName = file.name.toLowerCase();
+            if (!lowerName.endsWith('.zip') && !lowerName.endsWith('.xlsx')) {
+                showNotification('请选择 ZIP（内含 XLSX+图片）或 XLSX 文件', 'error');
                 return;
             }
-            parseXlsxFile(file, function(rows) {
+            loadImportData(file).then(function(importData) {
+                const rows = importData.rows;
+                const imageMap = importData.imageMap || new Map();
                 if (!Array.isArray(rows) || rows.length < 2) {
                     showNotification('XLSX 文件内容不足', 'error');
                     return;
@@ -10461,6 +10597,17 @@
                                 { label: 'D', text: String(row[7] || '').trim(), photo: '' }
                             ];
                         }
+                        // 题目图片（来自 ZIP 压缩包）
+                        {
+                            const img = collectQuestionPhotos(imageMap, [group.orderNo, group.subjectName + '_' + group.orderNo]);
+                            question.photos = img.photos;
+                            question.explanationPhotos = img.explanationPhotos;
+                            if (question.options) {
+                                question.options.forEach(function(o) {
+                                    if (img.optionPhotos[o.label]) o.photo = img.optionPhotos[o.label];
+                                });
+                            }
+                        }
                         if (question.type === 'compound') {
                             question.subQuestions = [];
                         }
@@ -10530,6 +10677,27 @@
                             options: [],
                             subQuestions: subQuestions
                         };
+                        // 题干图片（来自 ZIP）
+                        {
+                            const mainImg = collectQuestionPhotos(imageMap, [group.orderNo, group.subjectName + '_' + group.orderNo]);
+                            question.photos = mainImg.photos;
+                            question.explanationPhotos = mainImg.explanationPhotos;
+                            if (question.options) {
+                                question.options.forEach(function(o) {
+                                    if (mainImg.optionPhotos[o.label]) o.photo = mainImg.optionPhotos[o.label];
+                                });
+                            }
+                        }
+                        subQuestions.forEach(function(sq, idx) {
+                            const sqImg = collectQuestionPhotos(imageMap, [group.orderNo + '_s' + (idx + 1), group.subjectName + '_' + group.orderNo + '_s' + (idx + 1)]);
+                            sq.photos = sqImg.photos;
+                            sq.explanationPhotos = sqImg.explanationPhotos;
+                            if (sq.options) {
+                                sq.options.forEach(function(o) {
+                                    if (sqImg.optionPhotos[o.label]) o.photo = sqImg.optionPhotos[o.label];
+                                });
+                            }
+                        });
                         questions.unshift(question);
                         addedCount++;
                         totalSubCount += subQuestions.length;
@@ -10550,8 +10718,8 @@
                 if (skippedCount > 0) msg += `，跳过 ${skippedCount} 条空行`;
                 if (newKpCount > 0) msg += `，自动创建 ${newKpCount} 个新知识点`;
                 showNotification(msg, 'success');
-            }, function() {
-                showNotification('读取 XLSX 文件失败，请重试', 'error');
+            }).catch(function() {
+                showNotification('读取文件失败，请检查 ZIP 结构（须包含 XLSX）', 'error');
             });
         }
 
